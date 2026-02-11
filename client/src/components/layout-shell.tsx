@@ -14,10 +14,15 @@ import {
   Building2,
   PieChart,
   History,
-  Settings
+  Settings,
+  ChevronDown,
+  ChevronRight,
+  Mail,
+  UserCog
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Navigation Items based on roles
 const getNavItems = (role: string) => {
@@ -30,7 +35,15 @@ const getNavItems = (role: string) => {
     { name: "Verifications", href: "/verifications", icon: FileCheck, roles: ["admin", "verifier"] },
     { name: "Asset Types", href: "/asset-types", icon: Building2, roles: ["admin"] },
     { name: "Audit Trail", href: "/audit-trail", icon: History, roles: ["admin"] },
-    { name: "Settings", href: "/settings", icon: Settings, roles: ["admin"] },
+    {
+      name: "Settings",
+      icon: Settings,
+      roles: ["admin"],
+      children: [
+        { name: "User Management", href: "/users", icon: UserCog },
+        { name: "Email Settings", href: "/settings", icon: Mail },
+      ]
+    },
   ];
   return items.filter(item => item.roles.includes(role));
 };
@@ -39,6 +52,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (!user) return null;
 
@@ -62,6 +76,58 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       
       <div className="flex-1 py-6 px-3 space-y-1">
         {navItems.map((item) => {
+          if (item.children) {
+            const isChildActive = item.children.some(child => location === child.href);
+            return (
+              <Collapsible
+                key={item.name}
+                open={settingsOpen}
+                onOpenChange={setSettingsOpen}
+                className="space-y-1"
+              >
+                <CollapsibleTrigger asChild>
+                  <div
+                    className={`flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
+                      isChildActive
+                        ? "text-white bg-slate-800"
+                        : "text-slate-400 hover:text-white hover:bg-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon className={`w-5 h-5 ${isChildActive ? "text-white" : "text-slate-500"}`} />
+                      {item.name}
+                    </div>
+                    {settingsOpen ? (
+                      <ChevronDown className="w-4 h-4 text-slate-500" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-slate-500" />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-1 ml-4 pl-4 border-l border-slate-800">
+                  {item.children.map((child) => {
+                    const isChildActive = location === child.href;
+                    return (
+                      <Link key={child.href} href={child.href}>
+                        <div
+                          className={`flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer ${
+                            isChildActive
+                              ? "bg-blue-600 text-white shadow-md shadow-blue-900/20"
+                              : "text-slate-400 hover:text-white hover:bg-slate-800"
+                          }`}
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          <child.icon className={`w-4 h-4 ${isChildActive ? "text-white" : "text-slate-500"}`} />
+                          {child.name}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          }
+
           const isActive = location === item.href;
           return (
             <Link key={item.href} href={item.href}>
