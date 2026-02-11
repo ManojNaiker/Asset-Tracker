@@ -246,7 +246,11 @@ function CreateAssetDialog({ assetTypes }: { assetTypes: any[] }) {
                                 <FormItem>
                                     <FormLabel>Serial Number</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="SN-12345" {...field} />
+                                        <Input 
+                                            placeholder="SN-12345" 
+                                            {...field} 
+                                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
