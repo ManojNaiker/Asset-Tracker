@@ -9,9 +9,10 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import bcrypt from "bcryptjs";
-import { User, auditLogs, users } from "@shared/schema";
+import { User, auditLogs, users, emailSettings } from "@shared/schema";
 import { db } from "./db";
 import { desc } from "drizzle-orm";
+import nodemailer from "nodemailer";
 
 const PgSession = connectPgSimple(session);
 
@@ -320,6 +321,9 @@ export async function registerRoutes(
     // Update asset status
     await storage.updateAsset(assetId, { status: "Allocated" });
     
+    // Send email notification
+    sendAllocationEmail(employeeId, assetId);
+    
     await storage.createAuditLog({ 
       userId: (req.user as User).id, 
       action: "Allocate Asset", 
@@ -399,7 +403,7 @@ export async function registerRoutes(
 
   app.patch("/api/users/:id", requireAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       const { password, ...updates } = req.body;
       if (password) {
         updates.password = await bcrypt.hash(password, 10);
@@ -413,7 +417,7 @@ export async function registerRoutes(
 
   app.delete("/api/users/:id", requireAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       const currentUser = req.user as User;
       if (currentUser.id === id) {
         return res.status(400).json({ message: "Cannot delete your own account" });
@@ -424,6 +428,48 @@ export async function registerRoutes(
       res.status(500).json({ message: "Failed to delete user" });
     }
   });
+
+  // Email Settings Routes
+  app.get("/api/settings/email", requireAdmin, async (req, res) => {
+    const settings = await storage.getEmailSettings();
+    res.json(settings || {});
+  });
+
+  app.post("/api/settings/email", requireAdmin, async (req, res) => {
+    const settings = await storage.updateEmailSettings(req.body);
+    res.json(settings);
+  });
+
+  // Helper to send email
+  async function sendAllocationEmail(employeeId: number, assetId: number) {
+    try {
+      const settings = await storage.getEmailSettings();
+      if (!settings) return;
+
+      const employee = await storage.getEmployee(employeeId);
+      const asset = await storage.getAsset(assetId);
+      if (!employee || !asset) return;
+
+      const transporter = nodemailer.createTransport({
+        host: settings.host,
+        port: settings.port,
+        secure: settings.secure ?? true,
+        auth: {
+          user: settings.user,
+          pass: settings.password,
+        },
+      });
+
+      await transporter.sendMail({
+        from: settings.fromEmail,
+        to: employee.email,
+        subject: "Asset Allocated: " + asset.serialNumber,
+        text: `Hello ${employee.name},\n\nA new asset has been allocated to you.\n\nAsset: ${asset.type.name}\nSerial Number: ${asset.serialNumber}\n\nPlease log in to the system to acknowledge.\n\nBest regards,\nAsset Management Team`,
+      });
+    } catch (err) {
+      console.error("Failed to send email:", err);
+    }
+  }
 
   // Stats
   app.get(api.stats.dashboard.path, requireAuth, async (req, res) => {

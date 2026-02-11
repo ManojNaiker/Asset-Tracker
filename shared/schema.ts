@@ -87,6 +87,21 @@ export const auditLogs = pgTable("audit_logs", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
+export const emailSettings = pgTable("email_settings", {
+  id: serial("id").primaryKey(),
+  host: text("host").notNull(),
+  port: integer("port").notNull(),
+  secure: boolean("secure").default(true),
+  user: text("user").notNull(),
+  password: text("password").notNull(),
+  fromEmail: text("from_email").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertEmailSettingsSchema = createInsertSchema(emailSettings).omit({ id: true, updatedAt: true });
+export type EmailSettings = typeof emailSettings.$inferSelect;
+export type InsertEmailSettings = z.infer<typeof insertEmailSettingsSchema>;
+
 // === Relations ===
 export const assetsRelations = relations(assets, ({ one, many }) => ({
   type: one(assetTypes, {

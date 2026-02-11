@@ -1,7 +1,8 @@
 import { 
   User, InsertUser, Employee, InsertEmployee, AssetType, Asset, InsertAsset, 
   Allocation, InsertAllocation, Verification, InsertVerification, AuditLog,
-  users, employees, assetTypes, assets, allocations, verifications, auditLogs
+  users, employees, assetTypes, assets, allocations, verifications, auditLogs,
+  EmailSettings, InsertEmailSettings, emailSettings
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, ilike, and, or, sql, desc } from "drizzle-orm";
@@ -52,6 +53,10 @@ export interface IStorage {
   
   // Audit Logs
   createAuditLog(log: Partial<AuditLog>): Promise<AuditLog>;
+
+  // Email Settings
+  getEmailSettings(): Promise<EmailSettings | undefined>;
+  updateEmailSettings(settings: InsertEmailSettings): Promise<EmailSettings>;
   
   // Stats
   getDashboardStats(): Promise<{
@@ -258,6 +263,23 @@ export class DatabaseStorage implements IStorage {
   async createAuditLog(log: Partial<AuditLog>): Promise<AuditLog> {
     const [newLog] = await db.insert(auditLogs).values(log as any).returning();
     return newLog;
+  }
+
+  // Email Settings
+  async getEmailSettings(): Promise<EmailSettings | undefined> {
+    const [settings] = await db.select().from(emailSettings).limit(1);
+    return settings;
+  }
+
+  async updateEmailSettings(settings: InsertEmailSettings): Promise<EmailSettings> {
+    const [existing] = await db.select().from(emailSettings).limit(1);
+    if (existing) {
+      const [updated] = await db.update(emailSettings).set(settings).where(eq(emailSettings.id, existing.id)).returning();
+      return updated;
+    } else {
+      const [newSettings] = await db.insert(emailSettings).values(settings).returning();
+      return newSettings;
+    }
   }
 
   // Stats

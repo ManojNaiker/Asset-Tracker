@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-export default function UsersPage() {
+export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean }) {
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const { data: users, isLoading } = useQuery<any[]>({ queryKey: ["/api/users"] });
@@ -101,10 +101,13 @@ export default function UsersPage() {
         }
     });
 
-    if (isLoading) return <LayoutShell><div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div></LayoutShell>;
+    if (isLoading) {
+        const loadingContent = <div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div>;
+        return hideLayout ? loadingContent : <LayoutShell>{loadingContent}</LayoutShell>;
+    }
 
-    return (
-        <LayoutShell>
+    const content = (
+        <>
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-display font-bold text-slate-900">User Management</h1>
@@ -309,6 +312,8 @@ export default function UsersPage() {
                     </TableBody>
                 </Table>
             </div>
-        </LayoutShell>
+        </>
     );
+
+    return hideLayout ? content : <LayoutShell>{content}</LayoutShell>;
 }

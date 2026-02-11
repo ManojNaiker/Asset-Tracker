@@ -13,7 +13,8 @@ import {
   X,
   Building2,
   PieChart,
-  History
+  History,
+  Settings
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
@@ -28,8 +29,8 @@ const getNavItems = (role: string) => {
     { name: "My Assets", href: "/my-assets", icon: Box, roles: ["employee"] },
     { name: "Verifications", href: "/verifications", icon: FileCheck, roles: ["admin", "verifier"] },
     { name: "Asset Types", href: "/asset-types", icon: Building2, roles: ["admin"] },
-    { name: "User Management", href: "/users", icon: Users, roles: ["admin"] },
     { name: "Audit Trail", href: "/audit-trail", icon: History, roles: ["admin"] },
+    { name: "Settings", href: "/settings", icon: Settings, roles: ["admin"] },
   ];
   return items.filter(item => item.roles.includes(role));
 };
