@@ -52,7 +52,15 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  
+  // Check if current route is a sub-route of Settings
+  const isSettingsChildActive = location === "/users" || location === "/settings";
+  const [settingsOpen, setSettingsOpen] = useState(isSettingsChildActive);
+
+  // Sync settings menu open state when location changes (e.g. from direct navigation)
+  if (isSettingsChildActive && !settingsOpen) {
+    setSettingsOpen(true);
+  }
 
   if (!user) return null;
 
