@@ -13,11 +13,20 @@ export function BulkAssetUploadDialog({ assetTypes }: { assetTypes: any[] }) {
     const { toast } = useToast();
 
     const downloadTemplate = () => {
-        const worksheet = XLSX.utils.json_to_sheet([
+        // Create a worksheet with headers and a sample row
+        const data = [
             { "Serial Number": "SN001", "Asset Type Name": assetTypes[0]?.name || "Laptop", "Status": "Available" }
-        ]);
+        ];
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        
+        // Add a helper sheet for Asset Type Names so users know what to type
+        const typeNames = assetTypes.map(t => [t.name]);
+        const typeSheet = XLSX.utils.aoa_to_sheet([["Available Asset Types"], ...typeNames]);
+        
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Assets");
+        XLSX.utils.book_append_sheet(workbook, typeSheet, "Valid Asset Types");
+        
         XLSX.writeFile(workbook, "asset_upload_template.xlsx");
     };
 
@@ -35,11 +44,21 @@ export function BulkAssetUploadDialog({ assetTypes }: { assetTypes: any[] }) {
                 const ws = wb.Sheets[wsname];
                 const data = XLSX.utils.sheet_to_json(ws);
 
-                const formattedData = data.map((item: any) => {
-                    const type = assetTypes.find(t => t.name === item["Asset Type Name"]);
+                if (data.length === 0) {
+                    throw new Error("The uploaded file is empty");
+                }
+
+                const formattedData = data.map((item: any, index: number) => {
+                    const typeName = String(item["Asset Type Name"] || "").trim();
+                    const type = assetTypes.find(t => t.name.toLowerCase() === typeName.toLowerCase());
+                    
+                    if (!type) {
+                        throw new Error(`Row ${index + 2}: Asset Type "${typeName}" not found. Please check "Valid Asset Types" sheet.`);
+                    }
+
                     return {
-                        serialNumber: String(item["Serial Number"]),
-                        assetTypeId: type?.id || assetTypes[0]?.id,
+                        serialNumber: String(item["Serial Number"] || "").trim().toUpperCase(),
+                        assetTypeId: type.id,
                         status: item["Status"] || "Available",
                         specifications: {},
                         images: []
@@ -51,9 +70,14 @@ export function BulkAssetUploadDialog({ assetTypes }: { assetTypes: any[] }) {
                 toast({ title: "Assets imported successfully" });
                 setOpen(false);
             } catch (err: any) {
-                toast({ title: "Failed to import assets", description: err.message, variant: "destructive" });
+                toast({ 
+                    title: "Import Failed", 
+                    description: err.message || "Invalid data format", 
+                    variant: "destructive" 
+                });
             } finally {
                 setLoading(false);
+                if (fileInputRef.current) fileInputRef.current.value = "";
             }
         };
         reader.readAsBinaryString(file);
@@ -106,11 +130,24 @@ export function BulkAllocationUploadDialog() {
     const { toast } = useToast();
 
     const downloadTemplate = () => {
-        const worksheet = XLSX.utils.json_to_sheet([
-            { "Employee ID": "EMP001", "Asset Serial Number": "SN001", "Status": "Active", "Return Reason": "" }
-        ]);
+        const data = [
+            { "Employee ID": "EMP001", "Asset Serial Number": "SN001", "Action": "Allocate", "Return Reason": "" },
+            { "Employee ID": "EMP002", "Asset Serial Number": "SN002", "Action": "Return", "Return Reason": "Upgrading" }
+        ];
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        
+        // Add hints sheet
+        const hints = [
+            ["Action Options", "Description"],
+            ["Allocate", "Assigns an available asset to the employee"],
+            ["Return", "Marks an existing allocation as returned"]
+        ];
+        const hintSheet = XLSX.utils.aoa_to_sheet(hints);
+        
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Allocations");
+        XLSX.utils.book_append_sheet(workbook, hintSheet, "Instructions");
+        
         XLSX.writeFile(workbook, "allocation_upload_template.xlsx");
     };
 
@@ -128,22 +165,26 @@ export function BulkAllocationUploadDialog() {
                 const ws = wb.Sheets[wsname];
                 const data = XLSX.utils.sheet_to_json(ws);
 
-                const formattedData = data.map((item: any) => ({
-                    employeeEmpId: String(item["Employee ID"]),
-                    assetSerialNumber: String(item["Asset Serial Number"]),
-                    status: item["Status"] || "Active",
-                    returnReason: item["Return Reason"] || ""
-                }));
+                const formattedData = data.map((item: any) => {
+                    const action = String(item["Action"] || "Allocate").trim().toLowerCase();
+                    return {
+                        employeeEmpId: String(item["Employee ID"] || "").trim(),
+                        assetSerialNumber: String(item["Asset Serial Number"] || "").trim().toUpperCase(),
+                        status: action === "return" ? "Returned" : "Active",
+                        returnReason: item["Return Reason"] || ""
+                    };
+                });
 
                 await apiRequest("POST", "/api/allocations/import", formattedData);
                 queryClient.invalidateQueries({ queryKey: ["/api/allocations"] });
                 queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
-                toast({ title: "Allocations imported successfully" });
+                toast({ title: "Allocations processed successfully" });
                 setOpen(false);
             } catch (err: any) {
-                toast({ title: "Failed to import allocations", description: err.message, variant: "destructive" });
+                toast({ title: "Failed to process allocations", description: err.message, variant: "destructive" });
             } finally {
                 setLoading(false);
+                if (fileInputRef.current) fileInputRef.current.value = "";
             }
         };
         reader.readAsBinaryString(file);
