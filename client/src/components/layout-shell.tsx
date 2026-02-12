@@ -28,12 +28,19 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 const getNavItems = (role: string) => {
   const items = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "verifier", "employee"] },
-    { name: "Assets", href: "/assets", icon: Box, roles: ["admin", "verifier"] },
+    {
+      name: "Assets",
+      icon: Box,
+      roles: ["admin", "verifier"],
+      children: [
+        { name: "Asset List", href: "/assets", icon: Box },
+        { name: "Asset Type", href: "/asset-types", icon: Building2 },
+        { name: "Allocation", href: "/allocations", icon: Repeat },
+        { name: "Verification", href: "/verifications", icon: FileCheck },
+      ]
+    },
     { name: "Employees", href: "/employees", icon: Users, roles: ["admin"] },
-    { name: "Allocations", href: "/allocations", icon: Repeat, roles: ["admin"] },
     { name: "My Assets", href: "/my-assets", icon: Box, roles: ["employee"] },
-    { name: "Verifications", href: "/verifications", icon: FileCheck, roles: ["admin", "verifier"] },
-    { name: "Asset Types", href: "/asset-types", icon: Building2, roles: ["admin"] },
     { name: "Audit Trail", href: "/audit-trail", icon: History, roles: ["admin"] },
     {
       name: "Settings",
@@ -53,14 +60,15 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   
-  // Check if current route is a sub-route of Settings
-  const isSettingsChildActive = location === "/users" || location === "/settings";
-  const [settingsOpen, setSettingsOpen] = useState(isSettingsChildActive);
+  // Track open state for collapsible menus
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
-  // Sync settings menu open state when location changes (e.g. from direct navigation)
-  if (isSettingsChildActive && !settingsOpen) {
-    setSettingsOpen(true);
-  }
+  const toggleMenu = (name: string) => {
+    setOpenMenus(prev => ({
+      ...prev,
+      [name]: !prev[name]
+    }));
+  };
 
   if (!user) return null;
 
@@ -82,15 +90,17 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       
       <Separator className="bg-slate-800" />
       
-      <div className="flex-1 py-6 px-3 space-y-1">
+      <div className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           if (item.children) {
             const isChildActive = item.children.some(child => location === child.href);
+            const isOpen = openMenus[item.name] || isChildActive;
+
             return (
               <Collapsible
                 key={item.name}
-                open={settingsOpen}
-                onOpenChange={setSettingsOpen}
+                open={isOpen}
+                onOpenChange={() => toggleMenu(item.name)}
                 className="space-y-1"
               >
                 <CollapsibleTrigger asChild>
@@ -105,7 +115,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                       <item.icon className={`w-5 h-5 ${isChildActive ? "text-white" : "text-slate-500"}`} />
                       {item.name}
                     </div>
-                    {settingsOpen ? (
+                    {isOpen ? (
                       <ChevronDown className="w-4 h-4 text-slate-500" />
                     ) : (
                       <ChevronRight className="w-4 h-4 text-slate-500" />
@@ -114,18 +124,18 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-1 ml-4 pl-4 border-l border-slate-800">
                   {item.children.map((child) => {
-                    const isChildActive = location === child.href;
+                    const isActive = location === child.href;
                     return (
                       <Link key={child.href} href={child.href}>
                         <div
                           className={`flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer ${
-                            isChildActive
+                            isActive
                               ? "bg-blue-600 text-white shadow-md shadow-blue-900/20"
                               : "text-slate-400 hover:text-white hover:bg-slate-800"
                           }`}
                           onClick={() => setMobileOpen(false)}
                         >
-                          <child.icon className={`w-4 h-4 ${isChildActive ? "text-white" : "text-slate-500"}`} />
+                          <child.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
                           {child.name}
                         </div>
                       </Link>
