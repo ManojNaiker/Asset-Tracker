@@ -50,6 +50,23 @@ export default function SettingsPage() {
         }
     });
 
+    const testEmailMutation = useMutation({
+        mutationFn: async () => {
+            const res = await fetch("/api/settings/email/test", { method: "POST" });
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.message || "Failed to send test email");
+            }
+            return res.json();
+        },
+        onSuccess: (data) => {
+            toast({ title: "Success", description: data.message });
+        },
+        onError: (err: Error) => {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        }
+    });
+
     const [location] = useLocation();
     const activeTab = location === "/users" ? "users" : "email";
 
@@ -160,9 +177,18 @@ export default function SettingsPage() {
                                             </FormItem>
                                         )}
                                     />
-                                    <div className="md:col-span-2">
+                                    <div className="md:col-span-2 flex gap-4">
                                         <Button type="submit" className="w-full md:w-auto px-12" disabled={updateEmailMutation.isPending}>
                                             {updateEmailMutation.isPending ? "Saving..." : "Save Settings"}
+                                        </Button>
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            className="w-full md:w-auto px-12"
+                                            disabled={testEmailMutation.isPending}
+                                            onClick={() => testEmailMutation.mutate()}
+                                        >
+                                            {testEmailMutation.isPending ? "Testing..." : "Test Email"}
                                         </Button>
                                     </div>
                                 </form>

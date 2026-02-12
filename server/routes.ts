@@ -252,6 +252,112 @@ export async function registerRoutes(
     res.json(assets);
   });
 
+  app.post("/api/assets/import", requireAdmin, async (req, res) => {
+    try {
+      const input = z.array(insertAssetSchema).parse(req.body);
+      let count = 0;
+      for (const asset of input) {
+        try {
+          await storage.createAsset(asset);
+          count++;
+        } catch (e) {
+          console.error("Failed to import asset", asset, e);
+        }
+      }
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Import Assets", details: { count } });
+      res.json({ count });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json(err.errors);
+      res.status(500).json({ message: "Failed to import assets" });
+    }
+  });
+
+  app.post("/api/asset-types/import", requireAdmin, async (req, res) => {
+    try {
+      const input = z.array(insertAssetTypeSchema).parse(req.body);
+      let count = 0;
+      for (const type of input) {
+        try {
+          await storage.createAssetType(type);
+          count++;
+        } catch (e) {
+          console.error("Failed to import asset type", type, e);
+        }
+      }
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Import Asset Types", details: { count } });
+      res.json({ count });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json(err.errors);
+      res.status(500).json({ message: "Failed to import asset types" });
+    }
+  });
+
+  app.post("/api/allocations/import", requireAdmin, async (req, res) => {
+    try {
+      const input = z.array(z.object({
+        employeeEmpId: z.string(),
+        assetSerialNumber: z.string(),
+        status: z.string().optional(),
+        returnReason: z.string().optional()
+      })).parse(req.body);
+
+      let count = 0;
+      for (const item of input) {
+        try {
+          const employee = await storage.getEmployeeByEmpId(item.employeeEmpId);
+          const asset = await storage.getAssetBySerial(item.assetSerialNumber);
+
+          if (employee && asset) {
+            await storage.createAllocation({
+              assetId: asset.id,
+              employeeId: employee.id,
+              status: (item.status as any) || "Active",
+              returnReason: item.returnReason || ""
+            });
+            await storage.updateAsset(asset.id, { status: (item.status === "Returned" ? "Available" : "Allocated") });
+            count++;
+          }
+        } catch (e) {
+          console.error("Failed to import allocation", item, e);
+        }
+      }
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Import Allocations", details: { count } });
+      res.json({ count });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json(err.errors);
+      res.status(500).json({ message: "Failed to import allocations" });
+    }
+  });
+
+  app.post("/api/settings/email/test", requireAdmin, async (req, res) => {
+    try {
+      const settings = await storage.getEmailSettings();
+      if (!settings) return res.status(400).json({ message: "Email settings not configured" });
+
+      const transporter = nodemailer.createTransport({
+        host: settings.host,
+        port: settings.port,
+        secure: settings.secure ?? true,
+        auth: {
+          user: settings.user,
+          pass: settings.password,
+        },
+      });
+
+      await transporter.sendMail({
+        from: settings.fromEmail,
+        to: settings.fromEmail,
+        subject: "Test Email from Asset Management System",
+        text: "This is a test email to verify your email configuration.",
+      });
+
+      res.json({ message: "Test email sent successfully to " + settings.fromEmail });
+    } catch (err: any) {
+      console.error("Email test failed:", err);
+      res.status(500).json({ message: "Failed to send test email: " + err.message });
+    }
+  });
+
   app.post(api.assets.create.path, requireAdmin, async (req, res) => {
     const input = api.assets.create.input.parse(req.body);
     const asset = await storage.createAsset(input);
