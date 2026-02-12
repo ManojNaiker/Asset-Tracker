@@ -13,6 +13,7 @@ import { Plus, Search, Loader2, Upload, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
+import { BulkEmployeeUploadDialog } from "@/components/bulk-upload-dialogs";
 
 export default function EmployeesPage() {
   const [search, setSearch] = useState("");
@@ -26,9 +27,7 @@ export default function EmployeesPage() {
           <p className="text-muted-foreground mt-1">Directory of all staff members.</p>
         </div>
         <div className="flex gap-2">
-            <Button variant="outline" className="border-slate-300">
-                <Upload className="w-4 h-4 mr-2" /> Import
-            </Button>
+            <BulkEmployeeUploadDialog />
             <CreateEmployeeDialog />
         </div>
       </div>

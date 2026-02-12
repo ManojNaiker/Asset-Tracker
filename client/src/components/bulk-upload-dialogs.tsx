@@ -229,3 +229,108 @@ export function BulkAllocationUploadDialog() {
         </Dialog>
     );
 }
+
+export function BulkEmployeeUploadDialog() {
+    const [open, setOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
+
+    const downloadTemplate = () => {
+        const data = [
+            { 
+                "Employee ID": "EMP001", 
+                "Full Name": "John Doe", 
+                "Email": "john.doe@example.com", 
+                "Branch": "Main", 
+                "Department": "IT", 
+                "Designation": "Developer", 
+                "Mobile": "1234567890",
+                "Joining Date": "2024-01-01"
+            }
+        ];
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Employees");
+        XLSX.writeFile(workbook, "employee_upload_template.xlsx");
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setLoading(true);
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            try {
+                const bstr = evt.target?.result;
+                const wb = XLSX.read(bstr, { type: 'binary' });
+                const wsname = wb.SheetNames[0];
+                const ws = wb.Sheets[wsname];
+                const data = XLSX.utils.sheet_to_json(ws);
+
+                const formattedData = data.map((item: any) => ({
+                    empId: String(item["Employee ID"] || "").trim(),
+                    name: String(item["Full Name"] || "").trim(),
+                    email: String(item["Email"] || "").trim(),
+                    branch: String(item["Branch"] || "").trim(),
+                    department: String(item["Department"] || "").trim(),
+                    designation: String(item["Designation"] || "").trim(),
+                    mobile: String(item["Mobile"] || "").trim(),
+                    dateOfJoining: item["Joining Date"] ? new Date(item["Joining Date"]).toISOString().split('T')[0] : null,
+                    status: "Active"
+                }));
+
+                await apiRequest("POST", "/api/employees/import", formattedData);
+                queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+                toast({ title: "Employees imported successfully" });
+                setOpen(false);
+            } catch (err: any) {
+                toast({ title: "Failed to import employees", description: err.message, variant: "destructive" });
+            } finally {
+                setLoading(false);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+            }
+        };
+        reader.readAsBinaryString(file);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline">
+                    <Upload className="w-4 h-4 mr-2" /> Bulk Upload
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Bulk Upload Employees</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="flex flex-col gap-4">
+                        <Button onClick={downloadTemplate} variant="secondary">
+                            <Download className="w-4 h-4 mr-2" /> Download Template
+                        </Button>
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept=".xlsx, .xls"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={handleFileUpload}
+                            />
+                            <Button
+                                className="w-full"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={loading}
+                            >
+                                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+                                {loading ? "Uploading..." : "Select File"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
