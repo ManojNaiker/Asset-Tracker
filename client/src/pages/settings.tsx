@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import UsersPage from "./users";
 import { Settings, Mail, Shield, UserCog } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Link, useLocation } from "wouter";
 
 export default function SettingsPage() {
     const { toast } = useToast();
@@ -49,6 +50,9 @@ export default function SettingsPage() {
         }
     });
 
+    const [location] = useLocation();
+    const activeTab = location === "/users" ? "users" : "email";
+
     return (
         <LayoutShell>
             <div className="mb-8">
@@ -56,20 +60,23 @@ export default function SettingsPage() {
                 <p className="text-muted-foreground mt-1">Configure system parameters and user access.</p>
             </div>
 
-            <Tabs defaultValue="users" className="space-y-6">
+            <Tabs value={activeTab} className="space-y-6">
                 <TabsList className="bg-slate-100 p-1">
-                    <TabsTrigger value="users" className="data-[state=active]:bg-white">
-                        <UserCog className="w-4 h-4 mr-2" /> User Management
-                    </TabsTrigger>
-                    <TabsTrigger value="email" className="data-[state=active]:bg-white">
-                        <Mail className="w-4 h-4 mr-2" /> Email Settings
-                    </TabsTrigger>
+                    <Link href="/users">
+                        <TabsTrigger value="users" className="data-[state=active]:bg-white">
+                            <UserCog className="w-4 h-4 mr-2" /> User Management
+                        </TabsTrigger>
+                    </Link>
+                    <Link href="/settings">
+                        <TabsTrigger value="email" className="data-[state=active]:bg-white">
+                            <Mail className="w-4 h-4 mr-2" /> Email Settings
+                        </TabsTrigger>
+                    </Link>
                 </TabsList>
 
                 <TabsContent value="users" className="mt-0">
                     <Card className="border-none shadow-none bg-transparent">
                         <CardContent className="p-0">
-                            {/* We re-use the component logic from users.tsx but we wrap it differently if needed */}
                             <UsersPage hideLayout />
                         </CardContent>
                     </Card>
