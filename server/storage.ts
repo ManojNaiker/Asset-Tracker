@@ -38,6 +38,7 @@ export interface IStorage {
   getAsset(id: number): Promise<(Asset & { type: AssetType }) | undefined>;
   getAssetBySerial(serial: string): Promise<Asset | undefined>;
   createAsset(asset: InsertAsset): Promise<Asset>;
+  createAssetsBulk(assets: InsertAsset[]): Promise<Asset[]>;
   updateAsset(id: number, updates: Partial<Asset>): Promise<Asset>;
   deleteAsset(id: number): Promise<void>;
   
@@ -45,6 +46,7 @@ export interface IStorage {
   getAllocations(): Promise<(Allocation & { asset: Asset, employee: Employee })[]>;
   getAllocation(id: number): Promise<Allocation | undefined>;
   createAllocation(allocation: InsertAllocation): Promise<Allocation>;
+  createAllocationsBulk(allocations: InsertAllocation[]): Promise<Allocation[]>;
   updateAllocation(id: number, updates: Partial<Allocation>): Promise<Allocation>;
   
   // Verifications
@@ -210,6 +212,11 @@ export class DatabaseStorage implements IStorage {
     return newAsset;
   }
 
+  async createAssetsBulk(assetsList: InsertAsset[]): Promise<Asset[]> {
+    const newAssets = await db.insert(assets).values(assetsList).returning();
+    return newAssets;
+  }
+
   async updateAsset(id: number, updates: Partial<Asset>): Promise<Asset> {
     const [updated] = await db.update(assets).set(updates).where(eq(assets.id, id)).returning();
     return updated;
@@ -242,6 +249,11 @@ export class DatabaseStorage implements IStorage {
   async createAllocation(allocation: InsertAllocation): Promise<Allocation> {
     const [newAllocation] = await db.insert(allocations).values(allocation).returning();
     return newAllocation;
+  }
+
+  async createAllocationsBulk(allocationsList: InsertAllocation[]): Promise<Allocation[]> {
+    const newAllocations = await db.insert(allocations).values(allocationsList).returning();
+    return newAllocations;
   }
 
   async updateAllocation(id: number, updates: Partial<Allocation>): Promise<Allocation> {

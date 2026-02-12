@@ -151,7 +151,7 @@ function ViewAllocatedAssetsDialog({ employee }: { employee: Employee }) {
 
 function EditEmployeeDialog({ employee }: { employee: Employee }) {
     const [open, setOpen] = useState(false);
-    const mutation = useUpdateEmployee(employee.id);
+    const mutation = useUpdateEmployee();
     const form = useForm<InsertEmployee>({
         resolver: zodResolver(insertEmployeeSchema),
         defaultValues: {

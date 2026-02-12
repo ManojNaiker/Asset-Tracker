@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAssets, useCreateAsset, useAssetTypes } from "@/hooks/use-assets";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertAssetSchema, type InsertAsset } from "@shared/schema";
-import { Plus, Search, Filter, Loader2, FileText, Eye, History } from "lucide-react";
+import { Plus, Search, Filter, Loader2, FileText, Eye, History, Upload, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
+import { BulkAssetUploadDialog } from "@/components/bulk-upload-dialogs";
 
 export default function AssetsPage() {
   const [search, setSearch] = useState("");
@@ -29,6 +30,7 @@ export default function AssetsPage() {
           <p className="text-muted-foreground mt-1">Manage and track company assets.</p>
         </div>
         <div className="flex gap-2">
+            <BulkAssetUploadDialog assetTypes={assetTypes || []} />
             <CreateAssetDialog assetTypes={assetTypes || []} />
         </div>
       </div>

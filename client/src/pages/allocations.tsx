@@ -11,11 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertAllocationSchema, type InsertAllocation } from "@shared/schema";
-import { Plus, Loader2, ArrowRightLeft, CheckCircle2, Camera, X } from "lucide-react";
+import { Plus, Loader2, ArrowRightLeft, CheckCircle2, Camera, X, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { BulkAllocationUploadDialog } from "@/components/bulk-upload-dialogs";
 
 export default function AllocationsPage() {
   const { data: allocations, isLoading } = useAllocations();
@@ -27,7 +28,10 @@ export default function AllocationsPage() {
           <h1 className="text-3xl font-display font-bold text-slate-900">Allocations</h1>
           <p className="text-muted-foreground mt-1">Assign assets to employees.</p>
         </div>
-        <CreateAllocationDialog />
+        <div className="flex gap-2">
+            <BulkAllocationUploadDialog />
+            <CreateAllocationDialog />
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
