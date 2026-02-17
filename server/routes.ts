@@ -307,20 +307,48 @@ export async function registerRoutes(
       let count = 0;
       for (const item of data) {
         try {
-          // Re-use the same logic as single allocation create
-          // We can mock a request-like object or call the same logic
-          // For simplicity and stability, we'll implement the logic here matching the POST /api/allocations route
+          // Normalizing keys to handle different case/spacing in Excel
+          const getItemValue = (keys: string[]) => {
+            for (const key of keys) {
+              if (item[key] !== undefined) return item[key];
+              // Case-insensitive search
+              const lowerKey = key.toLowerCase();
+              const foundKey = Object.keys(item).find(k => k.toLowerCase() === lowerKey);
+              if (foundKey) return item[foundKey];
+            }
+            return undefined;
+          };
+
+          let empId = getItemValue(["empId", "Employee ID", "employeeEmpId"]);
+          let name = getItemValue(["name", "Full Name", "Employee Name"]);
+          let email = getItemValue(["email", "Email Address"]);
+          let branch = getItemValue(["branch", "Branch Name"]);
+          let department = getItemValue(["department", "Department Name"]);
+          let designation = getItemValue(["designation"]);
+          let mobile = getItemValue(["mobile", "Contact", "Phone"]);
+          let serialNumber = getItemValue(["serialNumber", "Serial Number", "assetSerialNumber"]);
+          let assetTypeName = getItemValue(["assetTypeName", "Asset Type", "Asset Type Name"]);
+          let status = getItemValue(["status", "Allocation Status"]);
+          let remarks = getItemValue(["remarks", "Note"]);
           
-          let { assetId, employeeId, empId, name, email, branch, department, designation, mobile, serialNumber, assetTypeName, status, remarks } = item;
+          let employeeId = item.employeeId;
+          let assetId = item.assetId;
           
           // Auto-creation logic for employee
           if (!employeeId && empId) {
-            const existing = await storage.getEmployeeByEmpId(empId);
+            const existing = await storage.getEmployeeByEmpId(String(empId));
             if (existing) {
               employeeId = existing.id;
-            } else if (name && email) {
+            } else if (name) {
               const newEmp = await storage.createEmployee({
-                empId, name, email, branch, department, designation, mobile, status: "Active"
+                empId: String(empId), 
+                name: String(name), 
+                email: String(email || ""), 
+                branch: String(branch || ""), 
+                department: String(department || ""), 
+                designation: String(designation || ""), 
+                mobile: String(mobile || ""), 
+                status: "Active"
               });
               employeeId = newEmp.id;
               await storage.createAuditLog({ userId: (req.user as User).id, action: "Auto Create Employee (Bulk)", entityType: "Employee", entityId: employeeId });
@@ -329,17 +357,17 @@ export async function registerRoutes(
 
           // Auto-creation logic for asset
           if (!assetId && serialNumber) {
-            const existing = await storage.getAssetBySerial(serialNumber);
+            const existing = await storage.getAssetBySerial(String(serialNumber));
             if (existing) {
               assetId = existing.id;
             } else if (assetTypeName) {
               const types = await storage.getAssetTypes();
-              let type = types.find(t => t.name.toLowerCase() === assetTypeName.toLowerCase());
+              let type = types.find(t => t.name.toLowerCase() === String(assetTypeName).toLowerCase());
               
               if (!type) {
                 // Auto-create asset type if it doesn't exist
                 type = await storage.createAssetType({
-                  name: assetTypeName,
+                  name: String(assetTypeName),
                   description: `Auto-created during bulk allocation`,
                   schema: []
                 });
@@ -352,7 +380,7 @@ export async function registerRoutes(
               }
 
               const newAsset = await storage.createAsset({
-                serialNumber,
+                serialNumber: String(serialNumber).toUpperCase(),
                 assetTypeId: type.id,
                 status: "Available",
                 specifications: {},
@@ -372,7 +400,7 @@ export async function registerRoutes(
               returnReason: "",
             });
             
-            await storage.updateAsset(Number(assetId), { status: "Allocated" });
+            await storage.updateAsset(Number(assetId), { status: (status === "Returned" ? "Available" : "Allocated") });
             
             await storage.createAuditLog({ 
               userId: (req.user as User).id, 
