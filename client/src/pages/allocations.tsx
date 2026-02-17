@@ -25,7 +25,7 @@ export default function AllocationsPage() {
     <LayoutShell>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900">Allocations</h1>
+          <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Allocations</h1>
           <p className="text-muted-foreground mt-1">Assign assets to employees.</p>
         </div>
         <div className="flex gap-2">
@@ -34,16 +34,16 @@ export default function AllocationsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         <Table>
-          <TableHeader className="bg-slate-50">
+          <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
             <TableRow>
-              <TableHead>Asset SN</TableHead>
-              <TableHead>Employee</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Allocated Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="dark:text-slate-200">Asset SN</TableHead>
+              <TableHead className="dark:text-slate-200">Employee</TableHead>
+              <TableHead className="dark:text-slate-200">Department</TableHead>
+              <TableHead className="dark:text-slate-200">Allocated Date</TableHead>
+              <TableHead className="dark:text-slate-200">Status</TableHead>
+              <TableHead className="text-right dark:text-slate-200">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -55,26 +55,26 @@ export default function AllocationsPage() {
                 </TableRow>
             ) : allocations?.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                    <TableCell colSpan={6} className="h-32 text-center text-slate-500 dark:text-slate-400">
                         No active allocations.
                     </TableCell>
                 </TableRow>
             ) : (
                 allocations?.map((alloc) => (
-                    <TableRow key={alloc.id} className="hover:bg-slate-50/50">
-                        <TableCell className="font-medium font-mono">{alloc.asset.serialNumber}</TableCell>
+                    <TableRow key={alloc.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                        <TableCell className="font-medium font-mono dark:text-slate-200">{alloc.asset.serialNumber}</TableCell>
                         <TableCell>
                             <div className="flex flex-col">
-                                <span className="font-medium text-slate-900">{alloc.employee.name}</span>
-                                <span className="text-xs text-slate-500">{alloc.employee.empId}</span>
+                                <span className="font-medium text-slate-900 dark:text-slate-200">{alloc.employee.name}</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">{alloc.employee.empId}</span>
                             </div>
                         </TableCell>
-                        <TableCell className="text-slate-600">{alloc.employee.department}</TableCell>
-                        <TableCell className="text-slate-500">
+                        <TableCell className="text-slate-600 dark:text-slate-400">{alloc.employee.department}</TableCell>
+                        <TableCell className="text-slate-500 dark:text-slate-400">
                             {new Date(alloc.allocatedAt!).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                            <Badge variant="outline" className={alloc.status === 'Active' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-slate-100'}>
+                            <Badge variant="outline" className={alloc.status === 'Active' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800' : 'bg-slate-100 dark:bg-slate-800 dark:text-slate-400'}>
                                 {alloc.status}
                             </Badge>
                         </TableCell>

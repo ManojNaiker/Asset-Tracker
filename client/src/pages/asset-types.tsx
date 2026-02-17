@@ -50,7 +50,7 @@ export default function AssetTypesPage() {
     <LayoutShell>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900">Asset Types</h1>
+          <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Asset Types</h1>
           <p className="text-muted-foreground mt-1">Manage asset categories and their custom fields.</p>
         </div>
         <Dialog>
@@ -97,25 +97,25 @@ export default function AssetTypesPage() {
         </Dialog>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead>Name</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Fields</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+            <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+              <TableHead className="dark:text-slate-200">Name</TableHead>
+              <TableHead className="dark:text-slate-200">Description</TableHead>
+              <TableHead className="dark:text-slate-200">Fields</TableHead>
+              <TableHead className="text-right dark:text-slate-200">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {types?.map((type) => (
-              <TableRow key={type.id}>
-                <TableCell className="font-medium">{type.name}</TableCell>
-                <TableCell>{type.description}</TableCell>
-                <TableCell>{(type.schema as any[])?.length || 0} fields</TableCell>
+              <TableRow key={type.id} className="dark:hover:bg-slate-800/30">
+                <TableCell className="font-medium dark:text-slate-200">{type.name}</TableCell>
+                <TableCell className="dark:text-slate-400">{type.description}</TableCell>
+                <TableCell className="dark:text-slate-400">{(type.schema as any[])?.length || 0} fields</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon"><Settings2 className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon"><Pencil className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" className="dark:text-slate-400 dark:hover:text-white"><Settings2 className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" className="dark:text-slate-400 dark:hover:text-white"><Pencil className="w-4 h-4" /></Button>
                 </TableCell>
               </TableRow>
             ))}
