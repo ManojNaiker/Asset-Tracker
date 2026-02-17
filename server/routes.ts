@@ -217,6 +217,91 @@ export async function registerRoutes(
       res.json({ count });
   });
 
+  // Template routes
+  app.get("/api/templates/employees", requireAdmin, (req, res) => {
+    res.json([
+      {
+        "empId": "EMP001",
+        "name": "John Doe",
+        "branch": "Main Branch",
+        "department": "IT",
+        "designation": "Software Engineer",
+        "mobile": "9876543210",
+        "email": "john.doe@example.com",
+        "status": "Active",
+        "dateOfJoining": "2023-01-01"
+      }
+    ]);
+  });
+
+  app.get("/api/templates/assets", requireAdmin, async (req, res) => {
+    const types = await storage.getAssetTypes();
+    const template: any[] = [];
+    
+    types.forEach(type => {
+      const row: any = {
+        "assetTypeName": type.name,
+        "serialNumber": `SN-${type.name.toUpperCase()}-001`,
+        "status": "Available"
+      };
+      
+      // Add dynamic fields from schema
+      if (Array.isArray(type.schema)) {
+        type.schema.forEach((field: any) => {
+          row[field.name] = field.type === "number" ? 0 : "Value";
+        });
+      }
+      template.push(row);
+    });
+    
+    res.json(template.length > 0 ? template : [
+      {
+        "assetTypeName": "Laptop",
+        "serialNumber": "SN123456",
+        "status": "Available",
+        "Brand": "Dell",
+        "Model": "Latitude"
+      }
+    ]);
+  });
+
+  // Assets bulk import with type resolution
+  app.post("/api/assets/bulk-import", requireAdmin, async (req, res) => {
+    try {
+      const data = req.body;
+      if (!Array.isArray(data)) return res.status(400).json({ message: "Invalid data format" });
+      
+      const types = await storage.getAssetTypes();
+      const typeMap = new Map(types.map(t => [t.name.toLowerCase(), t.id]));
+      
+      let count = 0;
+      for (const item of data) {
+        const { assetTypeName, serialNumber, status, ...specifications } = item;
+        const assetTypeId = typeMap.get(assetTypeName?.toLowerCase());
+        
+        if (assetTypeId && serialNumber) {
+          try {
+            await storage.createAsset({
+              assetTypeId,
+              serialNumber,
+              status: status || "Available",
+              specifications,
+              images: []
+            });
+            count++;
+          } catch (e) {
+            console.error("Failed to import asset row", item, e);
+          }
+        }
+      }
+      
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Import Assets", details: { count } });
+      res.json({ count });
+    } catch (err) {
+      res.status(500).json({ message: "Bulk import failed" });
+    }
+  });
+
   // Asset Types
   app.post("/api/upload", requireAuth, upload.single("image"), (req, res) => {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });

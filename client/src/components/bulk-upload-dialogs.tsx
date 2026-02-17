@@ -17,6 +17,14 @@ export function BulkAssetUploadDialog({ assetTypes }: { assetTypes: any[] }) {
         const data = [
             { "Serial Number": "SN001", "Asset Type Name": assetTypes[0]?.name || "Laptop", "Status": "Available" }
         ];
+        
+        // Add dynamic fields from schema if available
+        if (assetTypes[0]?.schema) {
+            assetTypes[0].schema.forEach((field: any) => {
+                data[0][field.name] = field.type === 'number' ? 0 : "Value";
+            });
+        }
+
         const worksheet = XLSX.utils.json_to_sheet(data);
         
         // Add a helper sheet for Asset Type Names so users know what to type
@@ -56,11 +64,21 @@ export function BulkAssetUploadDialog({ assetTypes }: { assetTypes: any[] }) {
                         throw new Error(`Row ${index + 2}: Asset Type "${typeName}" not found. Please check "Valid Asset Types" sheet.`);
                     }
 
+                    // Extract specifications from extra columns
+                    const specifications: Record<string, any> = {};
+                    if (type.schema) {
+                        type.schema.forEach((field: any) => {
+                            if (item[field.name] !== undefined) {
+                                specifications[field.name] = item[field.name];
+                            }
+                        });
+                    }
+
                     return {
                         serialNumber: String(item["Serial Number"] || "").trim().toUpperCase(),
                         assetTypeId: type.id,
                         status: item["Status"] || "Available",
-                        specifications: {},
+                        specifications,
                         images: []
                     };
                 });
