@@ -5,12 +5,12 @@
 @tailwind utilities;
 
 :root {
-  /* Professional Corporate Blue Palette (Light Microfinance inspired) */
-  --background: 210 20% 98%;
-  --foreground: 222 47% 11%;
+  /* Outlook-inspired Light Theme */
+  --background: 0 0% 100%;
+  --foreground: 210 29% 24%;
   
-  --primary: 215 100% 50%; /* Deep Blue */
-  --primary-foreground: 210 40% 98%;
+  --primary: 212 100% 45%; /* Outlook Blue */
+  --primary-foreground: 0 0% 100%;
   
   --secondary: 210 40% 96.1%;
   --secondary-foreground: 222 47% 11.2%;
@@ -26,7 +26,7 @@
 
   --border: 214.3 32% 91%;
   --input: 214.3 32% 91%;
-  --ring: 215 100% 50%;
+  --ring: 212 100% 45%;
   
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
@@ -38,29 +38,30 @@
 }
 
 .dark {
-  --background: 222 47% 4%;
+  /* Outlook-inspired Dark Theme */
+  --background: 222 47% 11%;
   --foreground: 210 40% 98%;
   
-  --primary: 217 91% 60%;
-  --primary-foreground: 222 47.4% 11.2%;
+  --primary: 212 100% 48%;
+  --primary-foreground: 222 47% 11%;
   
-  --secondary: 217 32% 12%;
+  --secondary: 217 32% 17%;
   --secondary-foreground: 210 40% 98%;
   
-  --muted: 217 32% 12%;
+  --muted: 217 32% 17%;
   --muted-foreground: 215 20% 65%;
   
-  --accent: 217 32% 12%;
+  --accent: 217 32% 17%;
   --accent-foreground: 210 40% 98%;
   
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
   
-  --border: 217 32% 14%;
-  --input: 217 32% 14%;
-  --ring: 224 76% 48%;
+  --border: 217 32% 20%;
+  --input: 217 32% 20%;
+  --ring: 212 100% 48%;
 
-  --card: 222 47% 7%;
+  --card: 222 47% 13%;
   --card-foreground: 210 40% 98%;
 }
 
