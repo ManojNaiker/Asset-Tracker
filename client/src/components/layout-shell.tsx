@@ -23,6 +23,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ThemeToggle } from "./theme-toggle";
 
 // Navigation Items based on roles
 const getNavItems = (role: string) => {
@@ -77,14 +78,17 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const NavContent = () => (
     <div className="flex flex-col h-full bg-slate-900 text-white">
       <div className="p-6">
-        <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <img src="/images/logo.png" alt="Light Microfinance" className="w-full h-full object-contain" />
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <img src="/images/logo.png" alt="Light Microfinance" className="w-full h-full object-contain" />
+                </div>
+                <div>
+                    <h1 className="text-xl font-display font-bold tracking-tight">AssetAlloc</h1>
+                    <p className="text-xs text-blue-200/70 font-medium">Light Finance</p>
+                </div>
             </div>
-            <div>
-                <h1 className="text-xl font-display font-bold tracking-tight">AssetAlloc</h1>
-                <p className="text-xs text-blue-200/70 font-medium">Light Finance</p>
-            </div>
+            <ThemeToggle />
         </div>
       </div>
       
