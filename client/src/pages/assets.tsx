@@ -26,7 +26,7 @@ export default function AssetsPage() {
     <LayoutShell>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900">Asset Inventory</h1>
+          <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Asset Inventory</h1>
           <p className="text-muted-foreground mt-1">Manage and track company assets.</p>
         </div>
         <div className="flex gap-2">
@@ -35,7 +35,7 @@ export default function AssetsPage() {
         </div>
       </div>
 
-      <Card className="mb-6 shadow-sm border-slate-200">
+      <Card className="mb-6 shadow-sm border-slate-200 dark:border-slate-800">
         <CardContent className="p-4 flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
@@ -43,7 +43,7 @@ export default function AssetsPage() {
                     placeholder="Search by serial number..." 
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                    className="pl-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-950 transition-colors"
                 />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -67,15 +67,15 @@ export default function AssetsPage() {
         </CardContent>
       </Card>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         <Table>
-          <TableHeader className="bg-slate-50">
+          <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
             <TableRow>
-              <TableHead>Serial Number</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Added Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="dark:text-slate-200">Serial Number</TableHead>
+              <TableHead className="dark:text-slate-200">Type</TableHead>
+              <TableHead className="dark:text-slate-200">Status</TableHead>
+              <TableHead className="dark:text-slate-200">Added Date</TableHead>
+              <TableHead className="text-right dark:text-slate-200">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -87,19 +87,19 @@ export default function AssetsPage() {
                 </TableRow>
             ) : assets?.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-slate-500">
+                    <TableCell colSpan={5} className="h-32 text-center text-slate-500 dark:text-slate-400">
                         No assets found.
                     </TableCell>
                 </TableRow>
             ) : (
                 assets?.map((asset) => (
-                    <TableRow key={asset.id} className="hover:bg-slate-50/50 transition-colors">
-                        <TableCell className="font-medium font-mono text-slate-700">{asset.serialNumber}</TableCell>
-                        <TableCell>{asset.type.name}</TableCell>
+                    <TableRow key={asset.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                        <TableCell className="font-medium font-mono text-slate-700 dark:text-slate-200">{asset.serialNumber}</TableCell>
+                        <TableCell className="dark:text-slate-400">{asset.type.name}</TableCell>
                         <TableCell>
                             <StatusBadge status={asset.status} />
                         </TableCell>
-                        <TableCell className="text-slate-500 text-sm">
+                        <TableCell className="text-slate-500 dark:text-slate-400 text-sm">
                             {new Date(asset.createdAt!).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
@@ -125,51 +125,51 @@ function ViewAssetLifecycleDialog({ asset }: { asset: any }) {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                <Button variant="ghost" size="sm" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
                     <Eye className="w-4 h-4 mr-1" /> View
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[600px] dark:bg-slate-900 dark:border-slate-800">
                 <DialogHeader>
-                    <DialogTitle>Asset Lifecycle: {asset.serialNumber}</DialogTitle>
+                    <DialogTitle className="dark:text-white">Asset Lifecycle: {asset.serialNumber}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6 py-4">
-                    <div className="grid grid-cols-3 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                    <div className="grid grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
                         <div>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Type</p>
-                            <p className="text-sm font-medium">{asset.type?.name}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Type</p>
+                            <p className="text-sm font-medium dark:text-slate-200">{asset.type?.name}</p>
                         </div>
                         <div>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Status</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Status</p>
                             <StatusBadge status={asset.status} />
                         </div>
                         <div>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Added On</p>
-                            <p className="text-sm font-medium">{new Date(asset.createdAt).toLocaleDateString()}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Added On</p>
+                            <p className="text-sm font-medium dark:text-slate-200">{new Date(asset.createdAt).toLocaleDateString()}</p>
                         </div>
                     </div>
 
                     <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <History className="w-4 h-4" /> Allocation History
                         </h3>
                         {isLoading ? (
                             <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-blue-500" /></div>
                         ) : !assetAllocations || assetAllocations.length === 0 ? (
-                            <p className="text-center py-4 text-slate-500 text-sm">No allocation history found.</p>
+                            <p className="text-center py-4 text-slate-500 dark:text-slate-400 text-sm">No allocation history found.</p>
                         ) : (
-                            <div className="relative border-l-2 border-slate-100 ml-3 pl-6 space-y-6">
+                            <div className="relative border-l-2 border-slate-100 dark:border-slate-800 ml-3 pl-6 space-y-6">
                                 {assetAllocations.map((a, i) => (
                                     <div key={a.id} className="relative">
-                                        <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-white border-2 border-blue-500" />
+                                        <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-white dark:bg-slate-950 border-2 border-blue-500" />
                                         <div className="space-y-1">
                                             <div className="flex justify-between items-start">
-                                                <p className="text-sm font-semibold text-slate-900">
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
                                                     Allocated to {a.employee?.name}
                                                 </p>
-                                                <Badge variant="outline" className="text-[10px]">{a.status}</Badge>
+                                                <Badge variant="outline" className="text-[10px] dark:border-slate-700 dark:text-slate-400">{a.status}</Badge>
                                             </div>
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">
                                                 {new Date(a.allocatedAt).toLocaleString()}
                                             </p>
                                             {a.returnDate && (

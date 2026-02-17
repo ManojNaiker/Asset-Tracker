@@ -20,37 +20,37 @@ export default function VerificationsPage() {
     <LayoutShell>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900">Verifications</h1>
+          <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Verifications</h1>
           <p className="text-muted-foreground mt-1">Review and verify asset allocations.</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead>Asset ID</TableHead>
-              <TableHead>Verifier ID</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Remarks</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+            <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+              <TableHead className="dark:text-slate-200">Asset ID</TableHead>
+              <TableHead className="dark:text-slate-200">Verifier ID</TableHead>
+              <TableHead className="dark:text-slate-200">Status</TableHead>
+              <TableHead className="dark:text-slate-200">Date</TableHead>
+              <TableHead className="dark:text-slate-200">Remarks</TableHead>
+              <TableHead className="text-right dark:text-slate-200">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {verifications?.map((v) => (
-              <TableRow key={v.id}>
-                <TableCell>#{v.assetId}</TableCell>
-                <TableCell>#{v.verifierId}</TableCell>
+              <TableRow key={v.id} className="dark:hover:bg-slate-800/30">
+                <TableCell className="dark:text-slate-200">#{v.assetId}</TableCell>
+                <TableCell className="dark:text-slate-400">#{v.verifierId}</TableCell>
                 <TableCell>
                   <Badge variant={v.status === "Approved" ? "default" : v.status === "Rejected" ? "destructive" : "secondary"}>
                     {v.status}
                   </Badge>
                 </TableCell>
-                <TableCell>{v.verifiedAt ? new Date(v.verifiedAt).toLocaleDateString() : "N/A"}</TableCell>
-                <TableCell className="max-w-xs truncate">{v.remarks}</TableCell>
+                <TableCell className="dark:text-slate-400">{v.verifiedAt ? new Date(v.verifiedAt).toLocaleDateString() : "N/A"}</TableCell>
+                <TableCell className="max-w-xs truncate dark:text-slate-400">{v.remarks}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="sm">View Details</Button>
+                  <Button variant="ghost" size="sm" className="dark:text-slate-300 dark:hover:text-white">View Details</Button>
                 </TableCell>
               </TableRow>
             ))}

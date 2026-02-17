@@ -34,11 +34,11 @@ export default function AuditTrailPage() {
   return (
     <LayoutShell>
       <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold text-slate-900">Audit Trail</h1>
+        <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Audit Trail</h1>
         <p className="text-muted-foreground mt-1">Monitor system activities and user actions.</p>
       </div>
 
-      <Card className="mb-6 shadow-sm border-slate-200">
+      <Card className="mb-6 shadow-sm border-slate-200 dark:border-slate-800">
         <CardContent className="p-4 flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
@@ -46,7 +46,7 @@ export default function AuditTrailPage() {
                     placeholder="Search actions or entities..." 
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 bg-slate-50 border-slate-200 focus:bg-white"
+                    className="pl-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-950"
                 />
             </div>
             <Select value={actionFilter} onValueChange={setActionFilter}>
@@ -68,44 +68,44 @@ export default function AuditTrailPage() {
         </CardContent>
       </Card>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         <Table>
-          <TableHeader className="bg-slate-50">
+          <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
             <TableRow>
-              <TableHead>Timestamp</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Entity</TableHead>
-              <TableHead>Details</TableHead>
+              <TableHead className="dark:text-slate-200">Timestamp</TableHead>
+              <TableHead className="dark:text-slate-200">User</TableHead>
+              <TableHead className="dark:text-slate-200">Action</TableHead>
+              <TableHead className="dark:text-slate-200">Entity</TableHead>
+              <TableHead className="dark:text-slate-200">Details</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredLogs?.map((log) => {
               const user = users?.find(u => u.id === log.userId);
               return (
-                <TableRow key={log.id} className="hover:bg-slate-50/50">
-                  <TableCell className="text-xs text-slate-500 font-mono">
+                <TableRow key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                  <TableCell className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                     {new Date(log.timestamp!).toLocaleString()}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center">
-                            <UserIcon className="w-3 h-3 text-slate-500" />
+                        <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                            <UserIcon className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                         </div>
-                        <span className="text-sm font-medium">{user?.username || 'System'}</span>
+                        <span className="text-sm font-medium dark:text-slate-200">{user?.username || 'System'}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="text-sm font-semibold">{log.action}</span>
+                    <span className="text-sm font-semibold dark:text-slate-200">{log.action}</span>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                        <span className="text-sm font-medium">{log.entityType}</span>
-                        <span className="text-xs text-slate-400">ID: {log.entityId}</span>
+                        <span className="text-sm font-medium dark:text-slate-200">{log.entityType}</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500">ID: {log.entityId}</span>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-md">
-                    <pre className="text-[10px] bg-slate-50 p-1 rounded overflow-hidden truncate">
+                    <pre className="text-[10px] bg-slate-50 dark:bg-slate-950 p-1 rounded overflow-hidden truncate dark:text-slate-400">
                         {JSON.stringify(log.details)}
                     </pre>
                   </TableCell>
