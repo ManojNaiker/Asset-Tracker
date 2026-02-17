@@ -334,18 +334,32 @@ export async function registerRoutes(
               assetId = existing.id;
             } else if (assetTypeName) {
               const types = await storage.getAssetTypes();
-              const type = types.find(t => t.name.toLowerCase() === assetTypeName.toLowerCase());
-              if (type) {
-                const newAsset = await storage.createAsset({
-                  serialNumber,
-                  assetTypeId: type.id,
-                  status: "Available",
-                  specifications: {},
-                  images: []
+              let type = types.find(t => t.name.toLowerCase() === assetTypeName.toLowerCase());
+              
+              if (!type) {
+                // Auto-create asset type if it doesn't exist
+                type = await storage.createAssetType({
+                  name: assetTypeName,
+                  description: `Auto-created during bulk allocation`,
+                  schema: []
                 });
-                assetId = newAsset.id;
-                await storage.createAuditLog({ userId: (req.user as User).id, action: "Auto Create Asset (Bulk)", entityType: "Asset", entityId: assetId });
+                await storage.createAuditLog({ 
+                  userId: (req.user as User).id, 
+                  action: "Auto Create Asset Type (Bulk)", 
+                  entityType: "AssetType", 
+                  entityId: type.id 
+                });
               }
+
+              const newAsset = await storage.createAsset({
+                serialNumber,
+                assetTypeId: type.id,
+                status: "Available",
+                specifications: {},
+                images: []
+              });
+              assetId = newAsset.id;
+              await storage.createAuditLog({ userId: (req.user as User).id, action: "Auto Create Asset (Bulk)", entityType: "Asset", entityId: assetId });
             }
           }
 
@@ -606,6 +620,20 @@ export async function registerRoutes(
       if (existing) {
         assetId = existing.id;
       } else {
+        // Ensure asset type exists if providing type name in assetData
+        if (assetData.assetTypeName && !assetData.assetTypeId) {
+          const types = await storage.getAssetTypes();
+          let type = types.find(t => t.name.toLowerCase() === assetData.assetTypeName.toLowerCase());
+          if (!type) {
+            type = await storage.createAssetType({
+              name: assetData.assetTypeName,
+              description: `Auto-created during allocation`,
+              schema: []
+            });
+          }
+          assetData.assetTypeId = type.id;
+        }
+        
         const newAsset = await storage.createAsset(assetData);
         assetId = newAsset.id;
         await storage.createAuditLog({ userId: (req.user as User).id, action: "Auto Create Asset", entityType: "Asset", entityId: assetId });

@@ -36,7 +36,7 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, color = "bl
         </div>
         <div className="mt-4">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <h3 className="text-2xl font-bold font-display mt-1 tracking-tight text-slate-900">{value}</h3>
+          <h3 className="text-2xl font-bold font-display mt-1 tracking-tight text-slate-900 dark:text-white">{value}</h3>
         </div>
       </CardContent>
     </Card>
