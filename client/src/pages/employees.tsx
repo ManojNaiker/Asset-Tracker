@@ -23,7 +23,7 @@ export default function EmployeesPage() {
     <LayoutShell>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900">Employees</h1>
+          <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Employees</h1>
           <p className="text-muted-foreground mt-1">Directory of all staff members.</p>
         </div>
         <div className="flex gap-2">
@@ -32,7 +32,7 @@ export default function EmployeesPage() {
         </div>
       </div>
 
-      <Card className="mb-6 shadow-sm border-slate-200">
+      <Card className="mb-6 shadow-sm border-slate-200 dark:border-slate-800">
         <CardContent className="p-4">
             <div className="relative max-w-md">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
@@ -40,22 +40,22 @@ export default function EmployeesPage() {
                     placeholder="Search name or ID..." 
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 bg-slate-50 border-slate-200 focus:bg-white"
+                    className="pl-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-950"
                 />
             </div>
         </CardContent>
       </Card>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         <Table>
-          <TableHeader className="bg-slate-50">
+          <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
             <TableRow>
-              <TableHead>Emp ID</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Designation</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Action</TableHead>
+              <TableHead className="dark:text-slate-200">Emp ID</TableHead>
+              <TableHead className="dark:text-slate-200">Name</TableHead>
+              <TableHead className="dark:text-slate-200">Department</TableHead>
+              <TableHead className="dark:text-slate-200">Designation</TableHead>
+              <TableHead className="dark:text-slate-200">Status</TableHead>
+              <TableHead className="text-right dark:text-slate-200">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -67,19 +67,19 @@ export default function EmployeesPage() {
                 </TableRow>
             ) : employees?.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                    <TableCell colSpan={6} className="h-32 text-center text-slate-500 dark:text-slate-400">
                         No employees found.
                     </TableCell>
                 </TableRow>
             ) : (
                 employees?.map((emp) => (
-                    <TableRow key={emp.id} className="hover:bg-slate-50/50">
-                        <TableCell className="font-mono text-slate-600">{emp.empId}</TableCell>
-                        <TableCell className="font-medium">{emp.name}</TableCell>
-                        <TableCell>{emp.department}</TableCell>
-                        <TableCell>{emp.designation}</TableCell>
+                    <TableRow key={emp.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                        <TableCell className="font-mono text-slate-600 dark:text-slate-400">{emp.empId}</TableCell>
+                        <TableCell className="font-medium dark:text-slate-200">{emp.name}</TableCell>
+                        <TableCell className="dark:text-slate-400">{emp.department}</TableCell>
+                        <TableCell className="dark:text-slate-400">{emp.designation}</TableCell>
                         <TableCell>
-                            <Badge variant="outline" className={emp.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-slate-100 text-slate-600'}>
+                            <Badge variant="outline" className={emp.status === 'Active' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'}>
                                 {emp.status}
                             </Badge>
                         </TableCell>
@@ -107,7 +107,7 @@ function ViewAllocatedAssetsDialog({ employee }: { employee: Employee }) {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                <Button variant="ghost" size="sm" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20">
                     <Eye className="w-4 h-4 mr-1" /> View Assets
                 </Button>
             </DialogTrigger>

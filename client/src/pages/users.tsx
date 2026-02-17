@@ -114,19 +114,19 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
     const content = (
         <>
             <div className="mb-8">
-                <h1 className="text-3xl font-display font-bold text-slate-900">System Settings</h1>
+                <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">System Settings</h1>
                 <p className="text-muted-foreground mt-1">Configure system parameters and user access.</p>
             </div>
 
             <Tabs value={activeTab} className="mb-6">
-                <TabsList className="bg-slate-100 p-1">
+                <TabsList className="bg-slate-100 dark:bg-slate-800 p-1">
                     <Link href="/users">
-                        <TabsTrigger value="users" className="data-[state=active]:bg-white">
+                        <TabsTrigger value="users" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
                             <UserCog className="w-4 h-4 mr-2" /> User Management
                         </TabsTrigger>
                     </Link>
                     <Link href="/settings">
-                        <TabsTrigger value="email" className="data-[state=active]:bg-white">
+                        <TabsTrigger value="email" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
                             <Mail className="w-4 h-4 mr-2" /> Email Settings
                         </TabsTrigger>
                     </Link>
@@ -135,7 +135,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
 
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-2xl font-display font-bold text-slate-900">User Management</h2>
+                    <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">User Management</h2>
                     <p className="text-muted-foreground mt-1">Manage system access and roles.</p>
                 </div>
                 <Dialog>
@@ -199,28 +199,28 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                 </Dialog>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                 <Table>
                     <TableHeader>
-                        <TableRow className="bg-slate-50">
-                            <TableHead>Username</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Created At</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                        <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+                            <TableHead className="dark:text-slate-200">Username</TableHead>
+                            <TableHead className="dark:text-slate-200">Role</TableHead>
+                            <TableHead className="dark:text-slate-200">Status</TableHead>
+                            <TableHead className="dark:text-slate-200">Created At</TableHead>
+                            <TableHead className="text-right dark:text-slate-200">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {users?.map((u) => (
-                            <TableRow key={u.id}>
-                                <TableCell className="font-medium">{u.username}</TableCell>
-                                <TableCell className="capitalize">{u.role}</TableCell>
+                            <TableRow key={u.id} className="dark:hover:bg-slate-800/30">
+                                <TableCell className="font-medium dark:text-slate-200">{u.username}</TableCell>
+                                <TableCell className="capitalize dark:text-slate-400">{u.role}</TableCell>
                                 <TableCell>
-                                    <span className={u.isLocked ? "text-red-600 font-medium" : "text-green-600 font-medium"}>
+                                    <span className={u.isLocked ? "text-red-600 dark:text-red-400 font-medium" : "text-green-600 dark:text-green-400 font-medium"}>
                                         {u.isLocked ? "Locked" : "Active"}
                                     </span>
                                 </TableCell>
-                                <TableCell className="text-slate-500">
+                                <TableCell className="text-slate-500 dark:text-slate-400">
                                     {new Date(u.createdAt).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell className="text-right">
@@ -308,7 +308,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
 
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                                                <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
                                             </AlertDialogTrigger>
