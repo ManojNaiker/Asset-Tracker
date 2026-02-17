@@ -5,6 +5,8 @@ import { Upload, Download, Loader2 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export function BulkAssetUploadDialog({ assetTypes }: { assetTypes: any[] }) {
     const [open, setOpen] = useState(false);
@@ -14,7 +16,7 @@ export function BulkAssetUploadDialog({ assetTypes }: { assetTypes: any[] }) {
 
     const downloadTemplate = () => {
         // Create a worksheet with headers and a sample row
-        const data = [
+        const data: any[] = [
             { "Serial Number": "SN001", "Asset Type Name": assetTypes[0]?.name || "Laptop", "Status": "Available" }
         ];
         
