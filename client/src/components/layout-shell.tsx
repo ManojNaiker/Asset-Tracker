@@ -192,7 +192,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-64 fixed inset-y-0 z-50">
         <NavContent />

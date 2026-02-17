@@ -6,7 +6,7 @@
 
 :root {
   /* Professional Corporate Blue Palette (Light Microfinance inspired) */
-  --background: 210 40% 98%;
+  --background: 210 20% 98%;
   --foreground: 222 47% 11%;
   
   --primary: 215 100% 50%; /* Deep Blue */
@@ -24,9 +24,12 @@
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
 
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
+  --border: 214.3 32% 91%;
+  --input: 214.3 32% 91%;
   --ring: 215 100% 50%;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
   
   --radius: 0.5rem;
   
@@ -35,27 +38,30 @@
 }
 
 .dark {
-  --background: 222 47% 6%;
+  --background: 222 47% 4%;
   --foreground: 210 40% 98%;
   
   --primary: 217 91% 60%;
   --primary-foreground: 222 47.4% 11.2%;
   
-  --secondary: 217.2 32.6% 12%;
+  --secondary: 217 32% 12%;
   --secondary-foreground: 210 40% 98%;
   
-  --muted: 217.2 32.6% 12%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 217 32% 12%;
+  --muted-foreground: 215 20% 65%;
   
-  --accent: 217.2 32.6% 12%;
+  --accent: 217 32% 12%;
   --accent-foreground: 210 40% 98%;
   
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
   
-  --border: 217.2 32.6% 15%;
-  --input: 217.2 32.6% 15%;
-  --ring: 224.3 76.3% 48%;
+  --border: 217 32% 14%;
+  --input: 217 32% 14%;
+  --ring: 224 76% 48%;
+
+  --card: 222 47% 7%;
+  --card-foreground: 210 40% 98%;
 }
 
 @layer base {
