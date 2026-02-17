@@ -265,6 +265,121 @@ export async function registerRoutes(
     ]);
   });
 
+  app.get("/api/templates/allocations", requireAdmin, async (req, res) => {
+    const assets = await storage.getAssets({ status: "Available" });
+    const employees = await storage.getEmployees();
+    
+    // Template 1: Basic Allocation (using IDs)
+    const basicTemplate = [
+      {
+        "employeeId": employees[0]?.id || 1,
+        "assetId": assets[0]?.id || 1,
+        "status": "Active",
+        "remarks": "Sample Allocation"
+      }
+    ];
+
+    // Template 2: Auto-Create Allocation (using names/serials)
+    const autoCreateTemplate = [
+      {
+        "empId": "EMP001",
+        "name": "New Employee",
+        "email": "new.employee@example.com",
+        "branch": "Main",
+        "department": "IT",
+        "designation": "Staff",
+        "mobile": "1234567890",
+        "serialNumber": "SN-NEW-001",
+        "assetTypeName": "Laptop",
+        "status": "Active",
+        "remarks": "Auto-create sample"
+      }
+    ];
+
+    res.json({ basic: basicTemplate, autoCreate: autoCreateTemplate });
+  });
+
+  app.post("/api/allocations/bulk-import", requireAdmin, async (req, res) => {
+    try {
+      const data = req.body;
+      if (!Array.isArray(data)) return res.status(400).json({ message: "Invalid data format" });
+      
+      let count = 0;
+      for (const item of data) {
+        try {
+          // Re-use the same logic as single allocation create
+          // We can mock a request-like object or call the same logic
+          // For simplicity and stability, we'll implement the logic here matching the POST /api/allocations route
+          
+          let { assetId, employeeId, empId, name, email, branch, department, designation, mobile, serialNumber, assetTypeName, status, remarks } = item;
+          
+          // Auto-creation logic for employee
+          if (!employeeId && empId) {
+            const existing = await storage.getEmployeeByEmpId(empId);
+            if (existing) {
+              employeeId = existing.id;
+            } else if (name && email) {
+              const newEmp = await storage.createEmployee({
+                empId, name, email, branch, department, designation, mobile, status: "Active"
+              });
+              employeeId = newEmp.id;
+              await storage.createAuditLog({ userId: (req.user as User).id, action: "Auto Create Employee (Bulk)", entityType: "Employee", entityId: employeeId });
+            }
+          }
+
+          // Auto-creation logic for asset
+          if (!assetId && serialNumber) {
+            const existing = await storage.getAssetBySerial(serialNumber);
+            if (existing) {
+              assetId = existing.id;
+            } else if (assetTypeName) {
+              const types = await storage.getAssetTypes();
+              const type = types.find(t => t.name.toLowerCase() === assetTypeName.toLowerCase());
+              if (type) {
+                const newAsset = await storage.createAsset({
+                  serialNumber,
+                  assetTypeId: type.id,
+                  status: "Available",
+                  specifications: {},
+                  images: []
+                });
+                assetId = newAsset.id;
+                await storage.createAuditLog({ userId: (req.user as User).id, action: "Auto Create Asset (Bulk)", entityType: "Asset", entityId: assetId });
+              }
+            }
+          }
+
+          if (assetId && employeeId) {
+            const allocation = await storage.createAllocation({
+              assetId: Number(assetId),
+              employeeId: Number(employeeId),
+              status: status || "Active",
+              pdfUrl: "",
+              returnReason: "",
+            });
+            
+            await storage.updateAsset(Number(assetId), { status: "Allocated" });
+            
+            await storage.createAuditLog({ 
+              userId: (req.user as User).id, 
+              action: "Allocate Asset (Bulk)", 
+              entityType: "Allocation", 
+              entityId: allocation.id,
+              details: { remarks } 
+            });
+            count++;
+          }
+        } catch (e) {
+          console.error("Failed to import allocation row", item, e);
+        }
+      }
+      
+      res.json({ count });
+    } catch (err) {
+      res.status(500).json({ message: "Bulk allocation import failed" });
+    }
+  });
+
   // Assets bulk import with type resolution
   app.post("/api/assets/bulk-import", requireAdmin, async (req, res) => {
     try {

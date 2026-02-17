@@ -149,26 +149,19 @@ export function BulkAllocationUploadDialog() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
 
-    const downloadTemplate = () => {
-        const data = [
-            { "Employee ID": "EMP001", "Asset Serial Number": "SN001", "Action": "Allocate", "Return Reason": "" },
-            { "Employee ID": "EMP002", "Asset Serial Number": "SN002", "Action": "Return", "Return Reason": "Upgrading" }
-        ];
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        
-        // Add hints sheet
-        const hints = [
-            ["Action Options", "Description"],
-            ["Allocate", "Assigns an available asset to the employee"],
-            ["Return", "Marks an existing allocation as returned"]
-        ];
-        const hintSheet = XLSX.utils.aoa_to_sheet(hints);
-        
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Allocations");
-        XLSX.utils.book_append_sheet(workbook, hintSheet, "Instructions");
-        
-        XLSX.writeFile(workbook, "allocation_upload_template.xlsx");
+    const downloadTemplate = async (type: 'basic' | 'auto') => {
+        try {
+            const res = await fetch("/api/templates/allocations");
+            const data = await res.json();
+            const template = type === 'basic' ? data.basic : data.autoCreate;
+            
+            const worksheet = XLSX.utils.json_to_sheet(template);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
+            XLSX.writeFile(workbook, `allocation_${type}_template.xlsx`);
+        } catch (error) {
+            toast({ title: "Failed to download template", variant: "destructive" });
+        }
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,19 +178,10 @@ export function BulkAllocationUploadDialog() {
                 const ws = wb.Sheets[wsname];
                 const data = XLSX.utils.sheet_to_json(ws);
 
-                const formattedData = data.map((item: any) => {
-                    const action = String(item["Action"] || "Allocate").trim().toLowerCase();
-                    return {
-                        employeeEmpId: String(item["Employee ID"] || "").trim(),
-                        assetSerialNumber: String(item["Asset Serial Number"] || "").trim().toUpperCase(),
-                        status: action === "return" ? "Returned" : "Active",
-                        returnReason: item["Return Reason"] || ""
-                    };
-                });
-
-                await apiRequest("POST", "/api/allocations/import", formattedData);
+                await apiRequest("POST", "/api/allocations/bulk-import", data);
                 queryClient.invalidateQueries({ queryKey: ["/api/allocations"] });
                 queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
                 toast({ title: "Allocations processed successfully" });
                 setOpen(false);
             } catch (err: any) {
@@ -222,12 +206,22 @@ export function BulkAllocationUploadDialog() {
                     <DialogTitle>Bulk Upload Allocations</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                    <div className="flex flex-col gap-4">
-                        <Button onClick={downloadTemplate} variant="secondary">
-                            <Download className="w-4 h-4 mr-2" /> Download Template
-                        </Button>
+                    <div className="flex flex-col gap-2">
+                        <Label>Templates</Label>
+                        <div className="flex gap-2">
+                            <Button onClick={() => downloadTemplate('basic')} variant="secondary" className="flex-1">
+                                <Download className="w-4 h-4 mr-2" /> Basic (IDs)
+                            </Button>
+                            <Button onClick={() => downloadTemplate('auto')} variant="secondary" className="flex-1">
+                                <Download className="w-4 h-4 mr-2" /> Auto-Create (Names)
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="space-y-2 border-t pt-4">
+                        <Label htmlFor="alloc-file">Select Excel File</Label>
                         <div className="relative">
                             <input
+                                id="alloc-file"
                                 type="file"
                                 accept=".xlsx, .xls"
                                 className="hidden"
