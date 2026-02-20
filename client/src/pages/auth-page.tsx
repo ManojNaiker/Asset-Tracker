@@ -111,6 +111,25 @@ export default function AuthPage() {
                     </>
                   )}
                 </Button>
+
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-slate-200" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-slate-500 font-medium">Or continue with</span>
+                  </div>
+                </div>
+
+                <Button 
+                    type="button"
+                    variant="outline"
+                    className="w-full h-11 text-base font-semibold border-slate-200 hover:bg-slate-50 shadow-sm"
+                    onClick={() => window.location.href = "/api/auth/saml/login"}
+                >
+                  <Building2 className="mr-2 w-5 h-5 text-blue-600" />
+                  Sign in with SSO
+                </Button>
               </form>
             </Form>
           </CardContent>
