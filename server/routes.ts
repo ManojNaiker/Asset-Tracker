@@ -76,6 +76,7 @@ export async function registerRoutes(
       if (ssoSettings?.isEnabled) {
         const samlStrategy = new (MultiSamlStrategy as any)(
           {
+            callbackUrl: `${process.env.APP_URL || ""}/api/auth/saml/callback`,
             getSamlOptions: async (req: any, done: any) => {
               try {
                 const settings = await storage.getSsoSettings();
@@ -140,6 +141,7 @@ export async function registerRoutes(
       
       const strategy = new MultiSamlStrategy(
         {
+          callbackUrl: `${req.protocol}://${req.get("host")}/api/auth/saml/callback`,
           getSamlOptions: (req: any, done: any) => {
             done(null, {
               callbackUrl: `${req.protocol}://${req.get("host")}/api/auth/saml/callback`,
@@ -160,7 +162,8 @@ export async function registerRoutes(
       );
 
       res.type("application/xml");
-      res.status(200).send(strategy.generateServiceProviderMetadata(settings.publicKey));
+      const xml = strategy.generateServiceProviderMetadata(settings.publicKey);
+      res.status(200).send(xml);
     } catch (err) {
       console.error("Metadata generation error:", err);
       res.status(500).send("Internal Server Error");
