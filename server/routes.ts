@@ -74,9 +74,9 @@ export async function registerRoutes(
     try {
       const ssoSettings = await storage.getSsoSettings();
       if (ssoSettings?.isEnabled) {
-        passport.use("saml", new MultiSamlStrategy(
+        const samlStrategy = new (MultiSamlStrategy as any)(
           {
-            getSamlOptions: async (req, done) => {
+            getSamlOptions: async (req: any, done: any) => {
               try {
                 const settings = await storage.getSsoSettings();
                 if (!settings) return done(new Error("SSO not configured"));
@@ -88,13 +88,13 @@ export async function registerRoutes(
                   idpIssuer: settings.idpEntityId,
                   cert: settings.publicKey,
                   logoutUrl: settings.logoutUrl || undefined,
-                });
+                } as any);
               } catch (err) {
                 return done(err as Error);
               }
             }
-          },
-          async (profile: any, done: any) => {
+          } as any,
+          (async (profile: any, done: any) => {
             try {
               let user = await storage.getUserByUsername(profile.nameID);
               if (!user && ssoSettings.jitProvisioning) {
@@ -108,14 +108,18 @@ export async function registerRoutes(
             } catch (err) {
               return done(err);
             }
-          }
-        ));
+          }) as any,
+          ((profile: any, done: any) => {
+            done(null, profile);
+          }) as any
+        );
+        passport.use("saml", samlStrategy as any);
       }
     } catch (err) {
       // console.error("Failed to initialize SSO:", err);
     }
   };
-  setupSso();
+  await setupSso();
 
   // === SSO Routes ===
   app.get("/api/auth/saml/login", (req, res, next) => {
@@ -136,7 +140,7 @@ export async function registerRoutes(
       
       const strategy = new MultiSamlStrategy(
         {
-          getSamlOptions: (req, done) => {
+          getSamlOptions: (req: any, done: any) => {
             done(null, {
               callbackUrl: `${req.protocol}://${req.get("host")}/api/auth/saml/callback`,
               path: "/api/auth/saml/callback",
@@ -144,10 +148,12 @@ export async function registerRoutes(
               issuer: settings.spEntityId,
               idpIssuer: settings.idpEntityId,
               cert: settings.publicKey,
-            });
+            } as any);
           }
-        },
-        () => {}
+        } as any,
+        ((profile: any, done: any) => {
+          done(null, profile);
+        }) as any
       );
 
       res.type("application/xml");

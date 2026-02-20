@@ -43,6 +43,7 @@ export default function SsoSettingsPage() {
       idpEntityId: "",
       spEntityId: window.location.origin,
       publicKey: "",
+      logoutUrl: "",
     },
   });
 
@@ -195,7 +196,7 @@ export default function SsoSettingsPage() {
                       <FormItem>
                         <FormLabel>SAML Logout URL</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://skillmine.example.com/adfs/ls/?wa=wsignout1.0" {...field} data-testid="input-saml-logout-url" />
+                          <Input placeholder="https://skillmine.example.com/adfs/ls/?wa=wsignout1.0" {...field} value={field.value || ""} data-testid="input-saml-logout-url" />
                         </FormControl>
                         <FormDescription>The URL where the SAML logout request will be sent.</FormDescription>
                         <FormMessage />
