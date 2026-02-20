@@ -102,6 +102,22 @@ export const insertEmailSettingsSchema = createInsertSchema(emailSettings).omit(
 export type EmailSettings = typeof emailSettings.$inferSelect;
 export type InsertEmailSettings = z.infer<typeof insertEmailSettingsSchema>;
 
+export const ssoSettings = pgTable("sso_settings", {
+  id: serial("id").primaryKey(),
+  isEnabled: boolean("is_enabled").default(false),
+  jitProvisioning: boolean("jit_provisioning").default(false),
+  spEntityId: text("sp_entity_id").notNull(),
+  idpEntityId: text("idp_entity_id").notNull(),
+  entryPoint: text("entry_point").notNull(),
+  logoutUrl: text("logout_url"),
+  publicKey: text("public_key").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertSsoSettingsSchema = createInsertSchema(ssoSettings).omit({ id: true, updatedAt: true });
+export type SsoSettings = typeof ssoSettings.$inferSelect;
+export type InsertSsoSettings = z.infer<typeof insertSsoSettingsSchema>;
+
 // === Relations ===
 export const assetsRelations = relations(assets, ({ one, many }) => ({
   type: one(assetTypes, {

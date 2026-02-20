@@ -230,6 +230,37 @@ export const api = {
       },
     },
   },
+  sso: {
+    get: {
+      method: 'GET' as const,
+      path: '/api/settings/sso' as const,
+      responses: {
+        200: z.custom<any>(),
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/settings/sso' as const,
+      input: z.any(),
+      responses: {
+        200: z.custom<any>(),
+      },
+    },
+    metadata: {
+      method: 'GET' as const,
+      path: '/api/auth/saml/metadata' as const,
+      responses: {
+        200: z.string(),
+      },
+    },
+    callback: {
+      method: 'POST' as const,
+      path: '/api/auth/saml/callback' as const,
+      responses: {
+        200: z.any(),
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {

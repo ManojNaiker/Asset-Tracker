@@ -37,10 +37,48 @@ const storage_multer = multer.diskStorage({
 
 const upload = multer({ storage: storage_multer });
 
+import { Strategy as MultiSamlStrategy } from "@node-saml/passport-saml";
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  // === SSO Setup ===
+  const ssoSettings = await storage.getSsoSettings();
+  if (ssoSettings?.isEnabled) {
+    passport.use(new MultiSamlStrategy(
+      {
+        getSamlOptions: async (req, done) => {
+          const settings = await storage.getSsoSettings();
+          if (!settings) return done(new Error("SSO not configured"));
+          return done(null, {
+            path: "/api/auth/saml/callback",
+            entryPoint: settings.entryPoint,
+            issuer: settings.spEntityId,
+            idpIssuer: settings.idpEntityId,
+            cert: settings.publicKey,
+            logoutUrl: settings.logoutUrl || undefined,
+          });
+        }
+      },
+      async (profile: any, done: any) => {
+        try {
+          let user = await storage.getUserByUsername(profile.nameID);
+          if (!user && ssoSettings.jitProvisioning) {
+            user = await storage.createUser({
+              username: profile.nameID,
+              password: await bcrypt.hash(Math.random().toString(36), 10),
+              role: "employee",
+            });
+          }
+          return done(null, user);
+        } catch (err) {
+          return done(err);
+        }
+      }
+    ));
+  }
 
   // === Authentication Setup ===
   passport.use(new LocalStrategy(async (username, password, done) => {
@@ -65,13 +103,50 @@ export async function registerRoutes(
         return done(null, false, { message: "Incorrect password." });
       }
 
-      // Reset failed attempts on success
-      await storage.updateUser(user.id, { failedAttempts: 0 });
+    await storage.updateUser(user.id, { failedAttempts: 0 });
       return done(null, user);
     } catch (err) {
       return done(err);
     }
   }));
+
+  // === SSO Routes ===
+  app.get("/api/auth/saml/login", (req, res, next) => {
+    passport.authenticate("saml", { failureRedirect: "/auth", failureFlash: true })(req, res, next);
+  });
+
+  app.post("/api/auth/saml/callback", 
+    passport.authenticate("saml", { failureRedirect: "/auth", failureFlash: true }),
+    (req, res) => {
+      res.redirect("/");
+    }
+  );
+
+  app.get("/api/auth/saml/metadata", async (req, res) => {
+    const settings = await storage.getSsoSettings();
+    if (!settings?.isEnabled) return res.status(404).send("SSO not enabled");
+    
+    const samlStrategy = passport._strategy("saml") as any;
+    if (!samlStrategy) return res.status(500).send("SAML strategy not initialized");
+
+    res.type("application/xml");
+    res.status(200).send(samlStrategy.generateServiceProviderMetadata(settings.publicKey));
+  });
+
+  app.get("/api/settings/sso", requireAdmin, async (req, res) => {
+    const settings = await storage.getSsoSettings();
+    res.json(settings || {});
+  });
+
+  app.put("/api/settings/sso", requireAdmin, async (req, res) => {
+    try {
+      const settings = await storage.updateSsoSettings(req.body);
+      // Re-initialize passport strategy if needed or just restart
+      res.json(settings);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to update SSO settings" });
+    }
+  });
 
   passport.serializeUser((user: any, done) => {
     done(null, user.id);
