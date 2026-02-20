@@ -1,0 +1,115 @@
+ <FormField
+                    control={form.control}
+                    name="samlIdpIssuer"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Identity Provider Entity ID (Issuer)</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="https://skillmine.example.com/adfs/services/trust" data-testid="input-saml-idp-issuer" />
+                        </FormControl>
+                        <FormDescription>The identifier for your SAML Identity Provider (Okta, Azure, etc.)</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="samlEntryPoint"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>SAML Entry Point (SSO URL)</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="https://skillmine.example.com/adfs/ls/" data-testid="input-saml-entry-point" />
+                        </FormControl>
+                        <FormDescription>The URL where the SAML authentication request will be sent.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="samlLogoutUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>SAML Logout URL</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="https://skillmine.example.com/adfs/ls/?wa=wsignout1.0" data-testid="input-saml-logout-url" />
+                        </FormControl>
+                        <FormDescription>The URL where the SAML logout request will be sent.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+              <FormField
+                control={form.control}
+                name="samlCert"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Public X.509 Certificate</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" 
+                        className="font-mono h-32"
+                        data-testid="textarea-saml-cert"
+                      />
+                    </FormControl>
+                    <FormDescription>The public certificate provided by Skillmine for signature verification.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="rounded-md bg-muted p-4 flex items-start space-x-3 mt-4">
+                <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium">Metadata URL</p>
+                  <p className="text-muted-foreground mt-1">
+                    Provide this URL to Skillmine to complete the trust relationship:
+                  </p>
+                  <code className="block mt-2 p-2 bg-background rounded border text-xs break-all">
+                    {window.location.origin}/api/auth/saml/metadata
+                  </code>
+                </div>
+              </div>
+              </CardContent>
+            )}
+          </Card>
+
+          <AlertDialog open={showDisableConfirm} onOpenChange={setShowDisableConfirm}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <div className="flex items-center gap-2 text-destructive mb-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                </div>
+                <AlertDialogDescription>
+                  This will disable SAML authentication for all users and <strong>permanently clear</strong> all your current SAML configuration settings. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDisableSso} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Yes, Disable and Clear Data
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <div className="flex justify-end">
+            {form.watch("enableSso") && (
+              <Button type="submit" disabled={mutation.isPending} data-testid="button-save-sso">
+                {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save SSO Settings
+              </Button>
+            )}
+          </div>
+        </form>
+      </Form>
+    </div>
+  );
+}

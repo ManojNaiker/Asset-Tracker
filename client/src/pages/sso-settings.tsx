@@ -163,10 +163,11 @@ export default function SsoSettingsPage() {
                     name="entryPoint"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>SSO Target URL (Entry Point)</FormLabel>
+                        <FormLabel>SAML Entry Point (SSO URL)</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://idp.example.com/saml/login" {...field} />
+                          <Input placeholder="https://skillmine.example.com/adfs/ls/" {...field} data-testid="input-saml-entry-point" />
                         </FormControl>
+                        <FormDescription>The URL where the SAML authentication request will be sent.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -177,10 +178,26 @@ export default function SsoSettingsPage() {
                     name="idpEntityId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>IdP Entity ID (Issuer)</FormLabel>
+                        <FormLabel>Identity Provider Entity ID (Issuer)</FormLabel>
                         <FormControl>
-                          <Input placeholder="urn:example:idp" {...field} />
+                          <Input placeholder="https://skillmine.example.com/adfs/services/trust" {...field} data-testid="input-saml-idp-issuer" />
                         </FormControl>
+                        <FormDescription>The identifier for your SAML Identity Provider (Okta, Azure, etc.)</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="logoutUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>SAML Logout URL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://skillmine.example.com/adfs/ls/?wa=wsignout1.0" {...field} data-testid="input-saml-logout-url" />
+                        </FormControl>
+                        <FormDescription>The URL where the SAML logout request will be sent.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -193,7 +210,7 @@ export default function SsoSettingsPage() {
                       <FormItem>
                         <FormLabel>SP Entity ID (Audience)</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} data-testid="input-sp-entity-id" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -205,21 +222,35 @@ export default function SsoSettingsPage() {
                     name="publicKey"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>X.509 Certificate</FormLabel>
+                        <FormLabel>Public X.509 Certificate</FormLabel>
                         <FormControl>
                           <Textarea 
                             className="font-mono text-xs h-32" 
                             placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" 
                             {...field} 
+                            data-testid="textarea-saml-cert"
                           />
                         </FormControl>
-                        <FormDescription>The public certificate provided by your IdP</FormDescription>
+                        <FormDescription>The public certificate provided by Skillmine for signature verification.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <Button type="submit" className="w-full" disabled={mutation.isPending}>
+                  <div className="rounded-md bg-muted p-4 flex items-start space-x-3 mt-4">
+                    <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium">Metadata URL</p>
+                      <p className="text-muted-foreground mt-1">
+                        Provide this URL to Skillmine to complete the trust relationship:
+                      </p>
+                      <code className="block mt-2 p-2 bg-background rounded border text-xs break-all">
+                        {metadataUrl}
+                      </code>
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={mutation.isPending} data-testid="button-save-sso">
                     {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save Configuration
                   </Button>
