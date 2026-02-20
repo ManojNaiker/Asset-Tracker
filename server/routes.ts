@@ -153,6 +153,9 @@ export async function registerRoutes(
         } as any,
         ((profile: any, done: any) => {
           done(null, profile);
+        }) as any,
+        ((profile: any, done: any) => {
+          done(null, profile);
         }) as any
       );
 
