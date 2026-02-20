@@ -77,6 +77,7 @@ export async function registerRoutes(
         const samlStrategy = new (MultiSamlStrategy as any)(
           {
             callbackUrl: `${process.env.APP_URL || ""}/api/auth/saml/callback`,
+            issuer: ssoSettings.spEntityId,
             getSamlOptions: async (req: any, done: any) => {
               try {
                 const settings = await storage.getSsoSettings();
@@ -142,6 +143,7 @@ export async function registerRoutes(
       const strategy = new MultiSamlStrategy(
         {
           callbackUrl: `${req.protocol}://${req.get("host")}/api/auth/saml/callback`,
+          issuer: settings.spEntityId,
           getSamlOptions: (req: any, done: any) => {
             done(null, {
               callbackUrl: `${req.protocol}://${req.get("host")}/api/auth/saml/callback`,
