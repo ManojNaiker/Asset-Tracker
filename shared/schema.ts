@@ -98,14 +98,10 @@ export const emailSettings = pgTable("email_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertEmailSettingsSchema = createInsertSchema(emailSettings).omit({ id: true, updatedAt: true });
-export type EmailSettings = typeof emailSettings.$inferSelect;
-export type InsertEmailSettings = z.infer<typeof insertEmailSettingsSchema>;
-
 export const ssoSettings = pgTable("sso_settings", {
   id: serial("id").primaryKey(),
-  isEnabled: boolean("is_enabled").default(false),
-  jitProvisioning: boolean("jit_provisioning").default(false),
+  isEnabled: boolean("is_enabled").default(false).notNull(),
+  jitProvisioning: boolean("jit_provisioning").default(false).notNull(),
   spEntityId: text("sp_entity_id").notNull(),
   idpEntityId: text("idp_entity_id").notNull(),
   entryPoint: text("entry_point").notNull(),
@@ -113,10 +109,6 @@ export const ssoSettings = pgTable("sso_settings", {
   publicKey: text("public_key").notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
-
-export const insertSsoSettingsSchema = createInsertSchema(ssoSettings).omit({ id: true, updatedAt: true });
-export type SsoSettings = typeof ssoSettings.$inferSelect;
-export type InsertSsoSettings = z.infer<typeof insertSsoSettingsSchema>;
 
 // === Relations ===
 export const assetsRelations = relations(assets, ({ one, many }) => ({
@@ -143,10 +135,11 @@ export const allocationsRelations = relations(allocations, ({ one }) => ({
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, isLocked: true, failedAttempts: true });
 export const insertEmployeeSchema = createInsertSchema(employees).omit({ id: true, createdAt: true });
 export const insertAssetTypeSchema = createInsertSchema(assetTypes).omit({ id: true, createdAt: true });
-export type InsertAssetType = z.infer<typeof insertAssetTypeSchema>;
 export const insertAssetSchema = createInsertSchema(assets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAllocationSchema = createInsertSchema(allocations).omit({ id: true, allocatedAt: true });
 export const insertVerificationSchema = createInsertSchema(verifications).omit({ id: true, verifiedAt: true });
+export const insertEmailSettingsSchema = createInsertSchema(emailSettings).omit({ id: true, updatedAt: true });
+export const insertSsoSettingsSchema = createInsertSchema(ssoSettings).omit({ id: true, updatedAt: true });
 
 // === Types ===
 export type User = typeof users.$inferSelect;
@@ -154,6 +147,7 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Employee = typeof employees.$inferSelect;
 export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
 export type AssetType = typeof assetTypes.$inferSelect;
+export type InsertAssetType = z.infer<typeof insertAssetTypeSchema>;
 export type Asset = typeof assets.$inferSelect;
 export type InsertAsset = z.infer<typeof insertAssetSchema>;
 export type Allocation = typeof allocations.$inferSelect;
@@ -161,6 +155,10 @@ export type InsertAllocation = z.infer<typeof insertAllocationSchema>;
 export type Verification = typeof verifications.$inferSelect;
 export type InsertVerification = z.infer<typeof insertVerificationSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
+export type EmailSettings = typeof emailSettings.$inferSelect;
+export type InsertEmailSettings = z.infer<typeof insertEmailSettingsSchema>;
+export type SsoSettings = typeof ssoSettings.$inferSelect;
+export type InsertSsoSettings = z.infer<typeof insertSsoSettingsSchema>;
 
 // Request Types
 export type LoginRequest = { username: string; password: string };

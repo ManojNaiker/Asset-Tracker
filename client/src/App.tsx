@@ -17,6 +17,7 @@ import MyAssetsPage from "@/pages/my-assets";
 import AuditTrailPage from "@/pages/audit-trail";
 import UsersPage from "@/pages/users";
 import SettingsPage from "@/pages/settings";
+import SsoSettingsPage from "@/pages/sso-settings";
 import { Loader2 } from "lucide-react";
 
 // Protected Route Wrapper
@@ -77,6 +78,10 @@ function Router() {
 
       <Route path="/settings">
         <ProtectedRoute component={SettingsPage} />
+      </Route>
+
+      <Route path="/sso-settings">
+        <ProtectedRoute component={SsoSettingsPage} />
       </Route>
 
       <Route path="/users">

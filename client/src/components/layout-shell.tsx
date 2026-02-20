@@ -18,7 +18,8 @@ import {
   ChevronDown,
   ChevronRight,
   Mail,
-  UserCog
+  UserCog,
+  ShieldCheck
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
@@ -50,6 +51,7 @@ const getNavItems = (role: string) => {
       children: [
         { name: "User Management", href: "/users", icon: UserCog },
         { name: "Email Settings", href: "/settings", icon: Mail },
+        { name: "SSO Configuration", href: "/sso-settings", icon: ShieldCheck },
       ]
     },
   ];
