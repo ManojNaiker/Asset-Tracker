@@ -9,7 +9,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import bcrypt from "bcryptjs";
-import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema } from "@shared/schema";
+import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, ssoSettings as ssoSettingsTable } from "@shared/schema";
 import { db } from "./db";
 import { desc } from "drizzle-orm";
 import nodemailer from "nodemailer";
@@ -70,44 +70,52 @@ export async function registerRoutes(
   };
 
   // === SSO Setup ===
-  try {
-    const ssoSettings = await storage.getSsoSettings();
-    if (ssoSettings?.isEnabled) {
-      passport.use(new MultiSamlStrategy(
-        {
-          getSamlOptions: async (req, done) => {
-            const settings = await storage.getSsoSettings();
-            if (!settings) return done(new Error("SSO not configured"));
-            return done(null, {
-              path: "/api/auth/saml/callback",
-              entryPoint: settings.entryPoint,
-              issuer: settings.spEntityId,
-              idpIssuer: settings.idpEntityId,
-              cert: settings.publicKey,
-              logoutUrl: settings.logoutUrl || undefined,
-            });
-          }
-        },
-        async (profile: any, done: any) => {
-          try {
-            let user = await storage.getUserByUsername(profile.nameID);
-            if (!user && ssoSettings.jitProvisioning) {
-              user = await storage.createUser({
-                username: profile.nameID,
-                password: await bcrypt.hash(Math.random().toString(36), 10),
-                role: "employee",
-              });
+  const setupSso = async () => {
+    try {
+      const ssoSettings = await storage.getSsoSettings();
+      if (ssoSettings?.isEnabled) {
+        passport.use("saml", new MultiSamlStrategy(
+          {
+            getSamlOptions: async (req, done) => {
+              try {
+                const settings = await storage.getSsoSettings();
+                if (!settings) return done(new Error("SSO not configured"));
+                return done(null, {
+                  callbackUrl: settings.isEnabled ? `${req.protocol}://${req.get("host")}/api/auth/saml/callback` : "http://localhost/api/auth/saml/callback",
+                  path: "/api/auth/saml/callback",
+                  entryPoint: settings.entryPoint,
+                  issuer: settings.spEntityId,
+                  idpIssuer: settings.idpEntityId,
+                  cert: settings.publicKey,
+                  logoutUrl: settings.logoutUrl || undefined,
+                });
+              } catch (err) {
+                return done(err as Error);
+              }
             }
-            return done(null, user);
-          } catch (err) {
-            return done(err);
+          },
+          async (profile: any, done: any) => {
+            try {
+              let user = await storage.getUserByUsername(profile.nameID);
+              if (!user && ssoSettings.jitProvisioning) {
+                user = await storage.createUser({
+                  username: profile.nameID,
+                  password: await bcrypt.hash(Math.random().toString(36), 10),
+                  role: "employee",
+                });
+              }
+              return done(null, user);
+            } catch (err) {
+              return done(err);
+            }
           }
-        }
-      ));
+        ));
+      }
+    } catch (err) {
+      // console.error("Failed to initialize SSO:", err);
     }
-  } catch (err) {
-    console.error("Failed to initialize SSO:", err);
-  }
+  };
+  setupSso();
 
   // === SSO Routes ===
   app.get("/api/auth/saml/login", (req, res, next) => {
@@ -122,14 +130,32 @@ export async function registerRoutes(
   );
 
   app.get("/api/auth/saml/metadata", async (req, res) => {
-    const settings = await storage.getSsoSettings();
-    if (!settings?.isEnabled) return res.status(404).send("SSO not enabled");
-    
-    const samlStrategy = passport._strategy("saml") as any;
-    if (!samlStrategy) return res.status(500).send("SAML strategy not initialized");
+    try {
+      const settings = await storage.getSsoSettings();
+      if (!settings?.isEnabled) return res.status(404).send("SSO not enabled");
+      
+      const strategy = new MultiSamlStrategy(
+        {
+          getSamlOptions: (req, done) => {
+            done(null, {
+              callbackUrl: `${req.protocol}://${req.get("host")}/api/auth/saml/callback`,
+              path: "/api/auth/saml/callback",
+              entryPoint: settings.entryPoint,
+              issuer: settings.spEntityId,
+              idpIssuer: settings.idpEntityId,
+              cert: settings.publicKey,
+            });
+          }
+        },
+        () => {}
+      );
 
-    res.type("application/xml");
-    res.status(200).send(samlStrategy.generateServiceProviderMetadata(settings.publicKey));
+      res.type("application/xml");
+      res.status(200).send(strategy.generateServiceProviderMetadata(settings.publicKey));
+    } catch (err) {
+      console.error("Metadata generation error:", err);
+      res.status(500).send("Internal Server Error");
+    }
   });
 
   app.get("/api/settings/sso", requireAdmin, async (req, res) => {
@@ -140,6 +166,7 @@ export async function registerRoutes(
   app.put("/api/settings/sso", requireAdmin, async (req, res) => {
     try {
       const settings = await storage.updateSsoSettings(req.body);
+      await setupSso(); // Re-initialize strategy with new settings
       res.json(settings);
     } catch (err) {
       res.status(500).json({ message: "Failed to update SSO settings" });
