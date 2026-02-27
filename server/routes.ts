@@ -73,11 +73,15 @@ export async function registerRoutes(
   const setupSso = async () => {
     try {
       const ssoSettings = await storage.getSsoSettings();
+      console.log("Initializing SSO strategy. Enabled:", ssoSettings?.isEnabled);
+      
       if (ssoSettings?.isEnabled) {
         const samlStrategy = new (MultiSamlStrategy as any)(
           {
             callbackUrl: `${process.env.APP_URL || ""}/api/auth/saml/callback`,
             issuer: ssoSettings.spEntityId,
+            cert: ssoSettings.publicKey || "placeholder",
+            idpCert: ssoSettings.publicKey || "placeholder",
             getSamlOptions: async (req: any, done: any) => {
               try {
                 const settings = await storage.getSsoSettings();
@@ -116,16 +120,26 @@ export async function registerRoutes(
           }) as any
         );
         passport.use("saml", samlStrategy as any);
+        console.log("SAML strategy registered with passport");
+      } else {
+        // Use a dummy strategy to prevent "Unknown authentication strategy" errors if someone tries to login
+        // while it's disabled, or just ensure passport.use isn't skipped if it was once enabled
+        console.log("SSO is disabled, SAML strategy not registered");
       }
     } catch (err) {
-      // console.error("Failed to initialize SSO:", err);
+      console.error("Failed to initialize SSO:", err);
     }
   };
   await setupSso();
 
   // === SSO Routes ===
   app.get("/api/auth/saml/login", (req, res, next) => {
-    passport.authenticate("saml", { failureRedirect: "/auth", failureFlash: true })(req, res, next);
+    try {
+      passport.authenticate("saml", { failureRedirect: "/auth", failureFlash: true })(req, res, next);
+    } catch (err) {
+      console.error("Auth error:", err);
+      res.redirect("/auth");
+    }
   });
 
   app.post("/api/auth/saml/callback", 
