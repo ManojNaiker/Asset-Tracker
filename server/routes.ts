@@ -144,14 +144,16 @@ export async function registerRoutes(
         {
           callbackUrl: `${req.protocol}://${req.get("host")}/api/auth/saml/callback`,
           issuer: settings.spEntityId,
+          cert: settings.publicKey || "placeholder", // Some versions use 'cert' instead of 'idpCert'
+          idpCert: settings.publicKey || "placeholder", // Required for constructor in newer versions
           getSamlOptions: (req: any, done: any) => {
             done(null, {
               callbackUrl: `${req.protocol}://${req.get("host")}/api/auth/saml/callback`,
               path: "/api/auth/saml/callback",
-              entryPoint: settings.entryPoint,
+              entryPoint: settings.entryPoint || "http://placeholder",
               issuer: settings.spEntityId,
-              idpIssuer: settings.idpEntityId,
-              cert: settings.publicKey,
+              idpIssuer: settings.idpEntityId || "http://placeholder",
+              cert: settings.publicKey || "placeholder",
             } as any);
           }
         } as any,
@@ -164,11 +166,22 @@ export async function registerRoutes(
       );
 
       res.type("application/xml");
-      const xml = strategy.generateServiceProviderMetadata(settings.publicKey);
-      res.status(200).send(xml);
+      // Use a placeholder if publicKey is empty for metadata generation
+      const xml = strategy.generateServiceProviderMetadata(settings.publicKey || "-----BEGIN CERTIFICATE-----\nplaceholder\n-----END CERTIFICATE-----");
+      
+      // Fix ACS URL in metadata to use the actual host
+      const host = req.get("host");
+      const protocol = req.protocol;
+      const actualAcsUrl = `${protocol}://${host}/api/auth/saml/callback`;
+      
+      // passport-saml generates metadata using the options provided.
+      // We'll manually ensure the Location attribute is correct in the final XML.
+      const formattedXml = xml.replace(/Location="[^"]*\/api\/auth\/saml\/callback"/g, `Location="${actualAcsUrl}"`);
+      
+      res.status(200).send(formattedXml);
     } catch (err) {
       console.error("Metadata generation error:", err);
-      res.status(500).send("Internal Server Error");
+      res.status(500).send("Internal Server Error: " + (err as Error).message);
     }
   });
 
