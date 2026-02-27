@@ -144,7 +144,7 @@ export default function SsoSettingsPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Just-In-Time (JIT) Provisioning</FormLabel>
+                          <FormLabel className="text-base">JIT User Provisioning</FormLabel>
                           <FormDescription>
                             Automatically create user accounts on first login
                           </FormDescription>
@@ -161,14 +161,14 @@ export default function SsoSettingsPage() {
 
                   <FormField
                     control={form.control}
-                    name="entryPoint"
+                    name="spEntityId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>SAML Entry Point (SSO URL)</FormLabel>
+                        <FormLabel>Service Provider Entity ID</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://skillmine.example.com/adfs/ls/" {...field} data-testid="input-saml-entry-point" />
+                          <Input {...field} data-testid="input-sp-entity-id" />
                         </FormControl>
-                        <FormDescription>The URL where the SAML authentication request will be sent.</FormDescription>
+                        <FormDescription>The unique identifier for this application (Service Provider).</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -179,11 +179,26 @@ export default function SsoSettingsPage() {
                     name="idpEntityId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Identity Provider Entity ID (Issuer)</FormLabel>
+                        <FormLabel>Identity Provider Entity ID</FormLabel>
                         <FormControl>
                           <Input placeholder="https://skillmine.example.com/adfs/services/trust" {...field} data-testid="input-saml-idp-issuer" />
                         </FormControl>
-                        <FormDescription>The identifier for your SAML Identity Provider (Okta, Azure, etc.)</FormDescription>
+                        <FormDescription>The unique identifier for your SAML Identity Provider.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="entryPoint"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>SAML Login URL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://skillmine.example.com/adfs/ls/" {...field} data-testid="input-saml-entry-point" />
+                        </FormControl>
+                        <FormDescription>The URL where the SAML authentication request will be sent (SSO URL).</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -206,20 +221,6 @@ export default function SsoSettingsPage() {
 
                   <FormField
                     control={form.control}
-                    name="spEntityId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>SP Entity ID (Audience)</FormLabel>
-                        <FormControl>
-                          <Input {...field} data-testid="input-sp-entity-id" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
                     name="publicKey"
                     render={({ field }) => (
                       <FormItem>
@@ -232,22 +233,36 @@ export default function SsoSettingsPage() {
                             data-testid="textarea-saml-cert"
                           />
                         </FormControl>
-                        <FormDescription>The public certificate provided by Skillmine for signature verification.</FormDescription>
+                        <FormDescription>The public certificate provided by your IdP for signature verification.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <div className="rounded-md bg-muted p-4 flex items-start space-x-3 mt-4">
-                    <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
-                    <div className="text-sm">
-                      <p className="font-medium">Metadata URL</p>
-                      <p className="text-muted-foreground mt-1">
-                        Provide this URL to Skillmine to complete the trust relationship:
-                      </p>
-                      <code className="block mt-2 p-2 bg-background rounded border text-xs break-all">
-                        {metadataUrl}
-                      </code>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                    <div className="rounded-md bg-muted p-4 flex items-start space-x-3">
+                      <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium">Metadata URL</p>
+                        <p className="text-muted-foreground mt-1">
+                          Provide this URL to your IdP:
+                        </p>
+                        <code className="block mt-2 p-2 bg-background rounded border text-xs break-all">
+                          {metadataUrl}
+                        </code>
+                      </div>
+                    </div>
+                    <div className="rounded-md bg-muted p-4 flex items-start space-x-3">
+                      <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium">ACS URL</p>
+                        <p className="text-muted-foreground mt-1">
+                          Assertion Consumer Service URL:
+                        </p>
+                        <code className="block mt-2 p-2 bg-background rounded border text-xs break-all">
+                          {`${window.location.origin}/api/auth/saml/callback`}
+                        </code>
+                      </div>
                     </div>
                   </div>
 
