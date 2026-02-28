@@ -596,6 +596,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                 </form>
                             </DialogContent>
                         </Dialog>
+                        </div>
                     </div>
                     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                         <Table>
@@ -651,6 +652,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                 </form>
                             </DialogContent>
                         </Dialog>
+                        </div>
                     </div>
                     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                         <Table>
