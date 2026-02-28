@@ -9,7 +9,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import bcrypt from "bcryptjs";
-import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, ssoSettings as ssoSettingsTable } from "@shared/schema";
+import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, ssoSettings as ssoSettingsTable } from "@shared/schema";
 import { db } from "./db";
 import { desc } from "drizzle-orm";
 import nodemailer from "nodemailer";
@@ -400,6 +400,48 @@ export async function registerRoutes(
     } catch (err) {
       res.status(500).json({ message: "Failed to delete user" });
     }
+  });
+
+  // Departments
+  app.get("/api/departments", requireAuth, async (req, res) => {
+    const depts = await storage.getDepartments();
+    res.json(depts);
+  });
+
+  app.post("/api/departments", requireAdmin, async (req, res) => {
+    try {
+      const input = insertDepartmentSchema.parse(req.body);
+      const dept = await storage.createDepartment(input);
+      res.status(201).json(dept);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid department data" });
+    }
+  });
+
+  app.delete("/api/departments/:id", requireAdmin, async (req, res) => {
+    await storage.deleteDepartment(parseInt(req.params.id));
+    res.sendStatus(204);
+  });
+
+  // Designations
+  app.get("/api/designations", requireAuth, async (req, res) => {
+    const desigs = await storage.getDesignations();
+    res.json(desigs);
+  });
+
+  app.post("/api/designations", requireAdmin, async (req, res) => {
+    try {
+      const input = insertDesignationSchema.parse(req.body);
+      const desig = await storage.createDesignation(input);
+      res.status(201).json(desig);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid designation data" });
+    }
+  });
+
+  app.delete("/api/designations/:id", requireAdmin, async (req, res) => {
+    await storage.deleteDesignation(parseInt(req.params.id));
+    res.sendStatus(204);
   });
 
   // Employees

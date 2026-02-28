@@ -80,6 +80,18 @@ export const verifications = pgTable("verifications", {
   images: text("images").array(),
 });
 
+export const departments = pgTable("departments", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const designations = pgTable("designations", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
   userId: integer("user_id"),
@@ -142,6 +154,8 @@ export const insertAssetTypeSchema = createInsertSchema(assetTypes).omit({ id: t
 export const insertAssetSchema = createInsertSchema(assets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAllocationSchema = createInsertSchema(allocations).omit({ id: true, allocatedAt: true });
 export const insertVerificationSchema = createInsertSchema(verifications).omit({ id: true, verifiedAt: true });
+export const insertDepartmentSchema = createInsertSchema(departments).omit({ id: true, createdAt: true });
+export const insertDesignationSchema = createInsertSchema(designations).omit({ id: true, createdAt: true });
 export const insertEmailSettingsSchema = createInsertSchema(emailSettings).omit({ id: true, updatedAt: true });
 export const insertSsoSettingsSchema = createInsertSchema(ssoSettings).omit({ id: true, updatedAt: true });
 
@@ -158,6 +172,10 @@ export type Allocation = typeof allocations.$inferSelect;
 export type InsertAllocation = z.infer<typeof insertAllocationSchema>;
 export type Verification = typeof verifications.$inferSelect;
 export type InsertVerification = z.infer<typeof insertVerificationSchema>;
+export type Department = typeof departments.$inferSelect;
+export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
+export type Designation = typeof designations.$inferSelect;
+export type InsertDesignation = z.infer<typeof insertDesignationSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type EmailSettings = typeof emailSettings.$inferSelect;
 export type InsertEmailSettings = z.infer<typeof insertEmailSettingsSchema>;

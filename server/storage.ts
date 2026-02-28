@@ -1,7 +1,9 @@
 import { 
   User, InsertUser, Employee, InsertEmployee, AssetType, Asset, InsertAsset, 
   Allocation, InsertAllocation, Verification, InsertVerification, AuditLog,
+  Department, InsertDepartment, Designation, InsertDesignation,
   users, employees, assetTypes, assets, allocations, verifications, auditLogs,
+  departments, designations,
   EmailSettings, InsertEmailSettings, emailSettings,
   SsoSettings, InsertSsoSettings, ssoSettings
 } from "@shared/schema";
@@ -54,6 +56,16 @@ export interface IStorage {
   getVerifications(): Promise<Verification[]>;
   createVerification(verification: InsertVerification): Promise<Verification>;
   
+  // Departments
+  getDepartments(): Promise<Department[]>;
+  createDepartment(dept: InsertDepartment): Promise<Department>;
+  deleteDepartment(id: number): Promise<void>;
+
+  // Designations
+  getDesignations(): Promise<Designation[]>;
+  createDesignation(desig: InsertDesignation): Promise<Designation>;
+  deleteDesignation(id: number): Promise<void>;
+
   // Audit Logs
   createAuditLog(log: Partial<AuditLog>): Promise<AuditLog>;
 
@@ -274,6 +286,34 @@ export class DatabaseStorage implements IStorage {
   async createVerification(verification: InsertVerification): Promise<Verification> {
     const [newVerification] = await db.insert(verifications).values(verification).returning();
     return newVerification;
+  }
+
+  // Departments
+  async getDepartments(): Promise<Department[]> {
+    return db.select().from(departments).orderBy(departments.name);
+  }
+
+  async createDepartment(dept: InsertDepartment): Promise<Department> {
+    const [newDept] = await db.insert(departments).values(dept).returning();
+    return newDept;
+  }
+
+  async deleteDepartment(id: number): Promise<void> {
+    await db.delete(departments).where(eq(departments.id, id));
+  }
+
+  // Designations
+  async getDesignations(): Promise<Designation[]> {
+    return db.select().from(designations).orderBy(designations.name);
+  }
+
+  async createDesignation(desig: InsertDesignation): Promise<Designation> {
+    const [newDesig] = await db.insert(designations).values(desig).returning();
+    return newDesig;
+  }
+
+  async deleteDesignation(id: number): Promise<void> {
+    await db.delete(designations).where(eq(designations.id, id));
   }
 
   // Audit Logs
