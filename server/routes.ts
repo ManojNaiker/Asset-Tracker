@@ -75,9 +75,6 @@ export async function registerRoutes(
       const ssoSettings = await storage.getSsoSettings();
       console.log("Initializing SSO strategy. Enabled:", ssoSettings?.isEnabled);
       
-      // Always register the strategy if we want to avoid "Unknown authentication strategy" errors
-      // but only if we have settings or we can handle the missing settings in getSamlOptions
-      
       const getSamlOptions = async (req: Request) => {
         const settings = await storage.getSsoSettings();
         if (!settings || !settings.isEnabled) throw new Error("SSO not enabled");
@@ -106,10 +103,16 @@ export async function registerRoutes(
 
       const samlStrategy = new MultiSamlStrategy(
         {
+          callbackUrl: "https://placeholder/api/auth/saml/callback",
+          issuer: "placeholder-issuer",
+          idpCert: "-----BEGIN CERTIFICATE-----\nplaceholder\n-----END CERTIFICATE-----",
           getSamlOptions: (req, done) => {
             getSamlOptions(req as Request)
               .then(options => done(null, options as any))
-              .catch(err => done(err));
+              .catch(err => {
+                console.error("Error in getSamlOptions:", err.message);
+                done(err);
+              });
           }
         } as any,
         (async (profile: any, done: any) => {
@@ -146,7 +149,8 @@ export async function registerRoutes(
       console.error("Failed to initialize SSO:", err);
     }
   };
-  await setupSso();
+  // Initialize immediately but don't block registerRoutes if it's slow
+  setupSso();
 
   // === SSO Routes ===
   app.get("/api/auth/saml/login", async (req, res, next) => {
