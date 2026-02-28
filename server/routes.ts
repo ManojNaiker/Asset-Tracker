@@ -110,16 +110,23 @@ export async function registerRoutes(
         } as any,
         async (profile: any, done: any) => {
           try {
-            console.log("SAML Profile received:", profile?.nameID);
-            if (!profile?.nameID) return done(new Error("SAML Profile is missing nameID"));
+            console.log("SAML Profile received:", JSON.stringify(profile, null, 2));
+            const username = profile?.nameID || profile?.email || profile?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
             
-            let user = await storage.getUserByUsername(profile.nameID);
+            if (!username) {
+              console.error("SAML Profile is missing identification fields:", profile);
+              return done(new Error("SAML Profile is missing identification fields"));
+            }
+            
+            let user = await storage.getUserByUsername(username);
             if (!user) {
               const currentSettings = await storage.getSsoSettings();
+              console.log("User not found. JIT enabled:", currentSettings?.jitProvisioning);
+              
               if (currentSettings?.jitProvisioning) {
-                console.log("JIT Provisioning user:", profile.nameID);
+                console.log("JIT Provisioning user:", username);
                 user = await storage.createUser({
-                  username: profile.nameID,
+                  username: username,
                   password: await bcrypt.hash(Math.random().toString(36), 10),
                   role: "employee",
                 });
