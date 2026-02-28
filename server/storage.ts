@@ -59,11 +59,13 @@ export interface IStorage {
   // Departments
   getDepartments(): Promise<Department[]>;
   createDepartment(dept: InsertDepartment): Promise<Department>;
+  createDepartmentsBulk(depts: InsertDepartment[]): Promise<Department[]>;
   deleteDepartment(id: number): Promise<void>;
 
   // Designations
   getDesignations(): Promise<Designation[]>;
   createDesignation(desig: InsertDesignation): Promise<Designation>;
+  createDesignationsBulk(desigs: InsertDesignation[]): Promise<Designation[]>;
   deleteDesignation(id: number): Promise<void>;
 
   // Audit Logs
@@ -298,6 +300,11 @@ export class DatabaseStorage implements IStorage {
     return newDept;
   }
 
+  async createDepartmentsBulk(depts: InsertDepartment[]): Promise<Department[]> {
+    const newDepts = await db.insert(departments).values(depts).returning();
+    return newDepts;
+  }
+
   async deleteDepartment(id: number): Promise<void> {
     await db.delete(departments).where(eq(departments.id, id));
   }
@@ -310,6 +317,11 @@ export class DatabaseStorage implements IStorage {
   async createDesignation(desig: InsertDesignation): Promise<Designation> {
     const [newDesig] = await db.insert(designations).values(desig).returning();
     return newDesig;
+  }
+
+  async createDesignationsBulk(desigs: InsertDesignation[]): Promise<Designation[]> {
+    const newDesigs = await db.insert(designations).values(desigs).returning();
+    return newDesigs;
   }
 
   async deleteDesignation(id: number): Promise<void> {

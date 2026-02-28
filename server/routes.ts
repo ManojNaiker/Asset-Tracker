@@ -402,6 +402,45 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/users/bulk", requireAdmin, async (req, res) => {
+    try {
+      const usersData = req.body;
+      if (!Array.isArray(usersData)) {
+        return res.status(400).json({ message: "Expected an array of users" });
+      }
+
+      const results = [];
+      for (const userData of usersData) {
+        try {
+          const { username, password, role, fullName, employeeCode, designation, department } = userData;
+          if (!username || !password) continue;
+
+          const existingUser = await storage.getUserByUsername(username);
+          if (existingUser) continue;
+
+          const hashedPassword = await bcrypt.hash(password, 10);
+          const user = await storage.createUser({
+            username,
+            password: hashedPassword,
+            role: role || "employee",
+            fullName,
+            employeeCode,
+            designation,
+            department,
+            mustChangePassword: true
+          });
+          results.push(user);
+        } catch (e) {
+          console.error("Failed to import user", userData, e);
+        }
+      }
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Users", details: { count: results.length } });
+      res.status(201).json({ count: results.length });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to bulk create users" });
+    }
+  });
+
   // Departments
   app.get("/api/departments", requireAuth, async (req, res) => {
     const depts = await storage.getDepartments();
@@ -423,6 +462,17 @@ export async function registerRoutes(
     res.sendStatus(204);
   });
 
+  app.post("/api/departments/bulk", requireAdmin, async (req, res) => {
+    try {
+      const input = z.array(insertDepartmentSchema).parse(req.body);
+      const depts = await storage.createDepartmentsBulk(input);
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Departments", details: { count: depts.length } });
+      res.status(201).json(depts);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid departments data" });
+    }
+  });
+
   // Designations
   app.get("/api/designations", requireAuth, async (req, res) => {
     const desigs = await storage.getDesignations();
@@ -442,6 +492,17 @@ export async function registerRoutes(
   app.delete("/api/designations/:id", requireAdmin, async (req, res) => {
     await storage.deleteDesignation(parseInt(req.params.id));
     res.sendStatus(204);
+  });
+
+  app.post("/api/designations/bulk", requireAdmin, async (req, res) => {
+    try {
+      const input = z.array(insertDesignationSchema).parse(req.body);
+      const desigs = await storage.createDesignationsBulk(input);
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Designations", details: { count: desigs.length } });
+      res.status(201).json(desigs);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid designations data" });
+    }
   });
 
   // Employees

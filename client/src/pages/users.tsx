@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LayoutShell } from "@/components/layout-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, UserPlus, Loader2, Edit2, Trash2, Lock, Unlock, Mail, UserCog, Building2, Briefcase } from "lucide-react";
+import { Plus, UserPlus, Loader2, Edit2, Trash2, Lock, Unlock, Mail, UserCog, Building2, Briefcase, Upload } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +15,7 @@ import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, useLocation } from "wouter";
+import { BulkUserUploadDialog, BulkDepartmentUploadDialog, BulkDesignationUploadDialog } from "@/components/bulk-upload-dialogs";
 
 export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean }) {
     const { toast } = useToast();
@@ -225,13 +226,15 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                             <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">User Management</h2>
                             <p className="text-muted-foreground mt-1">Manage system access and roles.</p>
                         </div>
-                        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button className="bg-blue-600 hover:bg-blue-700">
-                                    <UserPlus className="w-4 h-4 mr-2" /> Add User
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
+                        <div className="flex gap-2">
+                            <BulkUserUploadDialog />
+                            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button className="bg-blue-600 hover:bg-blue-700">
+                                        <UserPlus className="w-4 h-4 mr-2" /> Add User
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
                                 <DialogHeader>
                                     <DialogTitle>Create New User</DialogTitle>
                                 </DialogHeader>
@@ -567,13 +570,15 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                             <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">Departments</h2>
                             <p className="text-muted-foreground mt-1">Manage company departments.</p>
                         </div>
-                        <Dialog open={isDeptDialogOpen} onOpenChange={setIsDeptDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button className="bg-blue-600 hover:bg-blue-700">
-                                    <Building2 className="w-4 h-4 mr-2" /> Add Department
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
+                        <div className="flex gap-2">
+                            <BulkDepartmentUploadDialog />
+                            <Dialog open={isDeptDialogOpen} onOpenChange={setIsDeptDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button className="bg-blue-600 hover:bg-blue-700">
+                                        <Building2 className="w-4 h-4 mr-2" /> Add Department
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
                                 <DialogHeader><DialogTitle>Add Department</DialogTitle></DialogHeader>
                                 <form onSubmit={(e: any) => {
                                     e.preventDefault();
@@ -620,13 +625,15 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                             <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">Designations</h2>
                             <p className="text-muted-foreground mt-1">Manage company designations.</p>
                         </div>
-                        <Dialog open={isDesigDialogOpen} onOpenChange={setIsDesigDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button className="bg-blue-600 hover:bg-blue-700">
-                                    <Briefcase className="w-4 h-4 mr-2" /> Add Designation
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
+                        <div className="flex gap-2">
+                            <BulkDesignationUploadDialog />
+                            <Dialog open={isDesigDialogOpen} onOpenChange={setIsDesigDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button className="bg-blue-600 hover:bg-blue-700">
+                                        <Briefcase className="w-4 h-4 mr-2" /> Add Designation
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
                                 <DialogHeader><DialogTitle>Add Designation</DialogTitle></DialogHeader>
                                 <form onSubmit={(e: any) => {
                                     e.preventDefault();
