@@ -27,6 +27,9 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
     const isLoading = usersLoading || deptsLoading || desigsLoading;
     const [editingUser, setEditingUser] = useState<any>(null);
     const [activeSubTab, setActiveSubTab] = useState<string>("users");
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+    const [isDeptDialogOpen, setIsDeptDialogOpen] = useState(false);
+    const [isDesigDialogOpen, setIsDesigDialogOpen] = useState(false);
 
     const activeTab = location === "/users" ? "users" : "email";
 
@@ -47,6 +50,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
             queryClient.invalidateQueries({ queryKey: ["/api/users"] });
             toast({ title: "Success", description: "User created successfully" });
             form.reset();
+            setIsCreateDialogOpen(false);
         },
         onError: (error: Error) => {
             toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -105,6 +109,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/departments"] });
             toast({ title: "Success", description: "Department created" });
+            setIsDeptDialogOpen(false);
         }
     });
 
@@ -130,6 +135,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/designations"] });
             toast({ title: "Success", description: "Designation created" });
+            setIsDesigDialogOpen(false);
         }
     });
 
@@ -219,7 +225,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                             <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">User Management</h2>
                             <p className="text-muted-foreground mt-1">Manage system access and roles.</p>
                         </div>
-                        <Dialog>
+                        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                             <DialogTrigger asChild>
                                 <Button className="bg-blue-600 hover:bg-blue-700">
                                     <UserPlus className="w-4 h-4 mr-2" /> Add User
@@ -561,7 +567,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                             <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">Departments</h2>
                             <p className="text-muted-foreground mt-1">Manage company departments.</p>
                         </div>
-                        <Dialog>
+                        <Dialog open={isDeptDialogOpen} onOpenChange={setIsDeptDialogOpen}>
                             <DialogTrigger asChild>
                                 <Button className="bg-blue-600 hover:bg-blue-700">
                                     <Building2 className="w-4 h-4 mr-2" /> Add Department
@@ -614,7 +620,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                             <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">Designations</h2>
                             <p className="text-muted-foreground mt-1">Manage company designations.</p>
                         </div>
-                        <Dialog>
+                        <Dialog open={isDesigDialogOpen} onOpenChange={setIsDesigDialogOpen}>
                             <DialogTrigger asChild>
                                 <Button className="bg-blue-600 hover:bg-blue-700">
                                     <Briefcase className="w-4 h-4 mr-2" /> Add Designation
