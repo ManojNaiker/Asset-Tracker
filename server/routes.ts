@@ -16,7 +16,8 @@ import nodemailer from "nodemailer";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { Strategy as MultiSamlStrategy } from "@node-saml/passport-saml";
+import { Strategy as SamlStrategy } from "@node-saml/passport-saml";
+import { SAML } from "@node-saml/node-saml";
 
 const PgSession = connectPgSimple(session);
 
@@ -72,58 +73,41 @@ export async function registerRoutes(
   // === SSO Setup ===
   const setupSso = async () => {
     try {
-      const ssoSettings = await storage.getSsoSettings();
-      console.log("Initializing SSO strategy. Enabled:", ssoSettings?.isEnabled);
+      const settings = await storage.getSsoSettings();
+      console.log("Initializing SSO strategy. Enabled:", settings?.isEnabled);
       
-      const getSamlOptions = async (req: Request) => {
-        const settings = await storage.getSsoSettings();
-        if (!settings || !settings.isEnabled) throw new Error("SSO not enabled");
-        
-        const host = req.get("host");
-        const proto = req.headers["x-forwarded-proto"] || req.protocol;
-        const protocol = Array.isArray(proto) ? proto[0] : proto;
-        const baseUrl = process.env.APP_URL || `${protocol}://${host}`;
-        const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
+      if (!settings || !settings.isEnabled || !settings.entryPoint || !settings.publicKey) {
+        console.log("SSO not fully configured, skipping SAML strategy registration");
+        try { passport.unuse("saml"); } catch {}
+        return;
+      }
 
-        console.log(`SAML Config: BaseUrl=${baseUrl}, Callback=${callbackUrl}, Issuer=${settings.spEntityId}`);
+      const baseUrl = process.env.APP_URL || settings.spEntityId;
+      const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
 
-        return {
+      console.log(`SAML Config: Issuer=${settings.spEntityId}, CallbackUrl=${callbackUrl}`);
+
+      const samlStrategy = new SamlStrategy(
+        {
           callbackUrl,
           entryPoint: settings.entryPoint,
-          issuer: settings.spEntityId || baseUrl,
+          issuer: settings.spEntityId,
           idpIssuer: settings.idpEntityId,
-          cert: settings.publicKey, // legacy support
           idpCert: settings.publicKey,
           logoutUrl: settings.logoutUrl || undefined,
-          signatureAlgorithm: 'sha256',
-          digestAlgorithm: 'sha256',
+          signatureAlgorithm: 'sha256' as const,
+          digestAlgorithm: 'sha256' as const,
           disableRequestedAuthnContext: true,
-        };
-      };
-
-      const samlStrategy = new MultiSamlStrategy(
-        {
-          callbackUrl: "https://placeholder/api/auth/saml/callback",
-          issuer: "placeholder-issuer",
-          idpCert: "-----BEGIN CERTIFICATE-----\nplaceholder\n-----END CERTIFICATE-----",
-          getSamlOptions: (req, done) => {
-            getSamlOptions(req as Request)
-              .then(options => done(null, options as any))
-              .catch(err => {
-                console.error("Error in getSamlOptions:", err.message);
-                done(err);
-              });
-          }
         } as any,
-        (async (profile: any, done: any) => {
+        async (profile: any, done: any) => {
           try {
             console.log("SAML Profile received:", profile?.nameID);
             if (!profile?.nameID) return done(new Error("SAML Profile is missing nameID"));
             
             let user = await storage.getUserByUsername(profile.nameID);
             if (!user) {
-              const settings = await storage.getSsoSettings();
-              if (settings?.jitProvisioning) {
+              const currentSettings = await storage.getSsoSettings();
+              if (currentSettings?.jitProvisioning) {
                 console.log("JIT Provisioning user:", profile.nameID);
                 user = await storage.createUser({
                   username: profile.nameID,
@@ -139,8 +123,8 @@ export async function registerRoutes(
             console.error("SAML Strategy error:", err);
             return done(err);
           }
-        }) as any,
-        ((profile: any, done: any) => done(null, profile)) as any
+        },
+        (profile: any, done: any) => done(null, profile)
       );
       
       passport.use("saml", samlStrategy as any);
@@ -149,14 +133,19 @@ export async function registerRoutes(
       console.error("Failed to initialize SSO:", err);
     }
   };
-  // Initialize immediately but don't block registerRoutes if it's slow
   setupSso();
 
   // === SSO Routes ===
   app.get("/api/auth/saml/login", async (req, res, next) => {
     const settings = await storage.getSsoSettings();
     if (!settings?.isEnabled) {
-      return res.status(400).json({ message: "SSO is not enabled" });
+      return res.status(400).json({ message: "SSO is not enabled. Please configure SSO in the admin settings first." });
+    }
+    if (!settings.entryPoint) {
+      return res.status(400).json({ message: "SSO is not fully configured. The Identity Provider Entry Point URL is missing. Please complete the SSO configuration in admin settings." });
+    }
+    if (!settings.publicKey) {
+      return res.status(400).json({ message: "SSO is not fully configured. The Identity Provider Certificate is missing. Please complete the SSO configuration in admin settings." });
     }
     console.log("Initiating SAML Login redirect");
     passport.authenticate("saml", { 
@@ -177,45 +166,22 @@ export async function registerRoutes(
       const settings = await storage.getSsoSettings();
       if (!settings?.isEnabled) return res.status(404).send("SSO not enabled");
       
-      const strategy = new MultiSamlStrategy(
-        {
-          callbackUrl: `${req.protocol}://${req.get("host")}/api/auth/saml/callback`,
-          issuer: settings.spEntityId,
-          cert: settings.publicKey || "placeholder", // Some versions use 'cert' instead of 'idpCert'
-          idpCert: settings.publicKey || "placeholder", // Required for constructor in newer versions
-          getSamlOptions: (req: any, done: any) => {
-            done(null, {
-              callbackUrl: `${req.protocol}://${req.get("host")}/api/auth/saml/callback`,
-              path: "/api/auth/saml/callback",
-              entryPoint: settings.entryPoint || "http://placeholder",
-              issuer: settings.spEntityId,
-              idpIssuer: settings.idpEntityId || "http://placeholder",
-              cert: settings.publicKey || "placeholder",
-            } as any);
-          }
-        } as any,
-        ((profile: any, done: any) => {
-          done(null, profile);
-        }) as any,
-        ((profile: any, done: any) => {
-          done(null, profile);
-        }) as any
-      );
-
-      res.type("application/xml");
-      // Use a placeholder if publicKey is empty for metadata generation
-      const xml = strategy.generateServiceProviderMetadata(settings.publicKey || "-----BEGIN CERTIFICATE-----\nplaceholder\n-----END CERTIFICATE-----");
-      
-      // Fix ACS URL in metadata to use the actual host
       const host = req.get("host");
       const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-      const actualAcsUrl = `${protocol}://${host}/api/auth/saml/callback`;
-      
-      // passport-saml generates metadata using the options provided.
-      // We'll manually ensure the Location attribute is correct in the final XML.
-      const formattedXml = xml.replace(/Location="[^"]*\/api\/auth\/saml\/callback"/g, `Location="${actualAcsUrl}"`);
-      
-      res.status(200).send(formattedXml);
+      const baseUrl = process.env.APP_URL || `${protocol}://${host}`;
+      const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
+
+      const saml = new SAML({
+        callbackUrl,
+        entryPoint: settings.entryPoint || "http://placeholder",
+        issuer: settings.spEntityId,
+        idpIssuer: settings.idpEntityId || "http://placeholder",
+        idpCert: settings.publicKey || "placeholder",
+      } as any);
+
+      res.type("application/xml");
+      const xml = saml.generateServiceProviderMetadata(null, settings.publicKey || null);
+      res.status(200).send(xml);
     } catch (err) {
       console.error("Metadata generation error:", err);
       res.status(500).send("Internal Server Error: " + (err as Error).message);

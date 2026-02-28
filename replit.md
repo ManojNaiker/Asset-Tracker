@@ -41,7 +41,8 @@ Pages are organized in `client/src/pages/` with a `LayoutShell` component provid
 
 ### Backend (`server/`)
 - **Framework**: Express.js with TypeScript, run via `tsx` in development
-- **Authentication**: Passport.js with `passport-local` strategy, session-based auth stored in PostgreSQL via `connect-pg-simple`
+- **Authentication**: Passport.js with `passport-local` and `@node-saml/passport-saml` (SAML SSO) strategies, session-based auth stored in PostgreSQL via `connect-pg-simple`
+- **SSO**: SAML 2.0 SSO via `SamlStrategy` from `@node-saml/passport-saml`. SSO settings stored in `sso_settings` table. Strategy is initialized at startup and re-initialized when admin updates SSO settings. The `spEntityId` from SSO settings is used as the base URL for callback URLs when `APP_URL` env var is not set.
 - **Password Security**: `bcryptjs` for password hashing
 - **File Uploads**: `multer` with disk storage to `client/public/uploads/`
 - **API Design**: RESTful JSON APIs under `/api/` prefix. Route definitions are shared between client and server via `shared/routes.ts`

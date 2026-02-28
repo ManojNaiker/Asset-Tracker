@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Building2, ArrowRight } from "lucide-react";
+import { Building2, ArrowRight, AlertCircle } from "lucide-react";
 import { Redirect } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -17,7 +18,38 @@ const loginSchema = z.object({
 
 export default function AuthPage() {
   const { user, loginMutation } = useAuth();
-  
+  const { toast } = useToast();
+  const [ssoLoading, setSsoLoading] = useState(false);
+
+  const handleSsoLogin = async () => {
+    setSsoLoading(true);
+    try {
+      const res = await fetch("/api/auth/saml/login", { redirect: "manual" });
+      if (res.type === "opaqueredirect" || res.status === 302 || res.status === 301) {
+        window.location.href = "/api/auth/saml/login";
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json();
+        toast({
+          title: "SSO Login Failed",
+          description: data.message || "Unable to initiate SSO login. Please contact your administrator.",
+          variant: "destructive",
+        });
+      } else {
+        window.location.href = "/api/auth/saml/login";
+      }
+    } catch {
+      toast({
+        title: "SSO Login Failed",
+        description: "Unable to connect to the SSO service. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setSsoLoading(false);
+    }
+  };
+
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -125,10 +157,12 @@ export default function AuthPage() {
                     type="button"
                     variant="outline"
                     className="w-full h-11 text-base font-semibold border-slate-200 hover:bg-slate-50 shadow-sm"
-                    onClick={() => window.location.href = "/api/auth/saml/login"}
+                    onClick={handleSsoLogin}
+                    disabled={ssoLoading}
+                    data-testid="button-sso-login"
                 >
                   <Building2 className="mr-2 w-5 h-5 text-blue-600" />
-                  Sign in with SSO
+                  {ssoLoading ? "Connecting..." : "Sign in with SSO"}
                 </Button>
               </form>
             </Form>
