@@ -71,6 +71,15 @@ export async function registerRoutes(
   };
 
   // === SSO Setup ===
+  const getSsoBaseUrl = (spEntityId?: string): string => {
+    if (process.env.APP_URL) return process.env.APP_URL;
+    const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0];
+    if (replitDomain) return `https://${replitDomain}`;
+    if (spEntityId && /^https?:\/\//.test(spEntityId)) return spEntityId;
+    console.warn("SSO Warning: Could not determine a valid base URL. Set APP_URL environment variable.");
+    return "https://localhost";
+  };
+
   const setupSso = async () => {
     try {
       const settings = await storage.getSsoSettings();
@@ -82,18 +91,7 @@ export async function registerRoutes(
         return;
       }
 
-      const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0];
-      let baseUrl = process.env.APP_URL;
-      if (!baseUrl && replitDomain) {
-        baseUrl = `https://${replitDomain}`;
-      }
-      if (!baseUrl && /^https?:\/\//.test(settings.spEntityId)) {
-        baseUrl = settings.spEntityId;
-      }
-      if (!baseUrl) {
-        console.warn("SSO Warning: Could not determine a valid base URL for callback. Set APP_URL environment variable or use a full URL as the SP Entity ID.");
-        baseUrl = "https://localhost";
-      }
+      const baseUrl = getSsoBaseUrl(settings.spEntityId);
       const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
 
       console.log(`SAML Config: Issuer=${settings.spEntityId}, CallbackUrl=${callbackUrl}`);
@@ -192,9 +190,7 @@ export async function registerRoutes(
       const settings = await storage.getSsoSettings();
       if (!settings?.isEnabled) return res.status(404).send("SSO not enabled");
       
-      const host = req.get("host");
-      const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-      const baseUrl = process.env.APP_URL || `${protocol}://${host}`;
+      const baseUrl = getSsoBaseUrl(settings.spEntityId);
       const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
 
       const saml = new SAML({
