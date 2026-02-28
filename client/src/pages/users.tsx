@@ -247,7 +247,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                             <FormMessage />
                                         </FormItem>
                                     )}
-                                激/ />
+                                />
                                 <Button type="submit" className="w-full" disabled={createMutation.isPending}>
                                     {createMutation.isPending ? "Creating..." : "Create User"}
                                 </Button>
