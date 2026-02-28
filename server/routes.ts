@@ -82,7 +82,18 @@ export async function registerRoutes(
         return;
       }
 
-      const baseUrl = process.env.APP_URL || settings.spEntityId;
+      const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0];
+      let baseUrl = process.env.APP_URL;
+      if (!baseUrl && replitDomain) {
+        baseUrl = `https://${replitDomain}`;
+      }
+      if (!baseUrl && /^https?:\/\//.test(settings.spEntityId)) {
+        baseUrl = settings.spEntityId;
+      }
+      if (!baseUrl) {
+        console.warn("SSO Warning: Could not determine a valid base URL for callback. Set APP_URL environment variable or use a full URL as the SP Entity ID.");
+        baseUrl = "https://localhost";
+      }
       const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
 
       console.log(`SAML Config: Issuer=${settings.spEntityId}, CallbackUrl=${callbackUrl}`);
@@ -154,12 +165,27 @@ export async function registerRoutes(
     })(req, res, next);
   });
 
-  app.post("/api/auth/saml/callback", 
-    passport.authenticate("saml", { failureRedirect: "/auth", failureFlash: true }),
-    (req, res) => {
-      res.redirect("/");
-    }
-  );
+  app.post("/api/auth/saml/callback", (req, res, next) => {
+    console.log("SAML callback received");
+    passport.authenticate("saml", (err: any, user: any, info: any) => {
+      if (err) {
+        console.error("SAML callback authentication error:", err.message || err);
+        return res.redirect("/auth?error=sso_error");
+      }
+      if (!user) {
+        console.error("SAML callback: No user returned.", info?.message || "");
+        return res.redirect("/auth?error=sso_no_user");
+      }
+      req.logIn(user, (loginErr) => {
+        if (loginErr) {
+          console.error("SAML callback: Login error:", loginErr.message);
+          return res.redirect("/auth?error=sso_login_error");
+        }
+        console.log("SAML login successful for user:", (user as User).username);
+        return res.redirect("/");
+      });
+    })(req, res, next);
+  });
 
   app.get("/api/auth/saml/metadata", async (req, res) => {
     try {

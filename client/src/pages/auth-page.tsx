@@ -21,6 +21,26 @@ export default function AuthPage() {
   const { toast } = useToast();
   const [ssoLoading, setSsoLoading] = useState(false);
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const ssoError = urlParams.get("error");
+  if (ssoError && !sessionStorage.getItem("sso_error_shown")) {
+    sessionStorage.setItem("sso_error_shown", "1");
+    const errorMessages: Record<string, string> = {
+      sso_error: "SSO authentication failed. Please check with your administrator that the SSO configuration is correct.",
+      sso_no_user: "SSO login succeeded but your account was not found. Please contact your administrator.",
+      sso_login_error: "SSO login failed due to a server error. Please try again.",
+    };
+    setTimeout(() => {
+      toast({
+        title: "SSO Login Failed",
+        description: errorMessages[ssoError] || "An unknown SSO error occurred.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, "", "/auth");
+      sessionStorage.removeItem("sso_error_shown");
+    }, 100);
+  }
+
   const handleSsoLogin = async () => {
     setSsoLoading(true);
     try {
