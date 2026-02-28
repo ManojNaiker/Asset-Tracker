@@ -43,11 +43,13 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  app.set("trust proxy", 1);
   app.use(session({
     store: storage.sessionStore,
     secret: process.env.SESSION_SECRET || "default_secret",
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     cookie: { 
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       secure: false, // Set to false since we might not be on HTTPS in dev
@@ -183,11 +185,19 @@ export async function registerRoutes(
       }
       req.logIn(user, (loginErr) => {
         if (loginErr) {
-          console.error("SAML callback: Login error:", loginErr.message);
+          console.error("SAML callback: Login error:", loginErr.message || loginErr);
           return res.redirect("/auth?error=sso_login_error");
         }
         console.log("SAML login successful for user:", (user as User).username);
-        return res.redirect("/");
+        
+        // Ensure session is saved before redirecting to prevent race conditions where 
+        // the subsequent request arrives before the session is persisted.
+        req.session.save((err) => {
+          if (err) {
+            console.error("SAML callback: Session save error:", err);
+          }
+          return res.redirect("/");
+        });
       });
     })(req, res, next);
   });
