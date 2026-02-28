@@ -341,7 +341,7 @@ export async function registerRoutes(
 
   app.post("/api/users", requireAdmin, async (req, res) => {
     try {
-      const { username, password, role } = req.body;
+      const { username, password, role, fullName, employeeCode, designation, department } = req.body;
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
@@ -356,6 +356,10 @@ export async function registerRoutes(
         username,
         password: hashedPassword,
         role: role || "employee",
+        fullName,
+        employeeCode,
+        designation,
+        department,
         mustChangePassword: true
       });
 
@@ -369,13 +373,17 @@ export async function registerRoutes(
   app.patch("/api/users/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { username, role, password, isLocked } = req.body;
+      const { username, role, password, isLocked, fullName, employeeCode, designation, department } = req.body;
       const updates: any = {};
       
       if (username) updates.username = username;
       if (role) updates.role = role;
       if (password) updates.password = await bcrypt.hash(password, 10);
       if (typeof isLocked === 'boolean') updates.isLocked = isLocked;
+      if (fullName !== undefined) updates.fullName = fullName;
+      if (employeeCode !== undefined) updates.employeeCode = employeeCode;
+      if (designation !== undefined) updates.designation = designation;
+      if (department !== undefined) updates.department = department;
 
       const user = await storage.updateUser(id, updates);
       res.json(user);

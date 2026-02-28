@@ -94,6 +94,10 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
             username: "",
             password: "",
             role: "employee",
+            fullName: "",
+            employeeCode: "",
+            designation: "",
+            department: "",
             mustChangePassword: false
         }
     });
@@ -102,7 +106,11 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
         defaultValues: {
             username: "",
             role: "employee",
-            password: ""
+            password: "",
+            fullName: "",
+            employeeCode: "",
+            designation: "",
+            department: ""
         }
     });
 
@@ -150,17 +158,85 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                         </DialogHeader>
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit((v) => createMutation.mutate(v))} className="space-y-4">
-                                <FormField
-                                    control={form.control}
-                                    name="username"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Username (Email)</FormLabel>
-                                            <FormControl><Input {...field} placeholder="email@lightmf.com" /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="fullName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Full Name</FormLabel>
+                                                <FormControl><Input {...field} placeholder="John Doe" /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="username"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Email ID</FormLabel>
+                                                <FormControl><Input {...field} placeholder="email@lightmf.com" /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="employeeCode"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Employee Code</FormLabel>
+                                                <FormControl><Input {...field} placeholder="EMP001" /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="designation"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Designation</FormLabel>
+                                                <FormControl><Input {...field} placeholder="Software Engineer" /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="department"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Department</FormLabel>
+                                                <FormControl><Input {...field} placeholder="IT" /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="role"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Role</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        {userRoles.map(role => (
+                                                            <SelectItem key={role} value={role} className="capitalize">{role}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                                 <FormField
                                     control={form.control}
                                     name="password"
@@ -171,25 +247,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                             <FormMessage />
                                         </FormItem>
                                     )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="role"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Role</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                                <SelectContent>
-                                                    {userRoles.map(role => (
-                                                        <SelectItem key={role} value={role} className="capitalize">{role}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                激/ />
                                 <Button type="submit" className="w-full" disabled={createMutation.isPending}>
                                     {createMutation.isPending ? "Creating..." : "Create User"}
                                 </Button>
@@ -246,29 +304,105 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                     size="icon" 
                                                     onClick={() => {
                                                         setEditingUser(u);
-                                                        editForm.reset({ username: u.username, role: u.role, password: "" });
+                                                        editForm.reset({ 
+                                                            username: u.username, 
+                                                            role: u.role, 
+                                                            password: "",
+                                                            fullName: u.fullName || "",
+                                                            employeeCode: u.employeeCode || "",
+                                                            designation: u.designation || "",
+                                                            department: u.department || ""
+                                                        });
                                                     }}
                                                 >
                                                     <Edit2 className="w-4 h-4" />
                                                 </Button>
                                             </DialogTrigger>
-                                            <DialogContent>
+                                            <DialogContent className="max-w-2xl">
                                                 <DialogHeader>
                                                     <DialogTitle>Edit User: {u.username}</DialogTitle>
                                                 </DialogHeader>
                                                 <Form {...editForm}>
                                                     <form onSubmit={editForm.handleSubmit((v) => updateMutation.mutate({ id: u.id, values: v }))} className="space-y-4">
-                                                        <FormField
-                                                            control={editForm.control}
-                                                            name="username"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormLabel>Username (Email)</FormLabel>
-                                                                    <FormControl><Input {...field} /></FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <FormField
+                                                                control={editForm.control}
+                                                                name="fullName"
+                                                                render={({ field }) => (
+                                                                    <FormItem>
+                                                                        <FormLabel>Full Name</FormLabel>
+                                                                        <FormControl><Input {...field} /></FormControl>
+                                                                        <FormMessage />
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                            <FormField
+                                                                control={editForm.control}
+                                                                name="username"
+                                                                render={({ field }) => (
+                                                                    <FormItem>
+                                                                        <FormLabel>Email ID</FormLabel>
+                                                                        <FormControl><Input {...field} /></FormControl>
+                                                                        <FormMessage />
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <FormField
+                                                                control={editForm.control}
+                                                                name="employeeCode"
+                                                                render={({ field }) => (
+                                                                    <FormItem>
+                                                                        <FormLabel>Employee Code</FormLabel>
+                                                                        <FormControl><Input {...field} /></FormControl>
+                                                                        <FormMessage />
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                            <FormField
+                                                                control={editForm.control}
+                                                                name="designation"
+                                                                render={({ field }) => (
+                                                                    <FormItem>
+                                                                        <FormLabel>Designation</FormLabel>
+                                                                        <FormControl><Input {...field} /></FormControl>
+                                                                        <FormMessage />
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <FormField
+                                                                control={editForm.control}
+                                                                name="department"
+                                                                render={({ field }) => (
+                                                                    <FormItem>
+                                                                        <FormLabel>Department</FormLabel>
+                                                                        <FormControl><Input {...field} /></FormControl>
+                                                                        <FormMessage />
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                            <FormField
+                                                                control={editForm.control}
+                                                                name="role"
+                                                                render={({ field }) => (
+                                                                    <FormItem>
+                                                                        <FormLabel>Role</FormLabel>
+                                                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                                            <SelectContent>
+                                                                                {userRoles.map(role => (
+                                                                                    <SelectItem key={role} value={role} className="capitalize">{role}</SelectItem>
+                                                                                ))}
+                                                                            </SelectContent>
+                                                                        </Select>
+                                                                        <FormMessage />
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                        </div>
                                                         <FormField
                                                             control={editForm.control}
                                                             name="password"
@@ -276,24 +410,6 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                                 <FormItem>
                                                                     <FormLabel>New Password (Leave blank to keep current)</FormLabel>
                                                                     <FormControl><Input {...field} type="password" /></FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                        <FormField
-                                                            control={editForm.control}
-                                                            name="role"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormLabel>Role</FormLabel>
-                                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                                                        <SelectContent>
-                                                                            {userRoles.map(role => (
-                                                                                <SelectItem key={role} value={role} className="capitalize">{role}</SelectItem>
-                                                                            ))}
-                                                                        </SelectContent>
-                                                                    </Select>
                                                                     <FormMessage />
                                                                 </FormItem>
                                                             )}
