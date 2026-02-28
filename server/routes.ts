@@ -333,6 +333,67 @@ export async function registerRoutes(
     res.json({ message: "Password updated successfully" });
   });
 
+  // Users
+  app.get("/api/users", requireAdmin, async (req, res) => {
+    const allUsers = await db.select().from(users).orderBy(desc(users.createdAt));
+    res.json(allUsers);
+  });
+
+  app.post("/api/users", requireAdmin, async (req, res) => {
+    try {
+      const { username, password, role } = req.body;
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ message: "User already exists" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await storage.createUser({
+        username,
+        password: hashedPassword,
+        role: role || "employee",
+        mustChangePassword: true
+      });
+
+      res.status(201).json(user);
+    } catch (err) {
+      console.error("Error creating user:", err);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.patch("/api/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { username, role, password, isLocked } = req.body;
+      const updates: any = {};
+      
+      if (username) updates.username = username;
+      if (role) updates.role = role;
+      if (password) updates.password = await bcrypt.hash(password, 10);
+      if (typeof isLocked === 'boolean') updates.isLocked = isLocked;
+
+      const user = await storage.updateUser(id, updates);
+      res.json(user);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.delete("/api/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteUser(id);
+      res.sendStatus(204);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   // Employees
   app.get(api.employees.list.path, requireAuth, async (req, res) => {
     const employees = await storage.getEmployees(req.query as { search?: string, branch?: string, department?: string });
