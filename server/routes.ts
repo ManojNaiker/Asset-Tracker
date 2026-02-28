@@ -85,14 +85,18 @@ export async function registerRoutes(
             getSamlOptions: async (req: any, done: any) => {
               try {
                 const settings = await storage.getSsoSettings();
-                if (!settings) return done(new Error("SSO not configured"));
+                if (!settings || !settings.isEnabled) return done(new Error("SSO not enabled"));
+                
+                // Ensure required fields are present for the strategy
+                if (!settings.entryPoint) return done(new Error("SAML Entry Point is not configured in SSO settings"));
+                
                 return done(null, {
-                  callbackUrl: settings.isEnabled ? `${req.protocol}://${req.get("host")}/api/auth/saml/callback` : "http://localhost/api/auth/saml/callback",
+                  callbackUrl: `${req.protocol}://${req.get("host")}/api/auth/saml/callback`,
                   path: "/api/auth/saml/callback",
                   entryPoint: settings.entryPoint,
                   issuer: settings.spEntityId,
                   idpIssuer: settings.idpEntityId,
-                  cert: settings.publicKey,
+                  cert: settings.publicKey || "placeholder",
                   logoutUrl: settings.logoutUrl || undefined,
                 } as any);
               } catch (err) {
