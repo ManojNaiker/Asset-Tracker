@@ -76,69 +76,45 @@ export async function registerRoutes(
       console.log("Initializing SSO strategy. Enabled:", ssoSettings?.isEnabled);
       
       if (ssoSettings?.isEnabled) {
-        // Validation: passport-saml MultiSamlStrategy requires these in the constructor
-        const strategyConfig: any = {
-          // Required by newer passport-saml versions even if overridden in getSamlOptions
-          callbackUrl: process.env.APP_URL ? `${process.env.APP_URL}/api/auth/saml/callback` : "http://localhost:5000/api/auth/saml/callback",
-          issuer: ssoSettings.spEntityId || "http://localhost:5000",
-          idpCert: ssoSettings.publicKey || "placeholder",
-          entryPoint: ssoSettings.entryPoint || "https://placeholder.com",
-          getSamlOptions: async (req: any, done: any) => {
-            try {
-              const settings = await storage.getSsoSettings();
-              
-              if (!settings || !settings.isEnabled) {
-                console.error("SAML Error: SSO not enabled in settings");
-                return done(new Error("SSO is not enabled in settings"));
-              }
-              
-              if (!settings.entryPoint) {
-                console.error("SAML Error: SAML Entry Point missing");
-                return done(new Error("SAML Entry Point (Login URL) is missing in SSO settings"));
-              }
-              
-              // Correctly identify the base URL, especially behind Replit's proxy
-              const host = req.get("host");
-              const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-              const baseUrl = process.env.APP_URL || `${protocol}://${host}`;
-              const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
-              
-              console.log("SAML Options Generated:", {
-                callbackUrl,
-                issuer: settings.spEntityId,
-                entryPoint: settings.entryPoint
-              });
+        // Validation: passport-saml Strategy configuration
+        const getSamlOptions = async (req: Request) => {
+          const settings = await storage.getSsoSettings();
+          if (!settings || !settings.isEnabled) throw new Error("SSO not enabled");
+          
+          const host = req.get("host");
+          const proto = req.headers["x-forwarded-proto"] || req.protocol;
+          const protocol = Array.isArray(proto) ? proto[0] : proto;
+          const baseUrl = process.env.APP_URL || `${protocol}://${host}`;
+          const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
 
-              const options = {
-                callbackUrl: callbackUrl,
-                path: "/api/auth/saml/callback",
-                entryPoint: settings.entryPoint,
-                issuer: settings.spEntityId || baseUrl,
-                idpIssuer: settings.idpEntityId,
-                idpCert: settings.publicKey,
-                logoutUrl: settings.logoutUrl || undefined,
-                // Security and compatibility settings
-                signatureAlgorithm: 'sha256',
-                digestAlgorithm: 'sha256',
-                disableRequestedAuthnContext: true, // Often helps with compatibility
-              };
+          console.log(`SAML Config: BaseUrl=${baseUrl}, Callback=${callbackUrl}, Issuer=${settings.spEntityId}`);
 
-              return done(null, options as any);
-            } catch (err) {
-              console.error("SAML getSamlOptions error:", err);
-              return done(err as Error);
-            }
-          }
+          return {
+            callbackUrl,
+            entryPoint: settings.entryPoint,
+            issuer: settings.spEntityId || baseUrl,
+            idpIssuer: settings.idpEntityId,
+            cert: settings.publicKey, // legacy support
+            idpCert: settings.publicKey,
+            logoutUrl: settings.logoutUrl || undefined,
+            signatureAlgorithm: 'sha256',
+            digestAlgorithm: 'sha256',
+            disableRequestedAuthnContext: true,
+          };
         };
 
-        const samlStrategy = new (MultiSamlStrategy as any)(
-          strategyConfig,
+        const samlStrategy = new MultiSamlStrategy(
+          {
+            getSamlOptions: (req, done) => {
+              getSamlOptions(req as Request)
+                .then(options => done(null, options as any))
+                .catch(err => done(err));
+            }
+          } as any,
           (async (profile: any, done: any) => {
             try {
               console.log("SAML Profile received:", profile?.nameID);
-              if (!profile || !profile.nameID) {
-                return done(new Error("SAML Profile is missing nameID"));
-              }
+              if (!profile?.nameID) return done(new Error("SAML Profile is missing nameID"));
               
               let user = await storage.getUserByUsername(profile.nameID);
               if (!user) {
@@ -160,10 +136,9 @@ export async function registerRoutes(
               return done(err);
             }
           }) as any,
-          ((profile: any, done: any) => {
-            done(null, profile);
-          }) as any
+          ((profile: any, done: any) => done(null, profile)) as any
         );
+        
         passport.use("saml", samlStrategy as any);
         console.log("SAML strategy registered with passport");
       }
@@ -179,13 +154,7 @@ export async function registerRoutes(
     passport.authenticate("saml", { 
       failureRedirect: "/auth",
       failureFlash: true 
-    })(req, res, (err: any) => {
-      if (err) {
-        console.error("SAML Auth Initiation Error:", err);
-        return res.redirect("/auth?error=saml_init_failed");
-      }
-      next();
-    });
+    })(req, res, next);
   });
 
   app.post("/api/auth/saml/callback", 
