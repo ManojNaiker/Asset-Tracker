@@ -81,7 +81,6 @@ export async function registerRoutes(
           // Required by newer passport-saml versions even if overridden in getSamlOptions
           callbackUrl: process.env.APP_URL ? `${process.env.APP_URL}/api/auth/saml/callback` : "http://localhost:5000/api/auth/saml/callback",
           issuer: ssoSettings.spEntityId || "http://localhost:5000",
-          cert: ssoSettings.publicKey || "placeholder",
           idpCert: ssoSettings.publicKey || "placeholder",
           entryPoint: ssoSettings.entryPoint || "https://placeholder.com",
           getSamlOptions: async (req: any, done: any) => {
@@ -89,17 +88,26 @@ export async function registerRoutes(
               const settings = await storage.getSsoSettings();
               
               if (!settings || !settings.isEnabled) {
+                console.error("SAML Error: SSO not enabled in settings");
                 return done(new Error("SSO is not enabled in settings"));
               }
               
               if (!settings.entryPoint) {
+                console.error("SAML Error: SAML Entry Point missing");
                 return done(new Error("SAML Entry Point (Login URL) is missing in SSO settings"));
               }
               
-              const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get("host")}`;
+              // Correctly identify the base URL, especially behind Replit's proxy
+              const host = req.get("host");
+              const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+              const baseUrl = process.env.APP_URL || `${protocol}://${host}`;
               const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
               
-              console.log("SAML Options Generated - Callback URL:", callbackUrl);
+              console.log("SAML Options Generated:", {
+                callbackUrl,
+                issuer: settings.spEntityId,
+                entryPoint: settings.entryPoint
+              });
 
               const options = {
                 callbackUrl: callbackUrl,
@@ -107,13 +115,17 @@ export async function registerRoutes(
                 entryPoint: settings.entryPoint,
                 issuer: settings.spEntityId || baseUrl,
                 idpIssuer: settings.idpEntityId,
-                cert: settings.publicKey || "placeholder",
-                idpCert: settings.publicKey || "placeholder",
+                idpCert: settings.publicKey,
                 logoutUrl: settings.logoutUrl || undefined,
+                // Security and compatibility settings
+                signatureAlgorithm: 'sha256',
+                digestAlgorithm: 'sha256',
+                disableRequestedAuthnContext: true, // Often helps with compatibility
               };
 
               return done(null, options as any);
             } catch (err) {
+              console.error("SAML getSamlOptions error:", err);
               return done(err as Error);
             }
           }
@@ -123,6 +135,7 @@ export async function registerRoutes(
           strategyConfig,
           (async (profile: any, done: any) => {
             try {
+              console.log("SAML Profile received:", profile?.nameID);
               if (!profile || !profile.nameID) {
                 return done(new Error("SAML Profile is missing nameID"));
               }
@@ -131,6 +144,7 @@ export async function registerRoutes(
               if (!user) {
                 const settings = await storage.getSsoSettings();
                 if (settings?.jitProvisioning) {
+                  console.log("JIT Provisioning user:", profile.nameID);
                   user = await storage.createUser({
                     username: profile.nameID,
                     password: await bcrypt.hash(Math.random().toString(36), 10),
@@ -142,6 +156,7 @@ export async function registerRoutes(
               }
               return done(null, user);
             } catch (err) {
+              console.error("SAML Strategy error:", err);
               return done(err);
             }
           }) as any,
@@ -160,12 +175,17 @@ export async function registerRoutes(
 
   // === SSO Routes ===
   app.get("/api/auth/saml/login", (req, res, next) => {
-    try {
-      passport.authenticate("saml", { failureRedirect: "/auth", failureFlash: true })(req, res, next);
-    } catch (err) {
-      console.error("Auth error:", err);
-      res.redirect("/auth");
-    }
+    console.log("Initiating SAML Login redirect");
+    passport.authenticate("saml", { 
+      failureRedirect: "/auth",
+      failureFlash: true 
+    })(req, res, (err: any) => {
+      if (err) {
+        console.error("SAML Auth Initiation Error:", err);
+        return res.redirect("/auth?error=saml_init_failed");
+      }
+      next();
+    });
   });
 
   app.post("/api/auth/saml/callback", 
@@ -211,7 +231,7 @@ export async function registerRoutes(
       
       // Fix ACS URL in metadata to use the actual host
       const host = req.get("host");
-      const protocol = req.protocol;
+      const protocol = req.headers["x-forwarded-proto"] || req.protocol;
       const actualAcsUrl = `${protocol}://${host}/api/auth/saml/callback`;
       
       // passport-saml generates metadata using the options provided.
