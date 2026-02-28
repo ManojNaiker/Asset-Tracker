@@ -235,9 +235,9 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Create New User</DialogTitle>
-                                </DialogHeader>
+                                    <DialogHeader>
+                                        <DialogTitle>Create New User</DialogTitle>
+                                    </DialogHeader>
                                 <Form {...form}>
                                     <form onSubmit={form.handleSubmit((v) => createMutation.mutate(v))} className="space-y-4">
                                         <div className="grid grid-cols-2 gap-4">
@@ -344,14 +344,15 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                 </FormItem>
                                             )}
                                         />
-                                        <Button type="submit" className="w-full" disabled={createMutation.isPending}>
-                                            {createMutation.isPending ? "Creating..." : "Create User"}
-                                        </Button>
-                                    </form>
-                                </Form>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
+                                    <Button type="submit" className="w-full" disabled={createMutation.isPending}>
+                                        {createMutation.isPending ? "Creating..." : "Create User"}
+                                    </Button>
+                                </form>
+                            </Form>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+            </div>
 
                     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                         <Table>
@@ -579,7 +580,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent>
-                                <DialogHeader><DialogTitle>Add Department</DialogTitle></DialogHeader>
+                                    <DialogHeader><DialogTitle>Add Department</DialogTitle></DialogHeader>
                                 <form onSubmit={(e: any) => {
                                     e.preventDefault();
                                     createDeptMutation.mutate({ name: e.target.name.value });
@@ -634,7 +635,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent>
-                                <DialogHeader><DialogTitle>Add Designation</DialogTitle></DialogHeader>
+                                    <DialogHeader><DialogTitle>Add Designation</DialogTitle></DialogHeader>
                                 <form onSubmit={(e: any) => {
                                     e.preventDefault();
                                     createDesigMutation.mutate({ name: e.target.name.value });
