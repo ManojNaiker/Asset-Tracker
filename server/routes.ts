@@ -90,8 +90,14 @@ export async function registerRoutes(
                 // Ensure required fields are present for the strategy
                 if (!settings.entryPoint) return done(new Error("SAML Entry Point is not configured in SSO settings"));
                 
+                // Use the configured APP_URL if available, otherwise fallback to request headers
+                const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get("host")}`;
+                const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
+                
+                console.log("SAML Options Generated - Callback URL:", callbackUrl);
+
                 return done(null, {
-                  callbackUrl: `${req.protocol}://${req.get("host")}/api/auth/saml/callback`,
+                  callbackUrl: callbackUrl,
                   path: "/api/auth/saml/callback",
                   entryPoint: settings.entryPoint,
                   issuer: settings.spEntityId,
