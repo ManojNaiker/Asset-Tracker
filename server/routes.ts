@@ -75,73 +75,73 @@ export async function registerRoutes(
       const ssoSettings = await storage.getSsoSettings();
       console.log("Initializing SSO strategy. Enabled:", ssoSettings?.isEnabled);
       
-      if (ssoSettings?.isEnabled) {
-        // Validation: passport-saml Strategy configuration
-        const getSamlOptions = async (req: Request) => {
-          const settings = await storage.getSsoSettings();
-          if (!settings || !settings.isEnabled) throw new Error("SSO not enabled");
-          
-          const host = req.get("host");
-          const proto = req.headers["x-forwarded-proto"] || req.protocol;
-          const protocol = Array.isArray(proto) ? proto[0] : proto;
-          const baseUrl = process.env.APP_URL || `${protocol}://${host}`;
-          const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
-
-          console.log(`SAML Config: BaseUrl=${baseUrl}, Callback=${callbackUrl}, Issuer=${settings.spEntityId}`);
-
-          return {
-            callbackUrl,
-            entryPoint: settings.entryPoint,
-            issuer: settings.spEntityId || baseUrl,
-            idpIssuer: settings.idpEntityId,
-            cert: settings.publicKey, // legacy support
-            idpCert: settings.publicKey,
-            logoutUrl: settings.logoutUrl || undefined,
-            signatureAlgorithm: 'sha256',
-            digestAlgorithm: 'sha256',
-            disableRequestedAuthnContext: true,
-          };
-        };
-
-        const samlStrategy = new MultiSamlStrategy(
-          {
-            getSamlOptions: (req, done) => {
-              getSamlOptions(req as Request)
-                .then(options => done(null, options as any))
-                .catch(err => done(err));
-            }
-          } as any,
-          (async (profile: any, done: any) => {
-            try {
-              console.log("SAML Profile received:", profile?.nameID);
-              if (!profile?.nameID) return done(new Error("SAML Profile is missing nameID"));
-              
-              let user = await storage.getUserByUsername(profile.nameID);
-              if (!user) {
-                const settings = await storage.getSsoSettings();
-                if (settings?.jitProvisioning) {
-                  console.log("JIT Provisioning user:", profile.nameID);
-                  user = await storage.createUser({
-                    username: profile.nameID,
-                    password: await bcrypt.hash(Math.random().toString(36), 10),
-                    role: "employee",
-                  });
-                } else {
-                  return done(null, false, { message: "User not found and JIT provisioning is disabled" });
-                }
-              }
-              return done(null, user);
-            } catch (err) {
-              console.error("SAML Strategy error:", err);
-              return done(err);
-            }
-          }) as any,
-          ((profile: any, done: any) => done(null, profile)) as any
-        );
+      // Always register the strategy if we want to avoid "Unknown authentication strategy" errors
+      // but only if we have settings or we can handle the missing settings in getSamlOptions
+      
+      const getSamlOptions = async (req: Request) => {
+        const settings = await storage.getSsoSettings();
+        if (!settings || !settings.isEnabled) throw new Error("SSO not enabled");
         
-        passport.use("saml", samlStrategy as any);
-        console.log("SAML strategy registered with passport");
-      }
+        const host = req.get("host");
+        const proto = req.headers["x-forwarded-proto"] || req.protocol;
+        const protocol = Array.isArray(proto) ? proto[0] : proto;
+        const baseUrl = process.env.APP_URL || `${protocol}://${host}`;
+        const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
+
+        console.log(`SAML Config: BaseUrl=${baseUrl}, Callback=${callbackUrl}, Issuer=${settings.spEntityId}`);
+
+        return {
+          callbackUrl,
+          entryPoint: settings.entryPoint,
+          issuer: settings.spEntityId || baseUrl,
+          idpIssuer: settings.idpEntityId,
+          cert: settings.publicKey, // legacy support
+          idpCert: settings.publicKey,
+          logoutUrl: settings.logoutUrl || undefined,
+          signatureAlgorithm: 'sha256',
+          digestAlgorithm: 'sha256',
+          disableRequestedAuthnContext: true,
+        };
+      };
+
+      const samlStrategy = new MultiSamlStrategy(
+        {
+          getSamlOptions: (req, done) => {
+            getSamlOptions(req as Request)
+              .then(options => done(null, options as any))
+              .catch(err => done(err));
+          }
+        } as any,
+        (async (profile: any, done: any) => {
+          try {
+            console.log("SAML Profile received:", profile?.nameID);
+            if (!profile?.nameID) return done(new Error("SAML Profile is missing nameID"));
+            
+            let user = await storage.getUserByUsername(profile.nameID);
+            if (!user) {
+              const settings = await storage.getSsoSettings();
+              if (settings?.jitProvisioning) {
+                console.log("JIT Provisioning user:", profile.nameID);
+                user = await storage.createUser({
+                  username: profile.nameID,
+                  password: await bcrypt.hash(Math.random().toString(36), 10),
+                  role: "employee",
+                });
+              } else {
+                return done(null, false, { message: "User not found and JIT provisioning is disabled" });
+              }
+            }
+            return done(null, user);
+          } catch (err) {
+            console.error("SAML Strategy error:", err);
+            return done(err);
+          }
+        }) as any,
+        ((profile: any, done: any) => done(null, profile)) as any
+      );
+      
+      passport.use("saml", samlStrategy as any);
+      console.log("SAML strategy registered with passport");
     } catch (err) {
       console.error("Failed to initialize SSO:", err);
     }
@@ -149,7 +149,11 @@ export async function registerRoutes(
   await setupSso();
 
   // === SSO Routes ===
-  app.get("/api/auth/saml/login", (req, res, next) => {
+  app.get("/api/auth/saml/login", async (req, res, next) => {
+    const settings = await storage.getSsoSettings();
+    if (!settings?.isEnabled) {
+      return res.status(400).json({ message: "SSO is not enabled" });
+    }
     console.log("Initiating SAML Login redirect");
     passport.authenticate("saml", { 
       failureRedirect: "/auth",
