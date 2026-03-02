@@ -129,14 +129,27 @@ function ViewAllocatedAssetsDialog({ employee }: { employee: Employee }) {
                                     <TableHead>Asset SN</TableHead>
                                     <TableHead>Type</TableHead>
                                     <TableHead>Allocated At</TableHead>
+                                    <TableHead>Photo</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {employeeAllocations.map(a => (
                                     <TableRow key={a.id}>
                                         <TableCell className="font-mono">{a.asset.serialNumber}</TableCell>
-                                        <TableCell>{a.asset.type?.name}</TableCell>
+                                        <TableCell>{a.asset.type?.name || 'N/A'}</TableCell>
                                         <TableCell>{new Date(a.allocatedAt).toLocaleDateString()}</TableCell>
+                                        <TableCell>
+                                            {a.imageUrl && (
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <Button variant="outline" size="sm">View Photo</Button>
+                                                    </DialogTrigger>
+                                                    <DialogContent>
+                                                        <img src={a.imageUrl} alt="Asset" className="w-full h-auto rounded-lg" />
+                                                    </DialogContent>
+                                                </Dialog>
+                                            )}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

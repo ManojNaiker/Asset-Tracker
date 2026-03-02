@@ -68,6 +68,7 @@ export const allocations = pgTable("allocations", {
   status: text("status", { enum: allocationStatuses }).default("Active"),
   returnReason: text("return_reason"),
   pdfUrl: text("pdf_url"),
+  imageUrl: text("image_url"),
 });
 
 export const verifications = pgTable("verifications", {

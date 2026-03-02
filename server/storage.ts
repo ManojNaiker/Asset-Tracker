@@ -246,18 +246,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Allocations
-  async getAllocations(): Promise<(Allocation & { asset: Asset, employee: Employee })[]> {
+  async getAllocations(): Promise<(Allocation & { asset: Asset & { type: AssetType }, employee: Employee })[]> {
     const result = await db.select({
       allocation: allocations,
       asset: assets,
+      type: assetTypes,
       employee: employees
     })
     .from(allocations)
     .innerJoin(assets, eq(allocations.assetId, assets.id))
+    .innerJoin(assetTypes, eq(assets.assetTypeId, assetTypes.id))
     .innerJoin(employees, eq(allocations.employeeId, employees.id))
     .orderBy(desc(allocations.allocatedAt));
 
-    return result.map(r => ({ ...r.allocation, asset: r.asset, employee: r.employee }));
+    return result.map(r => ({ ...r.allocation, asset: { ...r.asset, type: r.type }, employee: r.employee }));
   }
 
   async getAllocation(id: number): Promise<Allocation | undefined> {

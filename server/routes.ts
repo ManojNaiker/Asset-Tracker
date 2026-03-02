@@ -661,7 +661,10 @@ export async function registerRoutes(
   app.post(api.allocations.create.path, requireAdmin, async (req, res) => {
     try {
       const input = insertAllocationSchema.parse(req.body);
-      const allocation = await storage.createAllocation(input);
+      const allocation = await storage.createAllocation({
+        ...input,
+        imageUrl: req.body.details?.imageUrl
+      });
       await storage.updateAsset(input.assetId, { status: "Allocated" });
 
       const asset = await storage.getAsset(input.assetId);
