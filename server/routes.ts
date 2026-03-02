@@ -76,7 +76,7 @@ export async function registerRoutes(
   const getSsoBaseUrl = (spEntityId?: string): string => {
     if (process.env.APP_URL) return process.env.APP_URL;
     const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0];
-    if (replitDomain) return `https://${replitDomain}`;
+    if (replitDomain) return "https://" + replitDomain;
     if (spEntityId && /^https?:\/\//.test(spEntityId)) return spEntityId;
     console.warn("SSO Warning: Could not determine a valid base URL. Set APP_URL environment variable.");
     return "https://localhost";
@@ -94,9 +94,9 @@ export async function registerRoutes(
       }
 
       const baseUrl = getSsoBaseUrl(settings.spEntityId);
-      const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
+      const callbackUrl = baseUrl + "/api/auth/saml/callback";
 
-      console.log(`SAML Config: Issuer=${settings.spEntityId}, CallbackUrl=${callbackUrl}`);
+      console.log("SAML Config: Issuer=" + settings.spEntityId + ", CallbackUrl=" + callbackUrl);
 
       const samlStrategy = new SamlStrategy(
         {
@@ -208,7 +208,7 @@ export async function registerRoutes(
       if (!settings?.isEnabled) return res.status(404).send("SSO not enabled");
       
       const baseUrl = getSsoBaseUrl(settings.spEntityId);
-      const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
+      const callbackUrl = baseUrl + "/api/auth/saml/callback";
 
       const saml = new SAML({
         callbackUrl,
@@ -389,7 +389,7 @@ export async function registerRoutes(
 
       const hashedPassword = await bcrypt.hash(password, 10);
       const user = await storage.createUser({
-        username,
+        username: password,
         password: hashedPassword,
         role: role || "employee",
         fullName,
@@ -527,7 +527,7 @@ export async function registerRoutes(
       const asset = await storage.getAsset(assetId);
       await storage.createAuditLog({
         userId: user.id,
-        action: `Asset ${status}`,
+        action: "Asset " + status,
         entityType: "Verification",
         entityId: verification.id,
         details: { assetSerial: asset?.serialNumber, status, remarks }
@@ -543,7 +543,7 @@ export async function registerRoutes(
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
-    const safePath = `/uploads/${req.file.filename}`;
+    const safePath = "/uploads/" + req.file.filename;
     res.json({ url: safePath });
   });
 
@@ -660,23 +660,42 @@ export async function registerRoutes(
 
   app.post(api.allocations.create.path, requireAdmin, async (req, res) => {
     try {
-      const input = insertAllocationSchema.parse(req.body);
+      const { assetId, employeeId, employeeData, assetData, status, remarks, details } = req.body;
+      
+      let finalAssetId = assetId;
+      let finalEmployeeId = employeeId;
+
+      if (employeeData) {
+        const employee = await storage.createEmployee(employeeData);
+        finalEmployeeId = employee.id;
+      }
+
+      if (assetData) {
+        const asset = await storage.createAsset(assetData);
+        finalAssetId = asset.id;
+      }
+
       const allocation = await storage.createAllocation({
-        ...input,
-        imageUrl: req.body.details?.imageUrl
+        assetId: finalAssetId,
+        employeeId: finalEmployeeId,
+        status: status || "Active",
+        remarks,
+        imageUrl: details?.imageUrl
       });
-      await storage.updateAsset(input.assetId, { status: "Allocated" });
 
-      const asset = await storage.getAsset(input.assetId);
-      const employee = await storage.getEmployee(input.employeeId);
+      // Update asset status
+      await storage.updateAsset(finalAssetId, { status: "Allocated" });
 
-      // Send allocation email
+      // Send email notification
       const emailSettings = await storage.getEmailSettings();
-      if (emailSettings && emailSettings.host && employee?.email) {
+      const employee = await storage.getEmployee(finalEmployeeId);
+      const asset = await storage.getAsset(finalAssetId);
+
+      if (emailSettings && employee && employee.email) {
         try {
           const transporter = nodemailer.createTransport({
             host: emailSettings.host,
-            port: emailSettings.port || 587,
+            port: emailSettings.port,
             secure: emailSettings.secure,
             auth: {
               user: emailSettings.user,
@@ -684,70 +703,50 @@ export async function registerRoutes(
             },
           });
 
-          const baseUrl = getSsoBaseUrl();
-          const verificationUrl = `${baseUrl}/my-assets`;
+          const appUrl = getSsoBaseUrl();
+          const verificationLink = appUrl + "/my-assets";
 
           await transporter.sendMail({
-            from: emailSettings.fromEmail || emailSettings.user,
+            from: emailSettings.fromEmail,
             to: employee.email,
-            subject: `Asset Allocated: ${asset?.type.name} - ${asset?.serialNumber}`,
-            html: `
-              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 8px;">
-                <h2 style="color: #1e293b;">Asset Allocation Notification</h2>
-                <p>Hello ${employee.name},</p>
-                <p>A new asset has been allocated to you:</p>
-                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-                  <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; width: 150px;">Asset Type:</td>
-                    <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${asset?.type.name}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Serial Number:</td>
-                    <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${asset?.serialNumber}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Allocation Date:</td>
-                    <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${new Date().toLocaleDateString()}</td>
-                  </tr>
-                </table>
-                <p>Please click the button below to view and acknowledge your allocated assets:</p>
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                    View & Acknowledge Asset
-                  </a>
-                </div>
-                <p style="color: #64748b; font-size: 14px;">If you cannot click the button, copy and paste this link into your browser:<br>${verificationUrl}</p>
-                <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;">
-                <p style="color: #94a3b8; font-size: 12px;">This is an automated message from the Asset Management System.</p>
-              </div>
-            `,
+            subject: "Asset Allocation Confirmation",
+            html: '<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">' +
+                  '<h2 style="color: #1e293b; margin-bottom: 16px;">Asset Allocation Confirmation</h2>' +
+                  '<p style="color: #475569; font-size: 16px;">Dear ' + employee.name + ',</p>' +
+                  '<p style="color: #475569; font-size: 16px; line-height: 1.5;">' +
+                  'With Reference to above mentioned Subject, Few assets are allocated to you. ' +
+                  'Please click on the link below to validate and confirm the custody of assets.' +
+                  '</p>' +
+                  '<div style="margin: 32px 0;">' +
+                  '<a href="' + verificationLink + '" style="background-color: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500;">click here</a>' +
+                  '</div>' +
+                  '<p style="color: #64748b; font-size: 14px; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">' +
+                  'This is an automated notification from the Asset Management System.' +
+                  '</p>' +
+                  '</div>'
           });
-          console.log(`Allocation email sent to ${employee.email}`);
+          console.log("Allocation email sent to " + employee.email);
         } catch (emailErr) {
           console.error("Failed to send allocation email:", emailErr);
         }
       }
 
-      await storage.createAuditLog({ 
-        userId: (req.user as User).id, 
-        action: "Allocate Asset", 
-        entityType: "Allocation", 
+      await storage.createAuditLog({
+        userId: (req.user as User).id,
+        action: "Create Allocation",
+        entityType: "Allocation",
         entityId: allocation.id,
-        details: { 
-          assetSerial: asset?.serialNumber,
-          assetType: asset?.type.name,
-          employeeName: employee?.name,
-          employeeCode: employee?.empId
-        }
+        details: { assetId: finalAssetId, employeeId: finalEmployeeId }
       });
 
       res.status(201).json(allocation);
     } catch (err) {
-      res.status(400).json({ message: "Failed to create allocation" });
+      console.error("Allocation error:", err);
+      res.status(500).json({ message: "Failed to create allocation" });
     }
   });
 
-  app.post(api.allocations.return.path, requireAdmin, async (req, res) => {
+  app.post("/api/allocations/:id/return", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { returnReason, status } = req.body;
@@ -810,32 +809,45 @@ export async function registerRoutes(
       
       res.status(201).json(dept);
     } catch (err) {
-      res.status(400).json({ message: "Invalid department data" });
+      res.status(400).json({ message: "Failed to create department" });
     }
   });
 
   app.delete("/api/departments/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
-    await storage.deleteDepartment(id);
-    
-    await storage.createAuditLog({ 
-      userId: (req.user as User).id, 
-      action: "Delete Department", 
-      entityType: "Department", 
-      entityId: id
-    });
-    
-    res.sendStatus(204);
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteDepartment(id);
+      
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Delete Department", 
+        entityType: "Department", 
+        entityId: id
+      });
+      
+      res.sendStatus(204);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete department" });
+    }
   });
 
   app.post("/api/departments/bulk", requireAdmin, async (req, res) => {
     try {
-      const input = z.array(insertDepartmentSchema).parse(req.body);
-      const depts = await storage.createDepartmentsBulk(input);
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Departments", details: { count: depts.length } });
-      res.status(201).json(depts);
+      const depts = req.body;
+      if (!Array.isArray(depts)) return res.status(400).json({ message: "Expected array" });
+      
+      let count = 0;
+      for (const d of depts) {
+        try {
+          await storage.createDepartment({ name: d.name });
+          count++;
+        } catch (e) {}
+      }
+      
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Departments", details: { count } });
+      res.status(201).json({ count });
     } catch (err) {
-      res.status(400).json({ message: "Invalid departments data" });
+      res.status(500).json({ message: "Bulk import failed" });
     }
   });
 
@@ -860,74 +872,98 @@ export async function registerRoutes(
       
       res.status(201).json(desig);
     } catch (err) {
-      res.status(400).json({ message: "Invalid designation data" });
+      res.status(400).json({ message: "Failed to create designation" });
     }
   });
 
   app.delete("/api/designations/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
-    await storage.deleteDesignation(id);
-    
-    await storage.createAuditLog({ 
-      userId: (req.user as User).id, 
-      action: "Delete Designation", 
-      entityType: "Designation", 
-      entityId: id
-    });
-    
-    res.sendStatus(204);
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteDesignation(id);
+      
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Delete Designation", 
+        entityType: "Designation", 
+        entityId: id
+      });
+      
+      res.sendStatus(204);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete designation" });
+    }
   });
 
   app.post("/api/designations/bulk", requireAdmin, async (req, res) => {
     try {
-      const input = z.array(insertDesignationSchema).parse(req.body);
-      const desigs = await storage.createDesignationsBulk(input);
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Designations", details: { count: desigs.length } });
-      res.status(201).json(desigs);
+      const desigs = req.body;
+      if (!Array.isArray(desigs)) return res.status(400).json({ message: "Expected array" });
+      
+      let count = 0;
+      for (const d of desigs) {
+        try {
+          await storage.createDesignation({ name: d.name });
+          count++;
+        } catch (e) {}
+      }
+      
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Designations", details: { count } });
+      res.status(201).json({ count });
     } catch (err) {
-      res.status(400).json({ message: "Invalid designations data" });
+      res.status(500).json({ message: "Bulk import failed" });
     }
   });
 
   // Employees
   app.get(api.employees.list.path, requireAuth, async (req, res) => {
-    const employees = await storage.getEmployees(req.query as { search?: string, branch?: string, department?: string });
+    const employees = await storage.getEmployees();
     res.json(employees);
   });
 
   app.post(api.employees.create.path, requireAdmin, async (req, res) => {
+    const input = insertEmployeeSchema.parse(req.body);
+    const employee = await storage.createEmployee(input);
+    
+    await storage.createAuditLog({
+      userId: (req.user as User).id,
+      action: "Create Employee",
+      entityType: "Employee",
+      entityId: employee.id,
+      details: { empId: employee.empId, name: employee.name }
+    });
+
+    res.status(201).json(employee);
+  });
+
+  app.post("/api/employees/bulk", requireAdmin, async (req, res) => {
     try {
-      const input = api.employees.create.input.parse(req.body);
-      const employee = await storage.createEmployee(input);
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Create Employee", entityType: "Employee", entityId: employee.id, details: input });
-      res.status(201).json(employee);
+      const employees = req.body;
+      if (!Array.isArray(employees)) return res.status(400).json({ message: "Expected array" });
+      
+      let count = 0;
+      for (const e of employees) {
+        try {
+          await storage.createEmployee(e);
+          count++;
+        } catch (err) {}
+      }
+      
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Employees", details: { count } });
+      res.status(201).json({ count });
     } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json(err.errors);
-      throw err;
+      res.status(500).json({ message: "Bulk import failed" });
     }
   });
 
-  app.put(api.employees.update.path, requireAdmin, async (req, res) => {
-      const id = parseInt(req.params.id as string);
-      const input = api.employees.update.input.parse(req.body);
-      const employee = await storage.updateEmployee(id, input);
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Update Employee", entityType: "Employee", entityId: employee.id, details: input });
-      res.json(employee);
+  // Email Settings
+  app.get("/api/settings/email", requireAdmin, async (req, res) => {
+    const settings = await storage.getEmailSettings();
+    res.json(settings || {});
   });
 
-  app.post(api.employees.import.path, requireAdmin, async (req, res) => {
-      const input = api.employees.import.input.parse(req.body);
-      let count = 0;
-      for (const emp of input) {
-        try {
-            await storage.createEmployee(emp);
-            count++;
-        } catch (e) {
-            console.error("Failed to import employee", emp, e);
-        }
-      }
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Import Employees", details: { count } });
-      res.json({ count });
+  app.put("/api/settings/email", requireAdmin, async (req, res) => {
+    const settings = await storage.updateEmailSettings(req.body);
+    res.json(settings);
   });
 
   return httpServer;
