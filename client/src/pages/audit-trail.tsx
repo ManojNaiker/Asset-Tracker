@@ -86,6 +86,8 @@ export default function AuditTrailPage() {
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">All Actions</SelectItem>
+                    <SelectItem value="Login">Login</SelectItem>
+                    <SelectItem value="Logout">Logout</SelectItem>
                     <SelectItem value="Create">Create</SelectItem>
                     <SelectItem value="Update">Update</SelectItem>
                     <SelectItem value="Delete">Delete</SelectItem>
@@ -117,6 +119,15 @@ export default function AuditTrailPage() {
                 
                 const d = log.details as any;
                 
+                if (log.action === "Login") {
+                  return `User logged in from ${d?.ip || 'unknown IP'}`;
+                }
+                if (log.action === "Logout") {
+                  return `User logged out`;
+                }
+                if (log.action === "Change Password") {
+                  return `User changed their password`;
+                }
                 if (log.action === "Allocate Asset") {
                   return `Allocated ${d.assetType} (${d.assetSerial}) to ${d.employeeName} (${d.employeeCode})`;
                 }

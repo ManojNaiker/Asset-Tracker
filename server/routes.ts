@@ -311,16 +311,34 @@ export async function registerRoutes(
   // === Routes ===
 
   // Auth Routes
-  app.post(api.auth.login.path, passport.authenticate("local"), (req, res) => {
+  app.post(api.auth.login.path, passport.authenticate("local"), async (req, res) => {
     const user = req.user as User;
     if (user.isLocked) {
         req.logout(() => {});
         return res.status(423).json({ message: "Account is locked." });
     }
+    
+    await storage.createAuditLog({
+      userId: user.id,
+      action: "Login",
+      entityType: "User",
+      entityId: user.id,
+      details: { username: user.username, ip: req.ip }
+    });
+
     res.json(user);
   });
 
-  app.post(api.auth.logout.path, (req, res) => {
+  app.post(api.auth.logout.path, async (req, res) => {
+    const user = req.user as User;
+    if (user) {
+      await storage.createAuditLog({
+        userId: user.id,
+        action: "Logout",
+        entityType: "User",
+        entityId: user.id
+      });
+    }
     req.logout((err) => {
       if (err) return res.status(500).json({ message: "Logout failed" });
       res.json({ message: "Logged out" });
@@ -340,6 +358,14 @@ export async function registerRoutes(
       password: hashedPassword,
       mustChangePassword: false 
     });
+
+    await storage.createAuditLog({
+      userId: user.id,
+      action: "Change Password",
+      entityType: "User",
+      entityId: user.id
+    });
+
     res.json({ message: "Password updated successfully" });
   });
 
@@ -494,12 +520,30 @@ export async function registerRoutes(
   app.post(api.assets.create.path, requireAdmin, async (req, res) => {
     const input = insertAssetSchema.parse(req.body);
     const asset = await storage.createAsset(input);
+    
+    await storage.createAuditLog({
+      userId: (req.user as User).id,
+      action: "Create Asset",
+      entityType: "Asset",
+      entityId: asset.id,
+      details: { serialNumber: asset.serialNumber }
+    });
+
     res.status(201).json(asset);
   });
 
   app.put(api.assets.update.path, requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id as string);
     const asset = await storage.updateAsset(id, req.body);
+    
+    await storage.createAuditLog({
+      userId: (req.user as User).id,
+      action: "Update Asset",
+      entityType: "Asset",
+      entityId: id,
+      details: req.body
+    });
+
     res.json(asset);
   });
 
@@ -511,12 +555,30 @@ export async function registerRoutes(
   app.post(api.assetTypes.create.path, requireAdmin, async (req, res) => {
     const input = insertAssetTypeSchema.parse(req.body);
     const type = await storage.createAssetType(input);
+    
+    await storage.createAuditLog({
+      userId: (req.user as User).id,
+      action: "Create Asset Type",
+      entityType: "AssetType",
+      entityId: type.id,
+      details: { name: type.name }
+    });
+
     res.status(201).json(type);
   });
 
   app.put(api.assetTypes.update.path, requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id as string);
     const type = await storage.updateAssetType(id, req.body);
+    
+    await storage.createAuditLog({
+      userId: (req.user as User).id,
+      action: "Update Asset Type",
+      entityType: "AssetType",
+      entityId: id,
+      details: req.body
+    });
+
     res.json(type);
   });
 
