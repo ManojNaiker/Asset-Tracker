@@ -76,7 +76,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
   } = useQuery<User | null, Error>({
     queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const res = await fetch("/api/user");
+      if (res.status === 401) return null;
+      if (!res.ok) throw new Error("Failed to fetch user");
+      return res.json();
+    },
+    retry: false,
   });
 
   const loginMutation = useLoginMutation();
