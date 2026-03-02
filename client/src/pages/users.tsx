@@ -14,13 +14,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link, useLocation } from "wouter";
 import { BulkUserUploadDialog, BulkDepartmentUploadDialog, BulkDesignationUploadDialog } from "@/components/bulk-upload-dialogs";
 
 export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean }) {
     const { toast } = useToast();
     const queryClient = useQueryClient();
-    const [location] = useLocation();
     const { data: users, isLoading: usersLoading } = useQuery<any[]>({ queryKey: ["/api/users"] });
     const { data: departments, isLoading: deptsLoading } = useQuery<any[]>({ queryKey: ["/api/departments"] });
     const { data: designations, isLoading: desigsLoading } = useQuery<any[]>({ queryKey: ["/api/designations"] });
@@ -31,8 +29,6 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [isDeptDialogOpen, setIsDeptDialogOpen] = useState(false);
     const [isDesigDialogOpen, setIsDesigDialogOpen] = useState(false);
-
-    const activeTab = location === "/users" ? "users" : "email";
 
     const createMutation = useMutation({
         mutationFn: async (values: any) => {
@@ -182,42 +178,25 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
     }
 
     const content = (
-        <>
+        <div className="space-y-6">
             <div className="mb-8">
                 <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">System Settings</h1>
                 <p className="text-muted-foreground mt-1">Configure system parameters and user access.</p>
             </div>
 
-            <Tabs value={activeTab} className="mb-6">
+            <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="mb-6">
                 <TabsList className="bg-slate-100 dark:bg-slate-800 p-1">
-                    <Link href="/users">
-                        <TabsTrigger value="users" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
-                            <UserCog className="w-4 h-4 mr-2" /> User Management
-                        </TabsTrigger>
-                    </Link>
-                    <Link href="/settings">
-                        <TabsTrigger value="email" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
-                            <Mail className="w-4 h-4 mr-2" /> Email Settings
-                        </TabsTrigger>
-                    </Link>
+                    <TabsTrigger value="users" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
+                        Users
+                    </TabsTrigger>
+                    <TabsTrigger value="departments" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
+                        Departments
+                    </TabsTrigger>
+                    <TabsTrigger value="designations" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
+                        Designations
+                    </TabsTrigger>
                 </TabsList>
             </Tabs>
-
-            {activeTab === "users" && (
-                <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="mb-6">
-                    <TabsList className="bg-slate-100 dark:bg-slate-800 p-1">
-                        <TabsTrigger value="users" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
-                            Users
-                        </TabsTrigger>
-                        <TabsTrigger value="departments" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
-                            Departments
-                        </TabsTrigger>
-                        <TabsTrigger value="designations" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
-                            Designations
-                        </TabsTrigger>
-                    </TabsList>
-                </Tabs>
-            )}
 
             {activeSubTab === "users" && (
                 <>
@@ -565,10 +544,6 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
             )}
 
             {activeSubTab === "departments" && (
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">Departments</h2>
                             <p className="text-muted-foreground mt-1">Manage company departments.</p>
                         </div>
                         <div className="flex gap-2">
