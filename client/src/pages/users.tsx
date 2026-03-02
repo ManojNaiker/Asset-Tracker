@@ -178,7 +178,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
     }
 
     const content = (
-        <div className="space-y-6">
+        <>
             <div className="mb-8">
                 <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">System Settings</h1>
                 <p className="text-muted-foreground mt-1">Configure system parameters and user access.</p>
@@ -544,6 +544,10 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
             )}
 
             {activeSubTab === "departments" && (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">Departments</h2>
                             <p className="text-muted-foreground mt-1">Manage company departments.</p>
                         </div>
                         <div className="flex gap-2">
