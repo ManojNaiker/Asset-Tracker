@@ -1050,7 +1050,8 @@ export async function registerRoutes(
 
   app.post("/api/settings/email", requireAdmin, async (req, res) => {
     try {
-      const settings = await storage.updateEmailSettings(req.body);
+      const { id, updatedAt, createdAt, ...updateData } = req.body;
+      const settings = await storage.updateEmailSettings(updateData);
       res.json(settings);
     } catch (err) {
       console.error("Failed to update email settings:", err);
