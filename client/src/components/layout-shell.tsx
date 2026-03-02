@@ -42,6 +42,7 @@ const getNavItems = (role: string) => {
       ]
     },
     { name: "Employees", href: "/employees", icon: Users, roles: ["admin"] },
+    { name: "Reports", href: "/reports", icon: PieChart, roles: ["admin"] },
     { name: "My Assets", href: "/my-assets", icon: Box, roles: ["employee"] },
     {
       name: "Settings",

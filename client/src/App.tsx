@@ -18,6 +18,7 @@ import AuditTrailPage from "@/pages/audit-trail";
 import UsersPage from "@/pages/users";
 import SettingsPage from "@/pages/settings";
 import SsoSettingsPage from "@/pages/sso-settings";
+import ReportsPage from "@/pages/reports";
 import { Loader2 } from "lucide-react";
 
 // Protected Route Wrapper
@@ -82,6 +83,10 @@ function Router() {
 
       <Route path="/sso-settings">
         <ProtectedRoute component={SsoSettingsPage} />
+      </Route>
+
+      <Route path="/reports">
+        <ProtectedRoute component={ReportsPage} />
       </Route>
 
       <Route path="/users">
