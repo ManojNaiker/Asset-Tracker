@@ -43,7 +43,6 @@ const getNavItems = (role: string) => {
     },
     { name: "Employees", href: "/employees", icon: Users, roles: ["admin"] },
     { name: "My Assets", href: "/my-assets", icon: Box, roles: ["employee"] },
-    { name: "Audit Trail", href: "/audit-trail", icon: History, roles: ["admin"] },
     {
       name: "Settings",
       icon: Settings,
@@ -52,6 +51,7 @@ const getNavItems = (role: string) => {
         { name: "User Management", href: "/users", icon: UserCog },
         { name: "Email Settings", href: "/settings", icon: Mail },
         { name: "SSO Configuration", href: "/sso-settings", icon: ShieldCheck },
+        { name: "Audit Trail", href: "/audit-trail", icon: History },
       ]
     },
   ];

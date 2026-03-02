@@ -4,18 +4,20 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select";
 import { useState } from "react";
 import { AuditLog, User } from "@shared/schema";
-import { Search, Filter, Loader2, User as UserIcon, Calendar } from "lucide-react";
+import { Search, Filter, Loader2, User as UserIcon, Download } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import * as XLSX from "xlsx";
 
 export default function AuditTrailPage() {
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   
   const { data: logs, isLoading } = useQuery<AuditLog[]>({ 
-    queryKey: ["/api/audit-logs"] 
+    queryKey: ["/api/audit/logs"] 
   });
 
   const { data: users } = useQuery<User[]>({ 
@@ -24,18 +26,44 @@ export default function AuditTrailPage() {
 
   const filteredLogs = logs?.filter(log => {
     const matchesSearch = log.action.toLowerCase().includes(search.toLowerCase()) || 
-                         log.entityType?.toLowerCase().includes(search.toLowerCase());
+                         (log.entityType && log.entityType.toLowerCase().includes(search.toLowerCase()));
     const matchesAction = actionFilter === "all" || log.action.includes(actionFilter);
     return matchesSearch && matchesAction;
   });
+
+  const exportToExcel = () => {
+    if (!filteredLogs) return;
+    
+    const exportData = filteredLogs.map(log => {
+      const user = users?.find(u => u.id === log.userId);
+      return {
+        Timestamp: new Date(log.timestamp!).toLocaleString(),
+        User: user?.username || 'System',
+        Action: log.action,
+        Entity: log.entityType,
+        EntityID: log.entityId,
+        Details: JSON.stringify(log.details)
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Audit Logs");
+    XLSX.writeFile(workbook, `Audit_Logs_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
 
   if (isLoading) return <LayoutShell><Loader2 className="w-8 h-8 animate-spin mx-auto mt-20" /></LayoutShell>;
 
   return (
     <LayoutShell>
-      <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Audit Trail</h1>
-        <p className="text-muted-foreground mt-1">Monitor system activities and user actions.</p>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Audit Trail</h1>
+          <p className="text-muted-foreground mt-1">Monitor system activities and user actions.</p>
+        </div>
+        <Button onClick={exportToExcel} variant="outline" className="flex items-center gap-2" data-testid="button-export-audit">
+          <Download className="w-4 h-4" /> Export Excel
+        </Button>
       </div>
 
       <Card className="mb-6 shadow-sm border-slate-200 dark:border-slate-800">
