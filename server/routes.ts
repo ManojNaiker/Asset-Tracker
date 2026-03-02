@@ -507,6 +507,38 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/verifications", requireAuth, async (req, res) => {
+    const verifications = await storage.getVerifications();
+    res.json(verifications);
+  });
+
+  app.post("/api/verifications", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { assetId, status, remarks } = req.body;
+      
+      const verification = await storage.createVerification({
+        assetId: parseInt(assetId),
+        status,
+        remarks,
+        verifierId: user.id
+      });
+
+      const asset = await storage.getAsset(assetId);
+      await storage.createAuditLog({
+        userId: user.id,
+        action: `Asset ${status}`,
+        entityType: "Verification",
+        entityId: verification.id,
+        details: { assetSerial: asset?.serialNumber, status, remarks }
+      });
+
+      res.status(201).json(verification);
+    } catch (err) {
+      res.status(400).json({ message: "Failed to create verification" });
+    }
+  });
+
   // Assets
   app.get(api.assets.list.path, requireAuth, async (req, res) => {
     const query = req.query as { search?: string, typeId?: string, status?: string };
