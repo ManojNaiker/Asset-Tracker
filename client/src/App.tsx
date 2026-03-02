@@ -1,3 +1,5 @@
+import SettingsPage from "./pages/settings";
+import SsoSettingsPage from "./pages/sso-settings";
 import ReportsPage from "./pages/reports";
 import ExternalVerificationPage from "./pages/external-verification";
 import VerificationSuccessPage from "./pages/verification-success";
@@ -77,8 +79,12 @@ function Router() {
         <ProtectedRoute component={AuditTrailPage} />
       </Route>
 
-      <Route path="/settings">
-        <ProtectedRoute component={ReportsPage} />
+      <Route path="/email-settings">
+        <ProtectedRoute component={SettingsPage} />
+      </Route>
+
+      <Route path="/sso-settings">
+        <ProtectedRoute component={SsoSettingsPage} />
       </Route>
 
       <Route path="/reports">

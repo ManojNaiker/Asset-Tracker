@@ -42,8 +42,15 @@ const getNavItems = (role: string) => {
       ]
     },
     { name: "Employees", href: "/employees", icon: Users, roles: ["admin"] },
-    { name: "User Management", href: "/users", icon: UserCog, roles: ["admin"] },
-    { name: "Audit Trail", href: "/audit-trail", icon: History, roles: ["admin"] },
+    {
+      name: "User Management",
+      icon: UserCog,
+      roles: ["admin"],
+      children: [
+        { name: "Users", href: "/users", icon: Users },
+        { name: "Audit Trail", href: "/audit-trail", icon: History },
+      ]
+    },
     { name: "Reports", href: "/reports", icon: PieChart, roles: ["admin"] },
     { name: "My Assets", href: "/my-assets", icon: Box, roles: ["employee"] },
     {
@@ -51,7 +58,7 @@ const getNavItems = (role: string) => {
       icon: Settings,
       roles: ["admin"],
       children: [
-        { name: "Email Settings", href: "/settings", icon: Mail },
+        { name: "Email Settings", href: "/email-settings", icon: Mail },
         { name: "SSO Configuration", href: "/sso-settings", icon: ShieldCheck },
       ]
     },
