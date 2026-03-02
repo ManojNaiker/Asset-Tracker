@@ -389,7 +389,7 @@ export async function registerRoutes(
 
       const hashedPassword = await bcrypt.hash(password, 10);
       const user = await storage.createUser({
-        username: password,
+        username,
         password: hashedPassword,
         role: role || "employee",
         fullName,
@@ -961,9 +961,15 @@ export async function registerRoutes(
     res.json(settings || {});
   });
 
-  app.put("/api/settings/email", requireAdmin, async (req, res) => {
-    const settings = await storage.updateEmailSettings(req.body);
-    res.json(settings);
+  app.post("/api/settings/email", requireAdmin, async (req, res) => {
+    try {
+      console.log("Updating email settings with:", JSON.stringify({ ...req.body, password: "****" }));
+      const settings = await storage.updateEmailSettings(req.body);
+      res.json(settings);
+    } catch (err) {
+      console.error("Failed to update email settings:", err);
+      res.status(500).json({ message: "Failed to update email settings" });
+    }
   });
 
   return httpServer;
