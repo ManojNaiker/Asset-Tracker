@@ -18,6 +18,8 @@ import { api } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { BulkAllocationUploadDialog } from "@/components/bulk-upload-dialogs";
 
+import { ImagePreview } from "@/components/image-preview";
+
 export default function AllocationsPage() {
   const { data: allocations, isLoading } = useAllocations();
 
@@ -451,11 +453,11 @@ function CreateAllocationDialog() {
                                 />
                                 {imageUrl ? (
                                     <div className="relative w-24 h-24 rounded border overflow-hidden">
-                                        <img src={imageUrl} alt="Asset" className="w-full h-full object-cover" />
+                                        <ImagePreview src={imageUrl} alt="Asset" className="w-full h-full" />
                                         <button 
                                             type="button"
                                             onClick={() => setImageUrl(null)}
-                                            className="absolute top-1 right-1 bg-white rounded-full p-0.5 shadow"
+                                            className="absolute top-1 right-1 bg-white rounded-full p-0.5 shadow z-10"
                                         >
                                             <X className="w-3 h-3 text-red-500" />
                                         </button>

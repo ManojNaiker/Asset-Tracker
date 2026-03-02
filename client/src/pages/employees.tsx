@@ -97,6 +97,8 @@ export default function EmployeesPage() {
   );
 }
 
+import { ImagePreview } from "@/components/image-preview";
+
 function ViewAllocatedAssetsDialog({ employee }: { employee: Employee }) {
     const { data: allocations, isLoading } = useQuery<(any)[]>({
         queryKey: ["/api/allocations"],
@@ -140,14 +142,11 @@ function ViewAllocatedAssetsDialog({ employee }: { employee: Employee }) {
                                         <TableCell>{new Date(a.allocatedAt).toLocaleDateString()}</TableCell>
                                         <TableCell>
                                             {a.imageUrl && (
-                                                <Dialog>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="outline" size="sm">View Photo</Button>
-                                                    </DialogTrigger>
-                                                    <DialogContent>
-                                                        <img src={a.imageUrl} alt="Asset" className="w-full h-auto rounded-lg" />
-                                                    </DialogContent>
-                                                </Dialog>
+                                                <ImagePreview 
+                                                    src={a.imageUrl} 
+                                                    alt="Asset" 
+                                                    className="w-20 h-20"
+                                                />
                                             )}
                                         </TableCell>
                                     </TableRow>
