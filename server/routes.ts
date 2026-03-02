@@ -791,26 +791,26 @@ export async function registerRoutes(
           });
 
           const appUrl = getSsoBaseUrl();
-          const verificationLink = appUrl + "/my-assets";
+          const verificationUrl = `${appUrl}/verify/${token}`;
 
           await transporter.sendMail({
             from: emailSettings.fromEmail,
             to: employee.email,
             subject: "Asset Allocation Confirmation",
-            html: '<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">' +
-                  '<h2 style="color: #1e293b; margin-bottom: 16px;">Asset Allocation Confirmation</h2>' +
-                  '<p style="color: #475569; font-size: 16px;">Dear ' + employee.name + ',</p>' +
-                  '<p style="color: #475569; font-size: 16px; line-height: 1.5;">' +
-                  'With Reference to above mentioned Subject, Few assets are allocated to you. ' +
-                  'Please click on the link below to validate and confirm the custody of assets.' +
-                  '</p>' +
-                  '<div style="margin: 32px 0;">' +
-                  '<a href="' + verificationLink + '" style="background-color: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500;">click here</a>' +
-                  '</div>' +
-                  '<p style="color: #64748b; font-size: 14px; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">' +
-                  'This is an automated notification from the Asset Management System.' +
-                  '</p>' +
-                  '</div>'
+            html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                  <h2 style="color: #1e293b; margin-bottom: 16px;">Asset Allocation Confirmation</h2>
+                  <p style="color: #475569; font-size: 16px;">Dear ${employee.name},</p>
+                  <p style="color: #475569; font-size: 16px; line-height: 1.5;">
+                  With Reference to above mentioned Subject, Few assets are allocated to you. 
+                  Please click on the link below to validate and confirm the custody of assets.
+                  </p>
+                  <div style="margin: 32px 0;">
+                  <a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500;">click here</a>
+                  </div>
+                  <p style="color: #64748b; font-size: 14px; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+                  This is an automated notification from the Asset Management System.
+                  </p>
+                  </div>`
           });
           console.log("Allocation email sent to " + employee.email);
         } catch (emailErr) {

@@ -21,6 +21,11 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
     queryFn: async () => {
       const res = await fetch(`/api/verifications/token/${params.token}`);
       if (!res.ok) {
+        if (res.status === 401) {
+          // This should not happen for public token routes, but if it does, 
+          // it means the server is enforcing auth where it shouldn't.
+          console.error("Auth required for public token route");
+        }
         const errorText = await res.text();
         try {
           const errorJson = JSON.parse(errorText);
