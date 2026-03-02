@@ -18,7 +18,15 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
     queryKey: ["/api/verifications/token", params.token],
     queryFn: async () => {
       const res = await fetch(`/api/verifications/token/${params.token}`);
-      if (!res.ok) throw new Error("Invalid or expired verification link");
+      if (!res.ok) {
+        const errorText = await res.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.message || "Invalid or expired verification link");
+        } catch (e) {
+          throw new Error("Invalid or expired verification link");
+        }
+      }
       return res.json();
     }
   });

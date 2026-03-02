@@ -89,7 +89,9 @@ function Router() {
         <ProtectedRoute component={UsersPage} />
       </Route>
 
-      <Route path="/verify/:token" component={ExternalVerificationPage} />
+      <Route path="/verify/:token">
+        {(params) => <ExternalVerificationPage params={params} />}
+      </Route>
       <Route path="/verification-success" component={VerificationSuccessPage} />
 
       <Route component={NotFound} />
