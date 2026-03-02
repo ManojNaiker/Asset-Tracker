@@ -602,8 +602,8 @@ export async function registerRoutes(
         verifierId: 0 // System/External verifier
       });
 
-      // Clear token after use
-      await storage.updateAllocation(allocation.id, { verificationToken: null });
+      // We no longer clear the token so the link remains valid for the employee to see their selection
+      // await storage.updateAllocation(allocation.id, { verificationToken: null });
 
       await storage.createAuditLog({
         action: "External Asset " + status,

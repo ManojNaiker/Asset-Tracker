@@ -7,10 +7,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Info } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ExternalVerificationPage({ params }: { params: { token: string } }) {
   const [remarks, setRemarks] = useState("");
+  const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -33,6 +35,9 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
 
   const mutation = useMutation({
     mutationFn: async (status: "Approved" | "Rejected") => {
+      if (selectedAssets.length === 0) {
+        throw new Error("Please select the asset to proceed with verification");
+      }
       const res = await fetch("/api/verifications/external", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -48,8 +53,21 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
     onSuccess: () => {
       toast({ title: "Verification submitted successfully" });
       setLocation("/verification-success");
+    },
+    onError: (err: Error) => {
+      toast({ 
+        title: "Verification failed", 
+        description: err.message,
+        variant: "destructive" 
+      });
     }
   });
+
+  const toggleAsset = (id: number) => {
+    setSelectedAssets(prev => 
+      prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
+    );
+  };
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" /></div>;
   if (error) return <div className="min-h-screen flex items-center justify-center text-red-600 font-medium">{error.message}</div>;
@@ -60,20 +78,41 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
         <CardHeader>
           <CardTitle>Asset Verification</CardTitle>
           <CardDescription>
-            Hello {allocation.employee.name}, please verify the following asset allocated to you.
+            Hello {allocation.employee.name}, please select and verify the asset(s) allocated to you.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-slate-100 dark:bg-slate-900 p-4 rounded-lg space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm text-slate-500">Asset Type:</span>
-              <span className="font-medium">{allocation.asset.type.name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-slate-500">Serial Number:</span>
-              <span className="font-mono font-medium">{allocation.asset.serialNumber}</span>
+          <div className="space-y-3">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Info className="w-4 h-4 text-blue-500" />
+              Allocated Assets
+            </label>
+            <div 
+              className={`p-4 rounded-lg border-2 transition-colors cursor-pointer flex items-center gap-4 ${
+                selectedAssets.includes(allocation.asset.id) 
+                  ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" 
+                  : "bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800"
+              }`}
+              onClick={() => toggleAsset(allocation.asset.id)}
+            >
+              <Checkbox 
+                checked={selectedAssets.includes(allocation.asset.id)}
+                onCheckedChange={() => toggleAsset(allocation.asset.id)}
+              />
+              <div className="flex-1 space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-slate-900 dark:text-slate-100">{allocation.asset.type.name}</span>
+                  <span className="text-xs font-mono bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-400">
+                    {allocation.asset.serialNumber}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Select this asset to approve or reject its current status.
+                </p>
+              </div>
             </div>
           </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium">Remarks (Optional)</label>
             <Textarea 
@@ -87,16 +126,18 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
         <CardFooter className="flex gap-4">
           <Button 
             variant="outline"
-            className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+            className="flex-1 border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
             onClick={() => mutation.mutate("Rejected")}
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || selectedAssets.length === 0}
+            data-testid="button-reject"
           >
             <XCircle className="w-4 h-4 mr-2" /> Reject
           </Button>
           <Button 
-            className="flex-1 bg-green-600 hover:bg-green-700"
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
             onClick={() => mutation.mutate("Approved")}
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || selectedAssets.length === 0}
+            data-testid="button-approve"
           >
             <CheckCircle2 className="w-4 h-4 mr-2" /> Approve
           </Button>
