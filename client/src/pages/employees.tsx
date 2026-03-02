@@ -296,16 +296,7 @@ function CreateEmployeeDialog() {
         mutation.mutate(data, {
             onSuccess: () => {
                 setOpen(false);
-                form.reset({
-                    empId: "",
-                    name: "",
-                    email: "",
-                    department: "",
-                    designation: "",
-                    status: "Active",
-                    mobile: "",
-                    branch: "",
-                });
+                form.reset();
             }
         });
     };

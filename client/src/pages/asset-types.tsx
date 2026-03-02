@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { LayoutShell } from "@/components/layout-shell";
 import { 
@@ -19,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AssetType } from "@shared/schema";
 
 export default function AssetTypesPage() {
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const { data: types, isLoading } = useQuery<AssetType[]>({ 
     queryKey: ["/api/asset-types"] 
@@ -32,6 +34,8 @@ export default function AssetTypesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/asset-types"] });
       toast({ title: "Success", description: "Asset type created successfully" });
+      setOpen(false);
+      form.reset();
     }
   });
 
@@ -53,7 +57,7 @@ export default function AssetTypesPage() {
           <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Asset Types</h1>
           <p className="text-muted-foreground mt-1">Manage asset categories and their custom fields.</p>
         </div>
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
