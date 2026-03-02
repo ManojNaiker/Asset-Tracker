@@ -1,24 +1,24 @@
-import { Switch, Route, Redirect } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { ThemeProvider } from "@/components/theme-provider";
-import NotFound from "@/pages/not-found";
-import AuthPage from "@/pages/auth-page";
+import ReportsPage from "./pages/reports";
+import ExternalVerificationPage from "./pages/external-verification";
+import VerificationSuccessPage from "./pages/verification-success";
+import UsersPage from "./pages/users";
+import AuditTrailPage from "./pages/audit-trail";
+import MyAssetsPage from "./pages/my-assets";
+import VerificationsPage from "./pages/verifications";
+import AssetTypesPage from "./pages/asset-types";
+import AllocationsPage from "./pages/allocations";
+import AssetsPage from "./pages/assets";
+import EmployeesPage from "./pages/employees";
 import Dashboard from "@/pages/dashboard";
-import EmployeesPage from "@/pages/employees";
-import AssetsPage from "@/pages/assets";
-import AllocationsPage from "@/pages/allocations";
-import AssetTypesPage from "@/pages/asset-types";
-import VerificationsPage from "@/pages/verifications";
-import MyAssetsPage from "@/pages/my-assets";
-import AuditTrailPage from "@/pages/audit-trail";
-import UsersPage from "@/pages/users";
-import SettingsPage from "@/pages/settings";
-import SsoSettingsPage from "@/pages/sso-settings";
-import ReportsPage from "@/pages/reports";
+import AuthPage from "@/pages/auth-page";
+import NotFound from "@/pages/not-found";
+import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/toaster";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
+import { Switch, Route, Redirect } from "wouter";
 import { Loader2 } from "lucide-react";
 
 // Protected Route Wrapper
@@ -78,11 +78,7 @@ function Router() {
       </Route>
 
       <Route path="/settings">
-        <ProtectedRoute component={SettingsPage} />
-      </Route>
-
-      <Route path="/sso-settings">
-        <ProtectedRoute component={SsoSettingsPage} />
+        <ProtectedRoute component={ReportsPage} />
       </Route>
 
       <Route path="/reports">
@@ -92,6 +88,9 @@ function Router() {
       <Route path="/users">
         <ProtectedRoute component={UsersPage} />
       </Route>
+
+      <Route path="/verify/:token" component={ExternalVerificationPage} />
+      <Route path="/verification-success" component={VerificationSuccessPage} />
 
       <Route component={NotFound} />
     </Switch>

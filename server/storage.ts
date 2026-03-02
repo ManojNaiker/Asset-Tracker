@@ -48,6 +48,7 @@ export interface IStorage {
   // Allocations
   getAllocations(): Promise<(Allocation & { asset: Asset, employee: Employee })[]>;
   getAllocation(id: number): Promise<Allocation | undefined>;
+  getAllocationByToken(token: string): Promise<(Allocation & { asset: Asset & { type: AssetType }, employee: Employee }) | undefined>;
   createAllocation(allocation: InsertAllocation): Promise<Allocation>;
   createAllocationsBulk(allocations: InsertAllocation[]): Promise<Allocation[]>;
   updateAllocation(id: number, updates: Partial<Allocation>): Promise<Allocation>;
@@ -265,6 +266,23 @@ export class DatabaseStorage implements IStorage {
   async getAllocation(id: number): Promise<Allocation | undefined> {
     const [allocation] = await db.select().from(allocations).where(eq(allocations.id, id));
     return allocation;
+  }
+
+  async getAllocationByToken(token: string): Promise<(Allocation & { asset: Asset & { type: AssetType }, employee: Employee }) | undefined> {
+    const [result] = await db.select({
+      allocation: allocations,
+      asset: assets,
+      type: assetTypes,
+      employee: employees
+    })
+    .from(allocations)
+    .innerJoin(assets, eq(allocations.assetId, assets.id))
+    .innerJoin(assetTypes, eq(assets.assetTypeId, assetTypes.id))
+    .innerJoin(employees, eq(allocations.employeeId, employees.id))
+    .where(eq(allocations.verificationToken, token));
+
+    if (!result) return undefined;
+    return { ...result.allocation, asset: { ...result.asset, type: result.type }, employee: result.employee };
   }
 
   async createAllocation(allocation: InsertAllocation): Promise<Allocation> {

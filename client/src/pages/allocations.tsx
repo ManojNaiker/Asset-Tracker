@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertAllocationSchema, type InsertAllocation } from "@shared/schema";
-import { Plus, Loader2, ArrowRightLeft, CheckCircle2, Camera, X, Upload } from "lucide-react";
+import { Plus, Loader2, ArrowRightLeft, CheckCircle2, Camera, X, Upload, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/queryClient";
@@ -81,6 +81,7 @@ export default function AllocationsPage() {
                             </Badge>
                         </TableCell>
                         <TableCell className="text-right space-x-2">
+                           <SendVerificationButton allocationId={alloc.id} disabled={alloc.status !== 'Active'} />
                            <ViewAllocationDetailsDialog allocation={alloc} />
                            {alloc.status === 'Active' && (
                                <ReturnAssetDialog allocationId={alloc.id} />
@@ -94,6 +95,36 @@ export default function AllocationsPage() {
       </div>
     </LayoutShell>
   );
+}
+
+function SendVerificationButton({ allocationId, disabled }: { allocationId: number, disabled: boolean }) {
+    const { toast } = useToast();
+    const [loading, setLoading] = useState(false);
+
+    const sendEmail = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/allocations/${allocationId}/send-verification`, { method: "POST" });
+            if (!res.ok) throw new Error(await res.text());
+            toast({ title: "Email sent successfully" });
+        } catch (err: any) {
+            toast({ title: "Failed to send email", description: err.message, variant: "destructive" });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={sendEmail} 
+            disabled={disabled || loading}
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+        >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+        </Button>
+    );
 }
 
 function ViewAllocationDetailsDialog({ allocation }: { allocation: any }) {

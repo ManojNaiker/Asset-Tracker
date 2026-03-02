@@ -69,6 +69,7 @@ export const allocations = pgTable("allocations", {
   returnReason: text("return_reason"),
   pdfUrl: text("pdf_url"),
   imageUrl: text("image_url"),
+  verificationToken: text("verification_token"),
 });
 
 export const verifications = pgTable("verifications", {

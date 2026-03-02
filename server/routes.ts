@@ -9,7 +9,8 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import bcrypt from "bcryptjs";
-import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, insertEmployeeSchema, ssoSettings as ssoSettingsTable } from "@shared/schema";
+import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, insertEmployeeSchema, allocations, ssoSettings as ssoSettingsTable } from "@shared/schema";
+import { crypto } from "node:crypto";
 import { db } from "./db";
 import { desc } from "drizzle-orm";
 import nodemailer from "nodemailer";
@@ -575,6 +576,92 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Email test failed:", err);
       res.status(500).json({ message: "Failed to send test email: " + (err as Error).message });
+    }
+  });
+
+  app.get("/api/verifications/token/:token", async (req, res) => {
+    try {
+      const allocation = await storage.getAllocationByToken(req.params.token);
+      if (!allocation) return res.status(404).json({ message: "Invalid or expired verification link" });
+      res.json(allocation);
+    } catch (err) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/verifications/external", async (req, res) => {
+    try {
+      const { token, status, remarks } = req.body;
+      const allocation = await storage.getAllocationByToken(token);
+      if (!allocation) return res.status(404).json({ message: "Invalid or expired verification link" });
+
+      const verification = await storage.createVerification({
+        assetId: allocation.assetId,
+        status,
+        remarks,
+        verifierId: 0 // System/External verifier
+      });
+
+      // Clear token after use
+      await storage.updateAllocation(allocation.id, { verificationToken: null });
+
+      await storage.createAuditLog({
+        action: "External Asset " + status,
+        entityType: "Verification",
+        entityId: verification.id,
+        details: { assetSerial: allocation.asset.serialNumber, status, remarks, employee: allocation.employee.name }
+      });
+
+      res.status(201).json(verification);
+    } catch (err) {
+      res.status(400).json({ message: "Failed to submit verification" });
+    }
+  });
+
+  app.post("/api/allocations/:id/send-verification", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const allocation = await storage.getAllocations().then(list => list.find(a => a.id === id));
+      if (!allocation) return res.status(404).json({ message: "Allocation not found" });
+
+      const token = (globalThis.crypto || await import('node:crypto')).randomBytes(32).toString('hex');
+      await storage.updateAllocation(id, { verificationToken: token });
+
+      const settings = await storage.getEmailSettings();
+      if (!settings || !settings.host) {
+        return res.status(400).json({ message: "Email settings not configured" });
+      }
+
+      const transporter = nodemailer.createTransport({
+        host: settings.host,
+        port: settings.port || 587,
+        secure: settings.secure,
+        auth: {
+          user: settings.user,
+          pass: settings.password,
+        },
+      });
+
+      const baseUrl = getSsoBaseUrl();
+      const verificationUrl = `${baseUrl}/verify/${token}`;
+
+      await transporter.sendMail({
+        from: settings.fromEmail || settings.user,
+        to: allocation.employee.email,
+        subject: "Action Required: Asset Verification",
+        html: `
+          <p>Hello ${allocation.employee.name},</p>
+          <p>An asset has been allocated to you: <strong>${allocation.asset.type.name} (${allocation.asset.serialNumber})</strong>.</p>
+          <p>Please verify receipt of this asset by clicking the link below:</p>
+          <p><a href="${verificationUrl}">${verificationUrl}</a></p>
+          <p>This link will allow you to approve or reject the allocation and provide remarks.</p>
+        `,
+      });
+
+      res.json({ message: "Verification email sent successfully" });
+    } catch (err) {
+      console.error("Email send failed:", err);
+      res.status(500).json({ message: "Failed to send email: " + (err as Error).message });
     }
   });
 
