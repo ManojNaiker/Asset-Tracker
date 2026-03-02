@@ -539,6 +539,45 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/upload", upload.single("image"), (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    const safePath = `/uploads/${req.file.filename}`;
+    res.json({ url: safePath });
+  });
+
+  app.post("/api/settings/email/test", requireAdmin, async (req, res) => {
+    try {
+      const settings = await storage.getEmailSettings();
+      if (!settings || !settings.host) {
+        return res.status(400).json({ message: "Email settings not configured" });
+      }
+
+      const transporter = nodemailer.createTransport({
+        host: settings.host,
+        port: settings.port || 587,
+        secure: settings.secure,
+        auth: {
+          user: settings.user,
+          pass: settings.password,
+        },
+      });
+
+      await transporter.sendMail({
+        from: settings.fromEmail || settings.user,
+        to: req.body.to || settings.fromEmail || settings.user,
+        subject: "Test Email from Asset Management System",
+        text: "This is a test email to verify your SMTP settings.",
+      });
+
+      res.json({ message: "Test email sent successfully" });
+    } catch (err) {
+      console.error("Email test failed:", err);
+      res.status(500).json({ message: "Failed to send test email: " + (err as Error).message });
+    }
+  });
+
   // Assets
   app.get(api.assets.list.path, requireAuth, async (req, res) => {
     const query = req.query as { search?: string, typeId?: string, status?: string };
@@ -627,6 +666,64 @@ export async function registerRoutes(
 
       const asset = await storage.getAsset(input.assetId);
       const employee = await storage.getEmployee(input.employeeId);
+
+      // Send allocation email
+      const emailSettings = await storage.getEmailSettings();
+      if (emailSettings && emailSettings.host && employee?.email) {
+        try {
+          const transporter = nodemailer.createTransport({
+            host: emailSettings.host,
+            port: emailSettings.port || 587,
+            secure: emailSettings.secure,
+            auth: {
+              user: emailSettings.user,
+              pass: emailSettings.password,
+            },
+          });
+
+          const baseUrl = getSsoBaseUrl();
+          const verificationUrl = `${baseUrl}/my-assets`;
+
+          await transporter.sendMail({
+            from: emailSettings.fromEmail || emailSettings.user,
+            to: employee.email,
+            subject: `Asset Allocated: ${asset?.type.name} - ${asset?.serialNumber}`,
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 8px;">
+                <h2 style="color: #1e293b;">Asset Allocation Notification</h2>
+                <p>Hello ${employee.name},</p>
+                <p>A new asset has been allocated to you:</p>
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                  <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; width: 150px;">Asset Type:</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${asset?.type.name}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Serial Number:</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${asset?.serialNumber}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Allocation Date:</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${new Date().toLocaleDateString()}</td>
+                  </tr>
+                </table>
+                <p>Please click the button below to view and acknowledge your allocated assets:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                    View & Acknowledge Asset
+                  </a>
+                </div>
+                <p style="color: #64748b; font-size: 14px;">If you cannot click the button, copy and paste this link into your browser:<br>${verificationUrl}</p>
+                <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;">
+                <p style="color: #94a3b8; font-size: 12px;">This is an automated message from the Asset Management System.</p>
+              </div>
+            `,
+          });
+          console.log(`Allocation email sent to ${employee.email}`);
+        } catch (emailErr) {
+          console.error("Failed to send allocation email:", emailErr);
+        }
+      }
 
       await storage.createAuditLog({ 
         userId: (req.user as User).id, 
