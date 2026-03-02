@@ -110,6 +110,32 @@ export default function AuditTrailPage() {
           <TableBody>
             {filteredLogs?.map((log) => {
               const user = users?.find(u => u.id === log.userId);
+              
+              // Helper to render details clearly
+              const renderDetails = () => {
+                if (!log.details) return <span className="text-slate-400 italic">No extra details</span>;
+                
+                const d = log.details as any;
+                
+                if (log.action === "Allocate Asset") {
+                  return `Allocated ${d.assetType} (${d.assetSerial}) to ${d.employeeName} (${d.employeeCode})`;
+                }
+                if (log.action === "Return Asset") {
+                  return `Returned ${d.assetSerial} from ${d.employeeName}. Reason: ${d.reason || 'None'}`;
+                }
+                if (log.action === "Delete User") {
+                  return `Deleted user: ${d.deletedUsername} (Role: ${d.deletedRole})`;
+                }
+                if (log.action === "Create User") {
+                  return `Created user: ${d.username} (Role: ${d.role})`;
+                }
+                if (log.action === "Update User") {
+                  return `Updated fields: ${Object.keys(d).join(', ')}`;
+                }
+                
+                return JSON.stringify(d);
+              };
+
               return (
                 <TableRow key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
                   <TableCell className="text-xs text-slate-500 dark:text-slate-400 font-mono">
@@ -133,9 +159,9 @@ export default function AuditTrailPage() {
                     </div>
                   </TableCell>
                   <TableCell className="max-w-md">
-                    <pre className="text-[10px] bg-slate-50 dark:bg-slate-950 p-1 rounded overflow-hidden truncate dark:text-slate-400">
-                        {JSON.stringify(log.details)}
-                    </pre>
+                    <div className="text-xs dark:text-slate-400 leading-relaxed py-1">
+                        {renderDetails()}
+                    </div>
                   </TableCell>
                 </TableRow>
               );

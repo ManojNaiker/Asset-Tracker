@@ -422,13 +422,18 @@ export async function registerRoutes(
   app.delete("/api/users/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userToDelete = await storage.getUser(id);
       await storage.deleteUser(id);
       
       await storage.createAuditLog({ 
         userId: (req.user as User).id, 
         action: "Delete User", 
         entityType: "User", 
-        entityId: id
+        entityId: id,
+        details: { 
+          deletedUsername: userToDelete?.username,
+          deletedRole: userToDelete?.role
+        }
       });
 
       res.sendStatus(204);
@@ -521,10 +526,63 @@ export async function registerRoutes(
   });
 
   app.post(api.allocations.create.path, requireAdmin, async (req, res) => {
-    const input = insertAllocationSchema.parse(req.body);
-    const allocation = await storage.createAllocation(input);
-    await storage.updateAsset(input.assetId, { status: "Allocated" });
-    res.status(201).json(allocation);
+    try {
+      const input = insertAllocationSchema.parse(req.body);
+      const allocation = await storage.createAllocation(input);
+      await storage.updateAsset(input.assetId, { status: "Allocated" });
+
+      const asset = await storage.getAsset(input.assetId);
+      const employee = await storage.getEmployee(input.employeeId);
+
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Allocate Asset", 
+        entityType: "Allocation", 
+        entityId: allocation.id,
+        details: { 
+          assetSerial: asset?.serialNumber,
+          assetType: asset?.type.name,
+          employeeName: employee?.name,
+          employeeCode: employee?.empId
+        }
+      });
+
+      res.status(201).json(allocation);
+    } catch (err) {
+      res.status(400).json({ message: "Failed to create allocation" });
+    }
+  });
+
+  app.post(api.allocations.return.path, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { returnReason, status } = req.body;
+      const allocation = await storage.updateAllocation(id, { 
+        status: "Returned", 
+        returnDate: new Date(),
+        returnReason 
+      });
+      await storage.updateAsset(allocation.assetId, { status: status as any });
+
+      const asset = await storage.getAsset(allocation.assetId);
+      const employee = await storage.getEmployee(allocation.employeeId);
+
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Return Asset", 
+        entityType: "Allocation", 
+        entityId: id,
+        details: { 
+          assetSerial: asset?.serialNumber,
+          employeeName: employee?.name,
+          reason: returnReason
+        }
+      });
+
+      res.json(allocation);
+    } catch (err) {
+      res.status(400).json({ message: "Failed to return asset" });
+    }
   });
 
   app.get(api.stats.dashboard.path, requireAuth, async (req, res) => {
