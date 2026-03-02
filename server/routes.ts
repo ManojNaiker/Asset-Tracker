@@ -373,6 +373,14 @@ export async function registerRoutes(
         mustChangePassword: true
       });
 
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Create User", 
+        entityType: "User", 
+        entityId: user.id,
+        details: { username: user.username, role: user.role }
+      });
+
       res.status(201).json(user);
     } catch (err) {
       console.error("Error creating user:", err);
@@ -396,6 +404,15 @@ export async function registerRoutes(
       if (department !== undefined) updates.department = department;
 
       const user = await storage.updateUser(id, updates);
+      
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Update User", 
+        entityType: "User", 
+        entityId: user.id,
+        details: updates
+      });
+
       res.json(user);
     } catch (err) {
       res.status(500).json({ message: "Failed to update user" });
@@ -406,6 +423,14 @@ export async function registerRoutes(
     try {
       const id = parseInt(req.params.id);
       await storage.deleteUser(id);
+      
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Delete User", 
+        entityType: "User", 
+        entityId: id
+      });
+
       res.sendStatus(204);
     } catch (err) {
       res.status(500).json({ message: "Failed to delete user" });
@@ -449,111 +474,6 @@ export async function registerRoutes(
     } catch (err) {
       res.status(500).json({ message: "Failed to bulk create users" });
     }
-  });
-
-  // Departments
-  app.get("/api/departments", requireAuth, async (req, res) => {
-    const depts = await storage.getDepartments();
-    res.json(depts);
-  });
-
-  app.post("/api/departments", requireAdmin, async (req, res) => {
-    try {
-      const input = insertDepartmentSchema.parse(req.body);
-      const dept = await storage.createDepartment(input);
-      res.status(201).json(dept);
-    } catch (err) {
-      res.status(400).json({ message: "Invalid department data" });
-    }
-  });
-
-  app.delete("/api/departments/:id", requireAdmin, async (req, res) => {
-    await storage.deleteDepartment(parseInt(req.params.id));
-    res.sendStatus(204);
-  });
-
-  app.post("/api/departments/bulk", requireAdmin, async (req, res) => {
-    try {
-      const input = z.array(insertDepartmentSchema).parse(req.body);
-      const depts = await storage.createDepartmentsBulk(input);
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Departments", details: { count: depts.length } });
-      res.status(201).json(depts);
-    } catch (err) {
-      res.status(400).json({ message: "Invalid departments data" });
-    }
-  });
-
-  // Designations
-  app.get("/api/designations", requireAuth, async (req, res) => {
-    const desigs = await storage.getDesignations();
-    res.json(desigs);
-  });
-
-  app.post("/api/designations", requireAdmin, async (req, res) => {
-    try {
-      const input = insertDesignationSchema.parse(req.body);
-      const desig = await storage.createDesignation(input);
-      res.status(201).json(desig);
-    } catch (err) {
-      res.status(400).json({ message: "Invalid designation data" });
-    }
-  });
-
-  app.delete("/api/designations/:id", requireAdmin, async (req, res) => {
-    await storage.deleteDesignation(parseInt(req.params.id));
-    res.sendStatus(204);
-  });
-
-  app.post("/api/designations/bulk", requireAdmin, async (req, res) => {
-    try {
-      const input = z.array(insertDesignationSchema).parse(req.body);
-      const desigs = await storage.createDesignationsBulk(input);
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Designations", details: { count: desigs.length } });
-      res.status(201).json(desigs);
-    } catch (err) {
-      res.status(400).json({ message: "Invalid designations data" });
-    }
-  });
-
-  // Employees
-  app.get(api.employees.list.path, requireAuth, async (req, res) => {
-    const employees = await storage.getEmployees(req.query as { search?: string, branch?: string, department?: string });
-    res.json(employees);
-  });
-
-  app.post(api.employees.create.path, requireAdmin, async (req, res) => {
-    try {
-      const input = api.employees.create.input.parse(req.body);
-      const employee = await storage.createEmployee(input);
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Create Employee", entityType: "Employee", entityId: employee.id });
-      res.status(201).json(employee);
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json(err.errors);
-      throw err;
-    }
-  });
-
-  app.put(api.employees.update.path, requireAdmin, async (req, res) => {
-      const id = parseInt(req.params.id as string);
-      const input = api.employees.update.input.parse(req.body);
-      const employee = await storage.updateEmployee(id, input);
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Update Employee", entityType: "Employee", entityId: employee.id });
-      res.json(employee);
-  });
-
-  app.post(api.employees.import.path, requireAdmin, async (req, res) => {
-      const input = api.employees.import.input.parse(req.body);
-      let count = 0;
-      for (const emp of input) {
-        try {
-            await storage.createEmployee(emp);
-            count++;
-        } catch (e) {
-            console.error("Failed to import employee", emp, e);
-        }
-      }
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Import Employees", details: { count } });
-      res.json({ count });
   });
 
   // Assets
@@ -615,6 +535,147 @@ export async function registerRoutes(
   app.get("/api/audit/logs", requireAdmin, async (req, res) => {
     const logs = await db.select().from(auditLogs).orderBy(desc(auditLogs.timestamp));
     res.json(logs);
+  });
+
+  // Departments
+  app.get("/api/departments", requireAuth, async (req, res) => {
+    const depts = await storage.getDepartments();
+    res.json(depts);
+  });
+
+  app.post("/api/departments", requireAdmin, async (req, res) => {
+    try {
+      const input = insertDepartmentSchema.parse(req.body);
+      const dept = await storage.createDepartment(input);
+      
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Create Department", 
+        entityType: "Department", 
+        entityId: dept.id,
+        details: { name: dept.name }
+      });
+      
+      res.status(201).json(dept);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid department data" });
+    }
+  });
+
+  app.delete("/api/departments/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteDepartment(id);
+    
+    await storage.createAuditLog({ 
+      userId: (req.user as User).id, 
+      action: "Delete Department", 
+      entityType: "Department", 
+      entityId: id
+    });
+    
+    res.sendStatus(204);
+  });
+
+  app.post("/api/departments/bulk", requireAdmin, async (req, res) => {
+    try {
+      const input = z.array(insertDepartmentSchema).parse(req.body);
+      const depts = await storage.createDepartmentsBulk(input);
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Departments", details: { count: depts.length } });
+      res.status(201).json(depts);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid departments data" });
+    }
+  });
+
+  // Designations
+  app.get("/api/designations", requireAuth, async (req, res) => {
+    const desigs = await storage.getDesignations();
+    res.json(desigs);
+  });
+
+  app.post("/api/designations", requireAdmin, async (req, res) => {
+    try {
+      const input = insertDesignationSchema.parse(req.body);
+      const desig = await storage.createDesignation(input);
+      
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Create Designation", 
+        entityType: "Designation", 
+        entityId: desig.id,
+        details: { name: desig.name }
+      });
+      
+      res.status(201).json(desig);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid designation data" });
+    }
+  });
+
+  app.delete("/api/designations/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteDesignation(id);
+    
+    await storage.createAuditLog({ 
+      userId: (req.user as User).id, 
+      action: "Delete Designation", 
+      entityType: "Designation", 
+      entityId: id
+    });
+    
+    res.sendStatus(204);
+  });
+
+  app.post("/api/designations/bulk", requireAdmin, async (req, res) => {
+    try {
+      const input = z.array(insertDesignationSchema).parse(req.body);
+      const desigs = await storage.createDesignationsBulk(input);
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Designations", details: { count: desigs.length } });
+      res.status(201).json(desigs);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid designations data" });
+    }
+  });
+
+  // Employees
+  app.get(api.employees.list.path, requireAuth, async (req, res) => {
+    const employees = await storage.getEmployees(req.query as { search?: string, branch?: string, department?: string });
+    res.json(employees);
+  });
+
+  app.post(api.employees.create.path, requireAdmin, async (req, res) => {
+    try {
+      const input = api.employees.create.input.parse(req.body);
+      const employee = await storage.createEmployee(input);
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Create Employee", entityType: "Employee", entityId: employee.id, details: input });
+      res.status(201).json(employee);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json(err.errors);
+      throw err;
+    }
+  });
+
+  app.put(api.employees.update.path, requireAdmin, async (req, res) => {
+      const id = parseInt(req.params.id as string);
+      const input = api.employees.update.input.parse(req.body);
+      const employee = await storage.updateEmployee(id, input);
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Update Employee", entityType: "Employee", entityId: employee.id, details: input });
+      res.json(employee);
+  });
+
+  app.post(api.employees.import.path, requireAdmin, async (req, res) => {
+      const input = api.employees.import.input.parse(req.body);
+      let count = 0;
+      for (const emp of input) {
+        try {
+            await storage.createEmployee(emp);
+            count++;
+        } catch (e) {
+            console.error("Failed to import employee", emp, e);
+        }
+      }
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Import Employees", details: { count } });
+      res.json({ count });
   });
 
   return httpServer;
