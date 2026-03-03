@@ -83,7 +83,7 @@ export default function AllocationsPage() {
                         <TableCell className="text-right space-x-2">
                            <SendVerificationButton 
                              allocationId={alloc.id} 
-                             disabled={alloc.status !== 'Active' || alloc.verificationStatus === 'Approved'} 
+                             disabled={alloc.status !== 'Active' || alloc.verificationStatus === 'Approved' || alloc.verificationStatus === 'Rejected'} 
                            />
                            <ViewAllocationDetailsDialog allocation={alloc} />
                            {alloc.status === 'Active' && (
@@ -168,12 +168,20 @@ function ViewAllocationDetailsDialog({ allocation }: { allocation: any }) {
                     <div className="border-t pt-4">
                         <p className="text-xs text-slate-500 font-medium uppercase mb-2">Audit Trail</p>
                         <div className="space-y-2">
-                             <div className="text-sm bg-slate-50 p-2 rounded border border-slate-100">
-                                <span className="text-slate-500">{new Date(allocation.allocatedAt).toLocaleString()}</span> - Asset Allocated
+                             <div className="text-sm bg-slate-50 dark:bg-slate-800/50 p-2 rounded border border-slate-100 dark:border-slate-800">
+                                <span className="text-slate-500 dark:text-slate-400">{new Date(allocation.allocatedAt).toLocaleString()}</span> - Asset Allocated
                              </div>
+                             {allocation.verificationStatus && allocation.verificationStatus !== 'Pending' && (
+                                 <div className="text-sm bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-100 dark:border-blue-800">
+                                    <span className="text-slate-500 dark:text-slate-400">Verification Status:</span> 
+                                    <Badge variant="outline" className="ml-2 h-5 text-[10px]">
+                                        {allocation.verificationStatus}
+                                    </Badge>
+                                 </div>
+                             )}
                              {allocation.returnDate && (
-                                 <div className="text-sm bg-slate-50 p-2 rounded border border-slate-100">
-                                    <span className="text-slate-500">{new Date(allocation.returnDate).toLocaleString()}</span> - Asset Returned
+                                 <div className="text-sm bg-slate-50 dark:bg-slate-800/50 p-2 rounded border border-slate-100 dark:border-slate-800">
+                                    <span className="text-slate-500 dark:text-slate-400">{new Date(allocation.returnDate).toLocaleString()}</span> - Asset Returned
                                  </div>
                              )}
                         </div>
