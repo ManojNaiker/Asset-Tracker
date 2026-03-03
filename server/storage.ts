@@ -307,6 +307,13 @@ export class DatabaseStorage implements IStorage {
 
   async createVerification(verification: InsertVerification): Promise<Verification> {
     const [newVerification] = await db.insert(verifications).values(verification).returning();
+    
+    // Update the associated allocation's verification status
+    const [allocation] = await db.select().from(allocations).where(eq(allocations.assetId, verification.assetId)).limit(1);
+    if (allocation) {
+      await db.update(allocations).set({ verificationStatus: verification.status }).where(eq(allocations.id, allocation.id));
+    }
+    
     return newVerification;
   }
 

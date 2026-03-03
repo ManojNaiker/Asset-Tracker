@@ -81,7 +81,10 @@ export default function AllocationsPage() {
                             </Badge>
                         </TableCell>
                         <TableCell className="text-right space-x-2">
-                           <SendVerificationButton allocationId={alloc.id} disabled={alloc.status !== 'Active'} />
+                           <SendVerificationButton 
+                             allocationId={alloc.id} 
+                             disabled={alloc.status !== 'Active' || alloc.verificationStatus === 'Approved'} 
+                           />
                            <ViewAllocationDetailsDialog allocation={alloc} />
                            {alloc.status === 'Active' && (
                                <ReturnAssetDialog allocationId={alloc.id} />
