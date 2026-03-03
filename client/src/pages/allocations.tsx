@@ -574,7 +574,7 @@ function CreateAllocationDialog() {
                                     />
                                 </div>
                             </div>
-                        )}}
+                        )}
                         <FormField
                             control={form.control}
                             name="remarks"
