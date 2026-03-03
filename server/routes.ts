@@ -869,6 +869,15 @@ export async function registerRoutes(
       }
 
       if (assetData) {
+        if (assetData.assetTypeName) {
+          const types = await storage.getAssetTypes();
+          let type = types.find(t => t.name === assetData.assetTypeName);
+          if (!type) {
+            type = await storage.createAssetType({ name: assetData.assetTypeName, schema: [] });
+          }
+          assetData.assetTypeId = type.id;
+          delete assetData.assetTypeName;
+        }
         const asset = await storage.createAsset(assetData);
         finalAssetId = asset.id;
       }

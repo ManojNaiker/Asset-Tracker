@@ -309,7 +309,7 @@ function CreateAllocationDialog() {
             name: "",
             email: "",
             serialNumber: "",
-            assetTypeId: "",
+            assetTypeName: "",
             status: "Active",
             remarks: ""
         }
@@ -365,7 +365,7 @@ function CreateAllocationDialog() {
             };
             payload.assetData = {
                 serialNumber: data.serialNumber,
-                assetTypeId: Number(data.assetTypeId),
+                assetTypeName: data.assetTypeName,
                 status: "Available",
                 specifications: {}
             };
@@ -561,24 +561,20 @@ function CreateAllocationDialog() {
                                     />
                                     <FormField
                                         control={form.control}
-                                        name="assetTypeId"
+                                        name="assetTypeName"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Type</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                                                    <SelectContent>
-                                                        {assetTypes?.map(t => (
-                                                            <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormItem>
+                                            <ComboboxField
+                                                label="Asset Type"
+                                                placeholder="Select or type..."
+                                                options={assetTypes?.map(t => ({ label: t.name, value: t.name })) || []}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                            />
                                         )}
                                     />
                                 </div>
                             </div>
-                        )}
+                        )}}
                         <FormField
                             control={form.control}
                             name="remarks"
