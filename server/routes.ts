@@ -877,48 +877,77 @@ export async function registerRoutes(
           const verificationUrl = `${appUrl}/verify/${token}`;
 
           // Get asset details for the email
-          const assetDetails = asset;
-          const assetType = assetDetails.type.name;
+          const assetDetails = asset as any;
+          const assetType = assetDetails.type?.name || "Asset";
           const assetSerial = assetDetails.serialNumber;
           
           // Extract dynamic fields if any
-          const dynamicFields = assetDetails.fields as Record<string, any> || {};
+          const dynamicFields = assetDetails.specifications as Record<string, any> || {};
           const fieldsHtml = Object.entries(dynamicFields)
-            .map(([key, value]) => `<li><strong style="color: #1e293b;">${key}:</strong> ${value}</li>`)
+            .map(([key, value]) => `
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7; color: #718096; font-size: 14px; width: 40%;">${key}</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7; color: #2d3748; font-size: 14px; font-weight: 500;">${value}</td>
+              </tr>`)
             .join('');
 
           await transporter.sendMail({
             from: emailSettings.fromEmail,
             to: employee.email,
             subject: `Asset Allocation Confirmation - ${assetType}`,
-            html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-                  <div style="text-align: center; margin-bottom: 24px;">
-                    <h2 style="color: #1e293b; margin: 0; font-size: 24px;">Asset Allocation Confirmation</h2>
-                  </div>
-                  <p style="color: #475569; font-size: 16px; margin-bottom: 20px;">Dear <strong>${employee.name}</strong>,</p>
-                  <p style="color: #475569; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-                    With reference to the above mentioned subject, the following asset has been allocated to you. 
-                    Please review the details and click the button below to validate and confirm the custody of the asset.
-                  </p>
+            html: `
+              <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                <!-- Header -->
+                <div style="background-color: #22c55e; padding: 24px; text-align: center;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">MNRL DATA VERIFICATION</h1>
+                  <p style="color: rgba(255,255,255,0.9); margin: 4px 0 0 0; font-size: 12px;">Lighthouse | Digital Lending</p>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 32px 24px;">
+                  <h2 style="color: #1a202c; margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">Asset Allocation Summary</h2>
                   
-                  <div style="background-color: #f8fafc; padding: 24px; border-radius: 8px; border-left: 4px solid #2563eb; margin-bottom: 30px;">
-                    <h3 style="margin-top: 0; color: #1e293b; font-size: 18px; margin-bottom: 16px;">Asset Details</h3>
-                    <ul style="list-style: none; padding: 0; margin: 0; color: #475569; font-size: 15px;">
-                      <li style="margin-bottom: 10px;"><strong style="color: #1e293b;">Type:</strong> ${assetType}</li>
-                      <li style="margin-bottom: 10px;"><strong style="color: #1e293b;">Serial Number:</strong> ${assetSerial}</li>
-                      ${fieldsHtml}
-                    </ul>
+                  <p style="color: #4a5568; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+                    Dear <strong>${employee.name}</strong>,<br><br>
+                    The following asset has been allocated to you. Please review the details below and confirm receipt by clicking the verification button.
+                  </p>
+
+                  <!-- Asset Table -->
+                  <div style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 32px;">
+                    <table style="width: 100%; border-collapse: collapse; background-color: #f8fafc;">
+                      <thead>
+                        <tr style="background-color: #edf2f7;">
+                          <th style="text-align: left; padding: 12px 16px; color: #4a5568; font-size: 13px; font-weight: 600; border-bottom: 2px solid #e2e8f0;">Field</th>
+                          <th style="text-align: left; padding: 12px 16px; color: #4a5568; font-size: 13px; font-weight: 600; border-bottom: 2px solid #e2e8f0;">Details</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #718096; font-size: 14px;">Asset Type</td>
+                          <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #2d3748; font-size: 14px; font-weight: 600;">${assetType}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #718096; font-size: 14px;">Serial Number</td>
+                          <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #2d3748; font-size: 14px; font-weight: 600;">${assetSerial}</td>
+                        </tr>
+                        ${fieldsHtml}
+                      </tbody>
+                    </table>
                   </div>
 
-                  <div style="text-align: center; margin: 32px 0;">
-                    <a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block; font-size: 16px;">Verify Asset Receipt</a>
+                  <!-- Action -->
+                  <div style="text-align: center; margin-bottom: 32px;">
+                    <a href="${verificationUrl}" style="background-color: #22c55e; color: #ffffff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block; font-size: 15px; box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.2);">
+                      Verify Asset Receipt
+                    </a>
                   </div>
-                  
-                  <p style="color: #64748b; font-size: 14px; margin-top: 40px; border-top: 1px solid #f1f5f9; padding-top: 20px; line-height: 1.5;">
+
+                  <p style="color: #718096; font-size: 13px; line-height: 1.5; margin: 0; border-top: 1px solid #edf2f7; padding-top: 24px;">
                     This is an automated notification from the Asset Management System.<br>
-                    Portal Access: <a href="${appUrl}" style="color: #2563eb; text-decoration: none;">${appUrl}</a>
+                    Portal Access: <a href="${appUrl}" style="color: #22c55e; text-decoration: none;">${appUrl}</a>
                   </p>
-                </div>`
+                </div>
+              </div>`
           });
           console.log("Allocation email sent to " + employee.email);
         } catch (emailErr) {
