@@ -707,8 +707,8 @@ export async function registerRoutes(
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
             <div style="background-color: #2e7d32; padding: 24px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px;">MNRL DATA VERIFICATION</h1>
-              <p style="color: #e8f5e9; margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;">Lighthouse | Digital Lending</p>
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px;">Asset Allocation Summary</h1>
+              <p style="color: #e8f5e9; margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;">Light Microfinance Pvt. Ltd.</p>
             </div>
             
             <div style="padding: 32px 24px;">
