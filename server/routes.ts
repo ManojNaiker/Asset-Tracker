@@ -408,6 +408,50 @@ export async function registerRoutes(
         details: { username: user.username, role: user.role }
       });
 
+      // Send welcome email to user
+      try {
+        const settings = await storage.getEmailSettings();
+        if (settings && settings.host) {
+          const transporter = nodemailer.createTransport({
+            host: settings.host,
+            port: settings.port || 587,
+            secure: settings.secure,
+            auth: {
+              user: settings.user,
+              pass: settings.password,
+            },
+          });
+
+          const baseUrl = getSsoBaseUrl();
+          await transporter.sendMail({
+            from: settings.fromEmail || settings.user,
+            to: user.username,
+            subject: "Welcome to Asset Management System",
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <h2 style="color: #1e293b; margin-bottom: 16px;">Welcome to AssetAlloc</h2>
+                <p style="color: #475569; font-size: 16px;">Hello ${user.fullName || user.username},</p>
+                <p style="color: #475569; font-size: 16px; line-height: 1.5;">
+                  Your account has been created successfully. You can now log in to the Asset Management System to view your allocated assets and manage verifications.
+                </p>
+                <div style="background-color: #f8fafc; padding: 16px; border-radius: 6px; margin: 24px 0;">
+                  <p style="margin: 0; color: #64748b; font-size: 14px;"><strong>Username:</strong> ${user.username}</p>
+                  <p style="margin: 4px 0 0 0; color: #64748b; font-size: 14px;"><strong>Role:</strong> ${user.role}</p>
+                </div>
+                <div style="margin: 32px 0;">
+                  <a href="${baseUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; display: inline-block;">Login to Portal</a>
+                </div>
+                <p style="color: #64748b; font-size: 14px; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+                  If you have any questions, please contact your administrator.
+                </p>
+              </div>
+            `,
+          });
+        }
+      } catch (emailErr) {
+        console.error("Failed to send welcome email:", emailErr);
+      }
+
       res.status(201).json(user);
     } catch (err) {
       console.error("Error creating user:", err);
@@ -645,25 +689,49 @@ export async function registerRoutes(
       const baseUrl = getSsoBaseUrl();
       const verificationUrl = `${baseUrl}/verify/${token}`;
 
+      // Get asset details for the email
+      const assetDetails = allocation.asset;
+      const assetType = assetDetails.type.name;
+      const assetSerial = assetDetails.serialNumber;
+      
+      // Extract dynamic fields if any
+      const dynamicFields = assetDetails.fields as Record<string, any> || {};
+      const fieldsHtml = Object.entries(dynamicFields)
+        .map(([key, value]) => `<li><strong>${key}:</strong> ${value}</li>`)
+        .join('');
+
       await transporter.sendMail({
         from: settings.fromEmail || settings.user,
         to: allocation.employee.email,
-        subject: "Action Required: Asset Verification",
+        subject: `Action Required: Asset Allocation Verification - ${assetType}`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <h2 style="color: #1e293b; margin-bottom: 16px;">Asset Verification Required</h2>
+            <h2 style="color: #1e293b; margin-bottom: 16px;">Asset Allocation Notification</h2>
             <p style="color: #475569; font-size: 16px;">Hello ${allocation.employee.name},</p>
             <p style="color: #475569; font-size: 16px; line-height: 1.5;">
-              An asset has been allocated to you: <strong>${allocation.asset.type.name} (${allocation.asset.serialNumber})</strong>.
+              A new asset has been allocated to you. Please review the details below and verify the receipt.
             </p>
-            <p style="color: #475569; font-size: 16px; line-height: 1.5;">
-              Please verify receipt of this asset by clicking the link below. No login is required.
-            </p>
-            <div style="margin: 32px 0;">
-              <a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; display: inline-block;">Verify Asset Now</a>
+            
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 24px 0;">
+              <h3 style="margin-top: 0; color: #1e293b; font-size: 18px;">Asset Information</h3>
+              <ul style="list-style: none; padding: 0; margin: 0; color: #475569;">
+                <li style="margin-bottom: 8px;"><strong>Type:</strong> ${assetType}</li>
+                <li style="margin-bottom: 8px;"><strong>Serial Number:</strong> ${assetSerial}</li>
+                ${fieldsHtml}
+              </ul>
             </div>
+
+            <p style="color: #475569; font-size: 16px; line-height: 1.5;">
+              <strong>Action Required:</strong> Please click the button below to confirm that you have received this asset in good condition. No login is required for this step.
+            </p>
+            
+            <div style="margin: 32px 0; text-align: center;">
+              <a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">Verify Receipt Now</a>
+            </div>
+
             <p style="color: #64748b; font-size: 14px; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
-              This is an automated notification from the Asset Management System.
+              This is an automated notification from the Asset Management System.<br>
+              Portal Link: <a href="${baseUrl}" style="color: #2563eb;">${baseUrl}</a>
             </p>
           </div>
         `,
