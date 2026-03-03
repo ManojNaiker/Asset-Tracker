@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useAllocations, useCreateAllocation, useReturnAllocation } from "@/hooks/use-allocations";
 import { useAssets, useAssetTypes } from "@/hooks/use-assets";
 import { useEmployees } from "@/hooks/use-employees";
+import { useDepartments, useDesignations } from "@/hooks/use-settings";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,14 +12,101 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertAllocationSchema, type InsertAllocation } from "@shared/schema";
-import { Plus, Loader2, ArrowRightLeft, CheckCircle2, Camera, X, Upload, Send } from "lucide-react";
+import { Plus, Loader2, ArrowRightLeft, CheckCircle2, Camera, X, Upload, Send, Check, ChevronsUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { api } from "@/lib/queryClient";
+import { api, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { BulkAllocationUploadDialog } from "@/components/bulk-upload-dialogs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 import { ImagePreview } from "@/components/image-preview";
+
+function ComboboxField({ 
+  options, 
+  value, 
+  onChange, 
+  placeholder,
+  label 
+}: { 
+  options: { label: string; value: string }[]; 
+  value: string; 
+  onChange: (value: string) => void;
+  placeholder: string;
+  label: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+
+  return (
+    <FormItem className="flex flex-col">
+      <FormLabel>{label}</FormLabel>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <FormControl>
+            <Button
+              variant="outline"
+              role="combobox"
+              className={cn(
+                "w-full justify-between font-normal",
+                !value && "text-muted-foreground"
+              )}
+            >
+              {value || placeholder}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </FormControl>
+        </PopoverTrigger>
+        <PopoverContent className="w-[200px] p-0">
+          <Command>
+            <CommandInput 
+              placeholder={`Search ${label.toLowerCase()}...`} 
+              onValueChange={setSearchValue}
+            />
+            <CommandList>
+              <CommandEmpty>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-blue-600 font-medium"
+                  onClick={() => {
+                    onChange(searchValue);
+                    setOpen(false);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add "{searchValue}"
+                </Button>
+              </CommandEmpty>
+              <CommandGroup>
+                {options.map((option) => (
+                  <CommandItem
+                    value={option.label}
+                    key={option.value}
+                    onSelect={() => {
+                      onChange(option.value);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        option.value === value ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {option.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      <FormMessage />
+    </FormItem>
+  );
+}
 
 export default function AllocationsPage() {
   const { data: allocations, isLoading } = useAllocations();
@@ -199,6 +287,18 @@ function CreateAllocationDialog() {
     const { data: assets } = useAssets({ status: "Available" });
     const { data: employees } = useEmployees();
     const { data: assetTypes } = useAssetTypes();
+    const { data: departments } = useDepartments();
+    const { data: designations } = useDesignations();
+
+    const deptOptions = useMemo(() => 
+      departments?.map(d => ({ label: d.name, value: d.name })) || [], 
+      [departments]
+    );
+    
+    const desigOptions = useMemo(() => 
+      designations?.map(d => ({ label: d.name, value: d.name })) || [], 
+      [designations]
+    );
 
     const form = useForm<any>({
         defaultValues: {
@@ -402,10 +502,13 @@ function CreateAllocationDialog() {
                                         control={form.control}
                                         name="department"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Department</FormLabel>
-                                                <FormControl><Input {...field} /></FormControl>
-                                            </FormItem>
+                                            <ComboboxField
+                                                label="Department"
+                                                placeholder="Select or type..."
+                                                options={deptOptions}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                            />
                                         )}
                                     />
                                 </div>
@@ -414,10 +517,13 @@ function CreateAllocationDialog() {
                                         control={form.control}
                                         name="designation"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Designation</FormLabel>
-                                                <FormControl><Input {...field} /></FormControl>
-                                            </FormItem>
+                                            <ComboboxField
+                                                label="Designation"
+                                                placeholder="Select or type..."
+                                                options={desigOptions}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                            />
                                         )}
                                     />
                                     <FormField

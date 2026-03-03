@@ -832,6 +832,20 @@ export async function registerRoutes(
       let finalEmployeeId = employeeId;
 
       if (employeeData) {
+        // Automatically create department/designation if they don't exist
+        if (employeeData.department) {
+          const depts = await storage.getDepartments();
+          if (!depts.find(d => d.name === employeeData.department)) {
+            await storage.createDepartment({ name: employeeData.department });
+          }
+        }
+        if (employeeData.designation) {
+          const desigs = await storage.getDesignations();
+          if (!desigs.find(d => d.name === employeeData.designation)) {
+            await storage.createDesignation({ name: employeeData.designation });
+          }
+        }
+
         const employee = await storage.createEmployee(employeeData);
         finalEmployeeId = employee.id;
       }
