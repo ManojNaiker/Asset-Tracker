@@ -624,7 +624,8 @@ export async function registerRoutes(
       const allocation = await storage.getAllocations().then(list => list.find(a => a.id === id));
       if (!allocation) return res.status(404).json({ message: "Allocation not found" });
 
-      const token = (globalThis.crypto || await import('node:crypto')).randomBytes(32).toString('hex');
+      const crypto = await import('node:crypto');
+      const token = crypto.randomBytes(32).toString('hex');
       await storage.updateAllocation(id, { verificationToken: token });
 
       const settings = await storage.getEmailSettings();
@@ -773,12 +774,17 @@ export async function registerRoutes(
         finalAssetId = asset.id;
       }
 
+      // Generate a verification token for the new allocation
+      const crypto = await import('node:crypto');
+      const token = crypto.randomBytes(32).toString('hex');
+
       const allocation = await storage.createAllocation({
         assetId: finalAssetId,
         employeeId: finalEmployeeId,
         status: status || "Active",
         remarks,
-        imageUrl: details?.imageUrl
+        imageUrl: details?.imageUrl,
+        verificationToken: token
       });
 
       // Update asset status
