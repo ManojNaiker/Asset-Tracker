@@ -99,6 +99,7 @@ function Router() {
         {(params) => <ExternalVerificationPage params={params} />}
       </Route>
       <Route path="/verification-success" component={VerificationSuccessPage} />
+      <Route path="/verification-already-done" component={VerificationSuccessPage} />
 
       <Route component={NotFound} />
     </Switch>

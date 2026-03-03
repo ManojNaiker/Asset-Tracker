@@ -77,6 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null, Error>({
     queryKey: ["/api/user"],
     queryFn: async () => {
+      // Don't even try to fetch the user if we're on a public route
+      const publicRoutes = ["/verify/", "/auth", "/verification-"];
+      if (publicRoutes.some(route => window.location.pathname.startsWith(route))) {
+        return null;
+      }
+
       const res = await fetch("/api/user");
       if (res.status === 401) return null;
       if (!res.ok) throw new Error("Failed to fetch user");

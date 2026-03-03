@@ -650,11 +650,22 @@ export async function registerRoutes(
         to: allocation.employee.email,
         subject: "Action Required: Asset Verification",
         html: `
-          <p>Hello ${allocation.employee.name},</p>
-          <p>An asset has been allocated to you: <strong>${allocation.asset.type.name} (${allocation.asset.serialNumber})</strong>.</p>
-          <p>Please verify receipt of this asset by clicking the link below:</p>
-          <p><a href="${verificationUrl}">${verificationUrl}</a></p>
-          <p>This link will allow you to approve or reject the allocation and provide remarks.</p>
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <h2 style="color: #1e293b; margin-bottom: 16px;">Asset Verification Required</h2>
+            <p style="color: #475569; font-size: 16px;">Hello ${allocation.employee.name},</p>
+            <p style="color: #475569; font-size: 16px; line-height: 1.5;">
+              An asset has been allocated to you: <strong>${allocation.asset.type.name} (${allocation.asset.serialNumber})</strong>.
+            </p>
+            <p style="color: #475569; font-size: 16px; line-height: 1.5;">
+              Please verify receipt of this asset by clicking the link below. No login is required.
+            </p>
+            <div style="margin: 32px 0;">
+              <a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; display: inline-block;">Verify Asset Now</a>
+            </div>
+            <p style="color: #64748b; font-size: 14px; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+              This is an automated notification from the Asset Management System.
+            </p>
+          </div>
         `,
       });
 
