@@ -705,34 +705,52 @@ export async function registerRoutes(
         to: allocation.employee.email,
         subject: `Action Required: Asset Allocation Verification - ${assetType}`,
         html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <h2 style="color: #1e293b; margin-bottom: 16px;">Asset Allocation Notification</h2>
-            <p style="color: #475569; font-size: 16px;">Hello ${allocation.employee.name},</p>
-            <p style="color: #475569; font-size: 16px; line-height: 1.5;">
-              A new asset has been allocated to you. Please review the details below and verify the receipt.
-            </p>
-            
-            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 24px 0;">
-              <h3 style="margin-top: 0; color: #1e293b; font-size: 18px;">Asset Information</h3>
-              <ul style="list-style: none; padding: 0; margin: 0; color: #475569;">
-                <li style="margin-bottom: 8px;"><strong>Type:</strong> ${assetType}</li>
-                <li style="margin-bottom: 8px;"><strong>Serial Number:</strong> ${assetSerial}</li>
-                ${fieldsHtml}
-              </ul>
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #2e7d32; padding: 24px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px;">MNRL DATA VERIFICATION</h1>
+              <p style="color: #e8f5e9; margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;">Lighthouse | Digital Lending</p>
             </div>
-
-            <p style="color: #475569; font-size: 16px; line-height: 1.5;">
-              <strong>Action Required:</strong> Please click the button below to confirm that you have received this asset in good condition. No login is required for this step.
-            </p>
             
-            <div style="margin: 32px 0; text-align: center;">
-              <a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">Verify Receipt Now</a>
-            </div>
+            <div style="padding: 32px 24px;">
+              <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">Asset Allocation Summary</h2>
+              
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+                <thead>
+                  <tr style="background-color: #f5f5f5;">
+                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0; color: #666666; font-size: 13px; text-transform: uppercase;">Asset</th>
+                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e0e0e0; color: #666666; font-size: 13px; text-transform: uppercase;">Serial Number</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="padding: 16px 12px; border-bottom: 1px solid #eeeeee; color: #333333; font-size: 15px;">${assetType}</td>
+                    <td style="padding: 16px 12px; border-bottom: 1px solid #eeeeee; color: #2e7d32; font-weight: 600; text-align: right; font-size: 15px;">${assetSerial}</td>
+                  </tr>
+                </tbody>
+              </table>
 
-            <p style="color: #64748b; font-size: 14px; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
-              This is an automated notification from the Asset Management System.<br>
-              Portal Link: <a href="${baseUrl}" style="color: #2563eb;">${baseUrl}</a>
-            </p>
+              <div style="background-color: #f8fafc; padding: 16px; border-radius: 6px; border: 1px solid #edf2f7; margin-bottom: 24px;">
+                <h3 style="margin: 0 0 12px 0; color: #4a5568; font-size: 14px; text-transform: uppercase;">Additional Details</h3>
+                <ul style="list-style: none; padding: 0; margin: 0; color: #4a5568; font-size: 14px;">
+                  ${fieldsHtml}
+                </ul>
+              </div>
+
+              <p style="color: #666666; font-size: 14px; line-height: 1.6; margin-bottom: 30px;">
+                A new asset has been allocated to you. Please click the button below to verify the asset details and complete the acknowledgement process.
+              </p>
+              
+              <div style="text-align: center; margin-bottom: 30px;">
+                <a href="${verificationUrl}" style="background-color: #2e7d32; color: #ffffff; padding: 14px 32px; border-radius: 4px; text-decoration: none; font-weight: 600; display: inline-block;">Verify Asset Now</a>
+              </div>
+            </div>
+            
+            <div style="background-color: #fafafa; padding: 20px; text-align: center; border-top: 1px solid #eeeeee;">
+              <p style="color: #999999; font-size: 12px; margin: 0;">
+                This is an automated notification. Please do not reply to this email.<br>
+                Portal: <a href="${baseUrl}" style="color: #2e7d32; text-decoration: none;">${baseUrl}</a>
+              </p>
+            </div>
           </div>
         `,
       });
