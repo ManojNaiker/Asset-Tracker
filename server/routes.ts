@@ -10,7 +10,7 @@ import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import bcrypt from "bcryptjs";
 import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, insertEmployeeSchema, allocations, ssoSettings as ssoSettingsTable } from "@shared/schema";
-import { crypto } from "node:crypto";
+import crypto from "node:crypto";
 import { db } from "./db";
 import { desc } from "drizzle-orm";
 import nodemailer from "nodemailer";
@@ -47,7 +47,7 @@ export async function registerRoutes(
   app.set("trust proxy", 1);
   app.use(session({
     store: storage.sessionStore,
-    secret: process.env.SESSION_SECRET || "default_secret",
+    secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
     resave: false,
     saveUninitialized: false,
     proxy: true,
@@ -624,7 +624,6 @@ export async function registerRoutes(
       const allocation = await storage.getAllocations().then(list => list.find(a => a.id === id));
       if (!allocation) return res.status(404).json({ message: "Allocation not found" });
 
-      const crypto = await import('node:crypto');
       const token = crypto.randomBytes(32).toString('hex');
       await storage.updateAllocation(id, { verificationToken: token });
 
@@ -775,7 +774,6 @@ export async function registerRoutes(
       }
 
       // Generate a verification token for the new allocation
-      const crypto = await import('node:crypto');
       const token = crypto.randomBytes(32).toString('hex');
 
       const allocation = await storage.createAllocation({
