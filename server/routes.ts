@@ -1001,7 +1001,14 @@ export async function registerRoutes(
         action: "Create Allocation",
         entityType: "Allocation",
         entityId: allocation.id,
-        details: { assetId: finalAssetId, employeeId: finalEmployeeId }
+        details: { 
+          assetId: finalAssetId, 
+          employeeId: finalEmployeeId,
+          assetSerial: asset?.serialNumber,
+          employeeName: employee?.name,
+          status: allocation.status,
+          remarks: allocation.remarks
+        }
       });
 
       res.status(201).json(allocation);
