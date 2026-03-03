@@ -265,6 +265,34 @@ function EditEmployeeDialog({ employee }: { employee: Employee }) {
                                 )}
                             />
                         </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="branch"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Branch</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Main Branch" {...field} value={field.value || ''} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="mobile"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Mobile</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="9876543210" {...field} value={field.value || ''} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <Button type="submit" className="w-full" disabled={mutation.isPending}>
                             {mutation.isPending ? "Updating..." : "Update Employee"}
                         </Button>
@@ -377,6 +405,34 @@ function CreateEmployeeDialog() {
                                         <FormLabel>Designation</FormLabel>
                                         <FormControl>
                                             <Input placeholder="Manager" {...field} value={field.value || ''} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="branch"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Branch</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Main Branch" {...field} value={field.value || ''} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="mobile"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Mobile</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="9876543210" {...field} value={field.value || ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
