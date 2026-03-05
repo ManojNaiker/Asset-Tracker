@@ -55,6 +55,7 @@ export interface IStorage {
   
   // Verifications
   getVerifications(): Promise<Verification[]>;
+  getVerificationWithDetails(id: number): Promise<any>;
   createVerification(verification: InsertVerification): Promise<Verification>;
   
   // Departments
@@ -303,6 +304,23 @@ export class DatabaseStorage implements IStorage {
   // Verifications
   async getVerifications(): Promise<Verification[]> {
     return db.select().from(verifications).orderBy(desc(verifications.verifiedAt));
+  }
+
+  async getVerificationWithDetails(id: number): Promise<any> {
+    const [result] = await db
+      .select({
+        id: verifications.id,
+        status: verifications.status,
+        verifiedAt: verifications.verifiedAt,
+        remarks: verifications.remarks,
+        assetName: assetTypes.name,
+        serialNumber: assets.serialNumber
+      })
+      .from(verifications)
+      .innerJoin(assets, eq(verifications.assetId, assets.id))
+      .innerJoin(assetTypes, eq(assets.assetTypeId, assetTypes.id))
+      .where(eq(verifications.id, id));
+    return result;
   }
 
   async createVerification(verification: InsertVerification): Promise<Verification> {

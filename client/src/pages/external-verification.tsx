@@ -55,9 +55,9 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (verification: any) => {
       toast({ title: "Verification submitted successfully" });
-      setLocation("/verification-success");
+      setLocation(`/verification-success?id=${verification.id}`);
     },
     onError: (err: Error) => {
       toast({ 

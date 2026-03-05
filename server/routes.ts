@@ -662,6 +662,18 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/verifications/public/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+      const verification = await storage.getVerificationWithDetails(id);
+      if (!verification) return res.status(404).json({ message: "Verification not found" });
+      res.json(verification);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/allocations/:id/send-verification", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
