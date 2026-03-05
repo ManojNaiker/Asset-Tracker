@@ -952,7 +952,7 @@ export async function registerRoutes(
               <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                 <!-- Header -->
                 <div style="background-color: #22c55e; padding: 24px; text-align: center;">
-                  <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">MNRL DATA VERIFICATION</h1>
+                  <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">ALLOCATED ASSET VERIFICATION</h1>
                   <p style="color: rgba(255,255,255,0.9); margin: 4px 0 0 0; font-size: 12px;">Lighthouse | Digital Lending</p>
                 </div>
 
