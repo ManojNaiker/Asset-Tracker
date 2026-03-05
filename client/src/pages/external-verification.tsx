@@ -93,25 +93,27 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
               Allocated Assets
             </label>
             <div 
-              className={`p-4 rounded-lg border-2 transition-colors cursor-pointer flex items-center gap-4 ${
+              className={`p-3 sm:p-4 rounded-lg border-2 transition-colors cursor-pointer flex items-start sm:items-center gap-3 sm:gap-4 ${
                 selectedAssets.includes(allocation.asset.id) 
                   ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" 
                   : "bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800"
               }`}
               onClick={() => toggleAsset(allocation.asset.id)}
             >
-              <Checkbox 
-                checked={selectedAssets.includes(allocation.asset.id)}
-                onCheckedChange={() => toggleAsset(allocation.asset.id)}
-              />
+              <div className="pt-1 sm:pt-0">
+                <Checkbox 
+                  checked={selectedAssets.includes(allocation.asset.id)}
+                  onCheckedChange={() => toggleAsset(allocation.asset.id)}
+                />
+              </div>
               <div className="flex-1 space-y-1">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-slate-900 dark:text-slate-100">{allocation.asset.type.name}</span>
-                  <span className="text-xs font-mono bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-400">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+                  <span className="font-medium text-slate-900 dark:text-slate-100 text-sm sm:text-base">{allocation.asset.type.name}</span>
+                  <span className="text-[10px] sm:text-xs font-mono bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-400 self-start">
                     {allocation.asset.serialNumber}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-[10px] sm:text-xs text-slate-500">
                   Select this asset to approve or reject its current status.
                 </p>
               </div>

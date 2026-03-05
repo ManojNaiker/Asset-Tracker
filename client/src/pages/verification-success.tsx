@@ -53,53 +53,53 @@ export default function VerificationSuccessPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="bg-slate-100 dark:bg-slate-900 rounded-lg p-4 space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
               <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                 <Hash className="w-4 h-4" />
                 <span>Transaction ID</span>
               </div>
-              <span className="font-mono font-medium text-slate-900 dark:text-slate-100">
+              <span className="font-mono font-medium text-slate-900 dark:text-slate-100 text-sm sm:text-base">
                 #VER-{id}
               </span>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
               <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                 <span className="w-4 h-4 flex items-center justify-center font-bold text-[10px]">A</span>
                 <span>Asset</span>
               </div>
-              <span className="font-medium text-slate-900 dark:text-slate-100">
+              <span className="font-medium text-slate-900 dark:text-slate-100 text-sm sm:text-base">
                 {verification.assetName}
               </span>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
               <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                 <span className="w-4 h-4 flex items-center justify-center font-bold text-[10px]">SN</span>
                 <span>Serial Number</span>
               </div>
-              <span className="font-mono text-xs text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800 px-2 py-0.5 rounded">
+              <span className="font-mono text-xs text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800 px-2 py-0.5 rounded self-start sm:self-auto">
                 {verification.serialNumber}
               </span>
             </div>
 
             {verification?.verifiedAt && (
               <>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
                   <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                     <Calendar className="w-4 h-4" />
                     <span>Date</span>
                   </div>
-                  <span className="font-medium text-slate-900 dark:text-slate-100">
+                  <span className="font-medium text-slate-900 dark:text-slate-100 text-sm sm:text-base">
                     {format(new Date(verification.verifiedAt), "PPP")}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
                   <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                     <Clock className="w-4 h-4" />
                     <span>Time</span>
                   </div>
-                  <span className="font-medium text-slate-900 dark:text-slate-100">
+                  <span className="font-medium text-slate-900 dark:text-slate-100 text-sm sm:text-base">
                     {format(new Date(verification.verifiedAt), "p")}
                   </span>
                 </div>
