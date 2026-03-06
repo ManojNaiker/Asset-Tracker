@@ -109,89 +109,88 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       <Separator className="bg-slate-800" />
       
       <div className="flex-1 py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar">
-        {navItems.map((item) => {
-          if (item.children) {
-            const isChildActive = item.children.some(child => location === child.href);
-            const isOpen = openMenus[item.name] || isChildActive;
+          {navItems.map((item) => {
+            if (item.children) {
+              const isChildActive = item.children.some(child => location === child.href);
+              const isOpen = openMenus[item.name] || isChildActive;
 
-            if (isCollapsed) {
-              return (
-                <div key={item.name} className="flex flex-col items-center py-2 group relative">
-                  <div className={`p-3 rounded-lg transition-all duration-200 ${isChildActive ? "bg-slate-800 text-white" : "text-slate-500 hover:text-white hover:bg-slate-800"}`}>
-                    <item.icon className="w-6 h-6" />
+              if (isCollapsed) {
+                return (
+                  <div key={item.name} className="flex flex-col items-center py-2 group relative">
+                    <div className={`p-3 rounded-lg transition-all duration-200 ${isChildActive ? "bg-slate-800 text-white" : "text-slate-500 hover:text-white hover:bg-slate-800"}`}>
+                      <item.icon className="w-6 h-6" />
+                    </div>
                   </div>
-                  {/* Tooltip-like popup for collapsed children could be added here */}
-                </div>
+                );
+              }
+
+              return (
+                <Collapsible
+                  key={item.name}
+                  open={isOpen}
+                  onOpenChange={() => toggleMenu(item.name)}
+                  className="w-full space-y-1"
+                >
+                  <CollapsibleTrigger asChild>
+                    <div
+                      className={`flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
+                        isChildActive
+                          ? "text-white bg-slate-800"
+                          : "text-slate-400 hover:text-white hover:bg-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon className={`w-5 h-5 ${isChildActive ? "text-white" : "text-slate-500"}`} />
+                        {item.name}
+                      </div>
+                      {isOpen ? (
+                        <ChevronDown className="w-4 h-4 text-slate-500" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-slate-500" />
+                      )}
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-1 mt-1 ml-4 pl-4 border-l border-slate-800">
+                    {item.children.map((child) => {
+                      const isActive = location === child.href;
+                      return (
+                        <Link key={child.href} href={child.href}>
+                          <div
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer ${
+                              isActive
+                                ? "bg-blue-600 text-white shadow-md shadow-blue-900/20"
+                                : "text-slate-400 hover:text-white hover:bg-slate-800"
+                            }`}
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            <child.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
+                            {child.name}
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </CollapsibleContent>
+                </Collapsible>
               );
             }
 
+            const isActive = location === item.href;
             return (
-              <Collapsible
-                key={item.name}
-                open={isOpen}
-                onOpenChange={() => toggleMenu(item.name)}
-                className="space-y-1"
-              >
-                <CollapsibleTrigger asChild>
-                  <div
-                    className={`flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
-                      isChildActive
-                        ? "text-white bg-slate-800"
-                        : "text-slate-400 hover:text-white hover:bg-slate-800"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <item.icon className={`w-5 h-5 ${isChildActive ? "text-white" : "text-slate-500"}`} />
-                      {item.name}
-                    </div>
-                    {isOpen ? (
-                      <ChevronDown className="w-4 h-4 text-slate-500" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-slate-500" />
-                    )}
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-1 ml-4 pl-4 border-l border-slate-800">
-                  {item.children.map((child) => {
-                    const isActive = location === child.href;
-                    return (
-                      <Link key={child.href} href={child.href}>
-                        <div
-                          className={`flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer ${
-                            isActive
-                              ? "bg-blue-600 text-white shadow-md shadow-blue-900/20"
-                              : "text-slate-400 hover:text-white hover:bg-slate-800"
-                          }`}
-                          onClick={() => setMobileOpen(false)}
-                        >
-                          <child.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
-                          {child.name}
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </CollapsibleContent>
-              </Collapsible>
+              <Link key={item.href || item.name} href={item.href || "#"}>
+                <div
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
+                    isActive
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-900/20"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800"
+                  } ${isCollapsed ? "justify-center px-0" : "justify-start"}`}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <item.icon className={`w-5 h-5 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} />
+                  {!isCollapsed && <span className="truncate">{item.name}</span>}
+                </div>
+              </Link>
             );
-          }
-
-          const isActive = location === item.href;
-          return (
-            <Link key={item.href || item.name} href={item.href || "#"}>
-              <div
-                className={`flex items-center justify-center lg:justify-start gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-900/20"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800"
-                }`}
-                onClick={() => setMobileOpen(false)}
-              >
-                <item.icon className={`w-5 h-5 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} />
-                {!isCollapsed && <span className="truncate">{item.name}</span>}
-              </div>
-            </Link>
-          );
-        })}
+          })}
       </div>
 
       <div className={`p-4 bg-slate-950/50 ${isCollapsed ? "px-2 items-center" : ""}`}>
