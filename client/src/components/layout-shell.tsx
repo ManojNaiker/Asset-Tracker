@@ -221,19 +221,22 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
       {/* Mobile Top Bar */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b bg-background/80 backdrop-blur-md z-40 flex items-center px-4">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b bg-background/95 backdrop-blur-md z-40 flex items-center px-4">
         <Button 
           variant="ghost" 
           size="icon"
+          className="hover:bg-accent"
           onClick={() => setMobileOpen(true)}
         >
           <Menu className="w-6 h-6" />
         </Button>
-        <div className="ml-4 flex items-center gap-2">
-          <img src="/images/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
-          <span className="font-bold text-lg">AssetAlloc</span>
+        <div className="ml-3 flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-slate-900 p-1 flex items-center justify-center">
+            <img src="/images/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
+          </div>
+          <span className="font-bold text-lg tracking-tight">AssetAlloc</span>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
         </div>
       </header>

@@ -20,23 +20,23 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, color = "bl
   };
 
   return (
-    <Card className="border-none shadow-sm hover:shadow-md transition-shadow duration-200">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div className={`p-3 rounded-xl ${colorStyles[color]}`}>
-            <Icon className="w-6 h-6" />
+    <Card className="border-none shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+      <CardContent className="p-3 sm:p-6">
+        <div className="flex items-center justify-between gap-2">
+          <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl ${colorStyles[color]}`}>
+            <Icon className="w-4 h-4 sm:w-6 h-6" />
           </div>
           {trend && (
-            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-              trendUp ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            <span className={`text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${
+              trendUp ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
             }`}>
               {trend}
             </span>
           )}
         </div>
-        <div className="mt-4">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <h3 className="text-2xl font-bold font-display mt-1 tracking-tight text-slate-900 dark:text-white">{value}</h3>
+        <div className="mt-3 sm:mt-4">
+          <p className="text-[10px] sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
+          <h3 className="text-lg sm:text-2xl font-bold font-display mt-0.5 tracking-tight text-slate-900 dark:text-white leading-none">{value}</h3>
         </div>
       </CardContent>
     </Card>

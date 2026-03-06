@@ -31,7 +31,7 @@ export default function Dashboard() {
         <p className="text-muted-foreground mt-1">Real-time insight into your asset inventory.</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-8">
         <StatCard 
           title="Total Assets" 
           value={stats.totalAssets} 
@@ -43,7 +43,7 @@ export default function Dashboard() {
           value={stats.allocatedAssets} 
           icon={Repeat} 
           color="orange"
-          trend={`${Math.round((stats.allocatedAssets / stats.totalAssets) * 100)}% utilized`}
+          trend={`${Math.round((stats.allocatedAssets / stats.totalAssets) * 100)}%`}
           trendUp={true}
         />
         <StatCard 
