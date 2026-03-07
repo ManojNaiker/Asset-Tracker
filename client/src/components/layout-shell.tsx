@@ -60,6 +60,7 @@ const getNavItems = (role: string) => {
       icon: Settings,
       roles: ["admin"],
       children: [
+        { name: "Page Settings", href: "/settings", icon: Settings },
         { name: "Email Settings", href: "/email-settings", icon: Mail },
         { name: "SSO Configuration", href: "/sso-settings", icon: ShieldCheck },
       ]
