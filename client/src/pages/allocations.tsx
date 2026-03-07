@@ -24,6 +24,56 @@ import { cn } from "@/lib/utils";
 import { ImagePreview } from "@/components/image-preview";
 import { Textarea } from "@/components/ui/textarea";
 
+function ComboboxField({ label, options, value, onChange, placeholder }: {
+  label: string;
+  options: { label: string; value: string }[];
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <FormItem>
+      <FormLabel>{label}</FormLabel>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <FormControl>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className={cn("w-full justify-between font-normal", !value && "text-muted-foreground")}
+            >
+              {value ? options.find(o => o.value === value)?.label || value : (placeholder || "Select...")}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </FormControl>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0" align="start">
+          <Command>
+            <CommandInput placeholder={`Search ${label.toLowerCase()}...`} />
+            <CommandList>
+              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandGroup>
+                {options.map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.label}
+                    onSelect={() => { onChange(option.value); setOpen(false); }}
+                  >
+                    <Check className={cn("mr-2 h-4 w-4", value === option.value ? "opacity-100" : "opacity-0")} />
+                    {option.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </FormItem>
+  );
+}
+
 export default function AllocationsPage() {
   const { data: allocations, isLoading } = useAllocations();
 
