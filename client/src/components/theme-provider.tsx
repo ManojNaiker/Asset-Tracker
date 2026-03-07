@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "dark" | "light" | "system";
+type Theme = "light" | "dark" | "amazon-green" | "ocean-blue" | "sunset-orange" | "royal-purple";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -14,7 +14,7 @@ type ThemeProviderState = {
 };
 
 const initialState: ThemeProviderState = {
-  theme: "system",
+  theme: "light",
   setTheme: () => null,
 };
 
@@ -22,7 +22,7 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "light",
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
@@ -33,19 +33,21 @@ export function ThemeProvider({
   useEffect(() => {
     const root = window.document.documentElement;
 
-    root.classList.remove("light", "dark");
+    root.classList.remove("light", "dark", "amazon-green", "ocean-blue", "sunset-orange", "royal-purple");
 
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light";
-
-      root.classList.add(systemTheme);
-      return;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else if (theme === "amazon-green") {
+      root.classList.add("amazon-green");
+    } else if (theme === "ocean-blue") {
+      root.classList.add("ocean-blue");
+    } else if (theme === "sunset-orange") {
+      root.classList.add("sunset-orange");
+    } else if (theme === "royal-purple") {
+      root.classList.add("royal-purple");
+    } else {
+      root.classList.add("light");
     }
-
-    root.classList.add(theme);
   }, [theme]);
 
   const value = {

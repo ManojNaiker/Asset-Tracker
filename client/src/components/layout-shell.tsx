@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -87,17 +87,17 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   const navItems = getNavItems(user.role);
 
-  const NavContent = ({ isCollapsed = false }: { isCollapsed?: boolean }) => (
+  const NavContent = memo(({ isCollapsed = false }: { isCollapsed?: boolean }) => (
     <div className="flex flex-col h-full bg-slate-900 text-white">
       <div className={`p-6 ${isCollapsed ? "items-center px-2" : ""}`}>
         <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
-                    <img src="/images/logo.png" alt="Light Microfinance" className="w-full h-full object-contain" />
-                </div>
-                {!isCollapsed && (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0 border border-slate-200/50 shadow-sm ring-1 ring-black/[0.08]">
+              <img src="/images/logo.png" alt="Light Microfinance" className="w-full h-full object-contain" />
+            </div>
+            {!isCollapsed && (
                   <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-                      <h1 className="text-xl font-display font-bold tracking-tight">AssetAlloc</h1>
+                      <h1 className="text-xl font-display font-bold tracking-tight text-white">AssetAlloc</h1>
                       <p className="text-xs text-blue-200/70 font-medium">Light Finance</p>
                   </div>
                 )}
@@ -108,7 +108,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       
       <Separator className="bg-slate-800" />
       
-      <div className="flex-1 py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1 custom-scrollbar">
           {navItems.map((item) => {
             if (item.children) {
               const isChildActive = item.children.some(child => location === child.href);
@@ -219,7 +219,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         </Button>
       </div>
     </div>
-  );
+  ));
 
   return (
     <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
@@ -234,10 +234,10 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           <Menu className="w-6 h-6" />
         </Button>
         <div className="ml-3 flex items-center gap-2 overflow-hidden">
-          <div className="w-8 h-8 rounded-lg bg-slate-900 p-1 flex items-center justify-center shrink-0">
-            <img src="/images/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
+          <div className="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shrink-0 border border-slate-200/50 shadow-sm ring-1 ring-black/[0.08]">
+            <img src="/images/logo.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="font-bold text-lg tracking-tight truncate">AssetAlloc</span>
+          <span className="font-bold text-lg tracking-tight truncate text-slate-900 dark:text-white">AssetAlloc</span>
         </div>
         <div className="ml-auto flex items-center gap-2 shrink-0">
           <ThemeToggle />
@@ -262,7 +262,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Sidebar Sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="p-0 w-72 border-r-slate-800 bg-slate-900 text-white">
+        <SheetContent side="left" className="p-0 w-72 border-r-slate-800 bg-slate-900 text-white flex flex-col">
           <NavContent />
         </SheetContent>
       </Sheet>
