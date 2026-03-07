@@ -79,6 +79,10 @@ function Router() {
         <ProtectedRoute component={AuditTrailPage} />
       </Route>
 
+      <Route path="/settings">
+        <ProtectedRoute component={SettingsPage} />
+      </Route>
+
       <Route path="/email-settings">
         <ProtectedRoute component={SettingsPage} />
       </Route>

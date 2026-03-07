@@ -6,7 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Loader2, Globe, Image as ImageIcon, Upload } from "lucide-react";
+import { Mail, Loader2, Globe, Image as ImageIcon, Upload, Database } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest } from "@/lib/queryClient";
@@ -119,17 +119,111 @@ export default function SettingsPage() {
                 <p className="text-muted-foreground mt-1">Configure system parameters and user access.</p>
             </div>
 
-            <Tabs defaultValue="email" className="space-y-6">
-                <TabsList className="bg-muted w-full md:w-auto p-1 h-auto grid grid-cols-2 md:inline-flex">
-                    <TabsTrigger value="email" className="data-[state=active]:bg-background px-8 py-2">
-                        <Mail className="w-4 h-4 mr-2" />
-                        Email
-                    </TabsTrigger>
+            <Tabs defaultValue="page" className="space-y-6">
+                <TabsList className="bg-muted w-full md:w-auto p-1 h-auto grid grid-cols-3 md:inline-flex">
                     <TabsTrigger value="page" className="data-[state=active]:bg-background px-8 py-2">
                         <Globe className="w-4 h-4 mr-2" />
                         Page
                     </TabsTrigger>
+                    <TabsTrigger value="fields" className="data-[state=active]:bg-background px-8 py-2">
+                        <Database className="w-4 h-4 mr-2" />
+                        Fields
+                    </TabsTrigger>
+                    <TabsTrigger value="email" className="data-[state=active]:bg-background px-8 py-2">
+                        <Mail className="w-4 h-4 mr-2" />
+                        Email
+                    </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="page">
+                    <Card className="border-border bg-card">
+                        <CardHeader>
+                            <CardTitle className="text-foreground">Page Settings</CardTitle>
+                            <CardDescription className="text-muted-foreground">Customize your application branding, including logo and company name.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Form {...pageForm}>
+                                <form onSubmit={pageForm.handleSubmit((v) => updatePageMutation.mutate(v))} className="space-y-6">
+                                    <FormField
+                                        control={pageForm.control}
+                                        name="companyName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-foreground">Company Name</FormLabel>
+                                                <FormControl><Input {...field} placeholder="AssetAlloc" className="bg-background" /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    
+                                    <div className="space-y-4">
+                                        <FormLabel className="text-foreground">Company Logo</FormLabel>
+                                        <div className="flex items-start gap-6">
+                                            <div className="w-32 h-32 rounded-lg border border-dashed border-border bg-muted flex items-center justify-center overflow-hidden">
+                                                {pageForm.watch("logoUrl") ? (
+                                                    <img src={pageForm.watch("logoUrl")} alt="Logo Preview" className="w-full h-full object-contain" />
+                                                ) : (
+                                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                                                )}
+                                            </div>
+                                            <div className="flex-1 space-y-4">
+                                                <div className="flex items-center gap-2">
+                                                    <Input 
+                                                        type="file" 
+                                                        accept="image/*" 
+                                                        className="hidden" 
+                                                        id="logo-upload"
+                                                        onChange={handleLogoUpload}
+                                                    />
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="outline" 
+                                                        className="border-border"
+                                                        onClick={() => document.getElementById("logo-upload")?.click()}
+                                                    >
+                                                        <Upload className="w-4 h-4 mr-2" />
+                                                        Upload Logo
+                                                    </Button>
+                                                </div>
+                                                <FormField
+                                                    control={pageForm.control}
+                                                    name="logoUrl"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl><Input {...field} placeholder="/images/logo.png" className="bg-background" /></FormControl>
+                                                            <p className="text-xs text-muted-foreground">Or provide a direct URL to your logo image.</p>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <Button type="submit" className="px-12" disabled={updatePageMutation.isPending}>
+                                        {updatePageMutation.isPending ? "Saving..." : "Save Page Settings"}
+                                    </Button>
+                                </form>
+                            </Form>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="fields">
+                    <Card className="border-border bg-card">
+                        <CardHeader>
+                            <CardTitle className="text-foreground">Field Settings</CardTitle>
+                            <CardDescription className="text-muted-foreground">Manage custom fields for assets and other entities in your system.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-center py-12">
+                                <Database className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                                <h3 className="text-lg font-semibold text-foreground mb-2">Custom Fields Management</h3>
+                                <p className="text-muted-foreground">Custom field management interface coming soon. You can configure field properties and validation rules here.</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
 
                 <TabsContent value="email">
                     <Card className="border-border bg-card">
@@ -223,80 +317,6 @@ export default function SettingsPage() {
                                             {testEmailMutation.isPending ? "Testing..." : "Test Email"}
                                         </Button>
                                     </div>
-                                </form>
-                            </Form>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="page">
-                    <Card className="border-border bg-card">
-                        <CardHeader>
-                            <CardTitle className="text-foreground">Page Settings</CardTitle>
-                            <CardDescription className="text-muted-foreground">Customize your application branding, including logo and company name.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Form {...pageForm}>
-                                <form onSubmit={pageForm.handleSubmit((v) => updatePageMutation.mutate(v))} className="space-y-6">
-                                    <FormField
-                                        control={pageForm.control}
-                                        name="companyName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-foreground">Company Name</FormLabel>
-                                                <FormControl><Input {...field} placeholder="AssetAlloc" className="bg-background" /></FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    
-                                    <div className="space-y-4">
-                                        <FormLabel className="text-foreground">Company Logo</FormLabel>
-                                        <div className="flex items-start gap-6">
-                                            <div className="w-32 h-32 rounded-lg border border-dashed border-border bg-muted flex items-center justify-center overflow-hidden">
-                                                {pageForm.watch("logoUrl") ? (
-                                                    <img src={pageForm.watch("logoUrl")} alt="Logo Preview" className="w-full h-full object-contain" />
-                                                ) : (
-                                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                                                )}
-                                            </div>
-                                            <div className="flex-1 space-y-4">
-                                                <div className="flex items-center gap-2">
-                                                    <Input 
-                                                        type="file" 
-                                                        accept="image/*" 
-                                                        className="hidden" 
-                                                        id="logo-upload"
-                                                        onChange={handleLogoUpload}
-                                                    />
-                                                    <Button 
-                                                        type="button" 
-                                                        variant="outline" 
-                                                        className="border-border"
-                                                        onClick={() => document.getElementById("logo-upload")?.click()}
-                                                    >
-                                                        <Upload className="w-4 h-4 mr-2" />
-                                                        Upload Logo
-                                                    </Button>
-                                                </div>
-                                                <FormField
-                                                    control={pageForm.control}
-                                                    name="logoUrl"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormControl><Input {...field} placeholder="/images/logo.png" className="bg-background" /></FormControl>
-                                                            <p className="text-xs text-muted-foreground">Or provide a direct URL to your logo image.</p>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <Button type="submit" className="px-12" disabled={updatePageMutation.isPending}>
-                                        {updatePageMutation.isPending ? "Saving..." : "Save Page Settings"}
-                                    </Button>
                                 </form>
                             </Form>
                         </CardContent>
