@@ -159,6 +159,27 @@
   --ring: 270 70% 60%;
 }
 
+/* Theme compatibility fixes */
+:is(.dark, .amazon-green, .ocean-blue, .sunset-orange, .royal-purple) .bg-white {
+  background-color: hsl(var(--card)) !important;
+}
+
+:is(.dark, .amazon-green, .ocean-blue, .sunset-orange, .royal-purple) [class*="text-slate-"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+:is(.dark, .amazon-green, .ocean-blue, .sunset-orange, .royal-purple) [class*="bg-slate-"] {
+  background-color: hsl(var(--muted) / 0.5) !important;
+}
+
+:is(.dark, .amazon-green, .ocean-blue, .sunset-orange, .royal-purple) [class*="border-slate-"] {
+  border-color: hsl(var(--border)) !important;
+}
+
+:is(.dark, .amazon-green, .ocean-blue, .sunset-orange, .royal-purple) .text-blue-600 {
+  color: hsl(var(--primary)) !important;
+}
+
 @layer base {
   * {
     @apply border-border;

@@ -90,19 +90,19 @@ export default function AuthPage() {
     <div className="min-h-screen grid lg:grid-cols-2">
       {/* Left: Branding */}
       <div className="hidden lg:flex flex-col bg-slate-900 text-white p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-blue-600/10 z-0"></div>
+        <div className="absolute inset-0 bg-primary/10 z-0"></div>
         <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-slate-900 to-transparent z-10"></div>
         
         <div className="relative z-20 flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-white p-2 flex items-center justify-center">
-            <img src="/images/logo.png" alt="Light Microfinance" className="w-full h-full object-contain" />
+          <div className="w-12 h-12 rounded-lg bg-white p-2 flex items-center justify-center border border-border shadow-sm">
+            <img src="/images/logo.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <span className="font-display font-bold text-2xl">AssetAlloc</span>
         </div>
 
         <div className="relative z-20 flex-1 flex flex-col justify-center max-w-lg">
           <h1 className="text-5xl font-display font-bold mb-6 leading-tight">
-            Manage your assets with <span className="text-blue-500">precision</span> and <span className="text-blue-500">ease</span>.
+            Manage your assets with <span className="text-primary">precision</span> and <span className="text-primary">ease</span>.
           </h1>
           <p className="text-slate-400 text-lg leading-relaxed">
             Complete lifecycle management for Light Microfinance Pvt Ltd. Track allocation, verification, and asset health in real-time.
@@ -110,16 +110,16 @@ export default function AuthPage() {
         </div>
 
         <div className="relative z-20 text-sm text-slate-500">
-          © 2024 Light Microfinance Pvt Ltd. All rights reserved.
+          © 2026 Light Microfinance Pvt Ltd. All rights reserved.
         </div>
       </div>
 
       {/* Right: Login Form */}
-      <div className="flex items-center justify-center p-6 bg-slate-50">
-        <Card className="w-full max-w-md shadow-xl border-none">
+      <div className="flex items-center justify-center p-6 bg-background">
+        <Card className="w-full max-w-md shadow-xl border-border bg-card">
           <CardHeader className="space-y-1 pb-8">
-            <CardTitle className="text-2xl font-bold text-center">Sign in to your account</CardTitle>
-            <CardDescription className="text-center text-base">
+            <CardTitle className="text-2xl font-bold text-center text-foreground">Sign in to your account</CardTitle>
+            <CardDescription className="text-center text-base text-muted-foreground">
               Enter your credentials to access the dashboard
             </CardDescription>
           </CardHeader>
@@ -131,9 +131,9 @@ export default function AuthPage() {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username</FormLabel>
+                      <FormLabel className="text-foreground">Username</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter username" className="h-11 bg-slate-50" {...field} />
+                        <Input placeholder="Enter username" className="h-11 bg-background text-foreground border-border" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -144,9 +144,9 @@ export default function AuthPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel className="text-foreground">Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Enter password" className="h-11 bg-slate-50" {...field} />
+                        <Input type="password" placeholder="Enter password" className="h-11 bg-background text-foreground border-border" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -154,7 +154,7 @@ export default function AuthPage() {
                 />
                 <Button 
                     type="submit" 
-                    className="w-full h-11 text-base font-semibold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/20" 
+                    className="w-full h-11 text-base font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20" 
                     disabled={loginMutation.isPending}
                 >
                   {loginMutation.isPending ? "Signing in..." : (
@@ -166,22 +166,22 @@ export default function AuthPage() {
 
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-slate-200" />
+                    <span className="w-full border-t border-border" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-slate-500 font-medium">Or continue with</span>
+                    <span className="bg-card px-2 text-muted-foreground font-medium">Or continue with</span>
                   </div>
                 </div>
 
                 <Button 
                     type="button"
                     variant="outline"
-                    className="w-full h-11 text-base font-semibold border-slate-200 hover:bg-slate-50 shadow-sm"
+                    className="w-full h-11 text-base font-semibold border-border hover:bg-muted shadow-sm"
                     onClick={handleSsoLogin}
                     disabled={ssoLoading}
                     data-testid="button-sso-login"
                 >
-                  <Building2 className="mr-2 w-5 h-5 text-blue-600" />
+                  <Building2 className="mr-2 w-5 h-5 text-primary" />
                   {ssoLoading ? "Connecting..." : "Sign in with SSO"}
                 </Button>
               </form>

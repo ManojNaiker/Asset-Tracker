@@ -6,7 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Mail } from "lucide-react";
+import { Mail, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 export default function SettingsPage() {
@@ -67,15 +67,15 @@ export default function SettingsPage() {
     return (
         <LayoutShell>
             <div className="mb-8">
-                <h1 className="text-3xl font-display font-bold text-slate-900">System Settings</h1>
+                <h1 className="text-3xl font-display font-bold text-foreground">System Settings</h1>
                 <p className="text-muted-foreground mt-1">Configure system parameters and user access.</p>
             </div>
 
             <div className="space-y-6">
-                <Card>
+                <Card className="border-border bg-card">
                     <CardHeader>
-                        <CardTitle>Email Notification Settings</CardTitle>
-                        <CardDescription>Configure SMTP settings for sending automated allocation notifications.</CardDescription>
+                        <CardTitle className="text-foreground">Email Notification Settings</CardTitle>
+                        <CardDescription className="text-muted-foreground">Configure SMTP settings for sending automated allocation notifications.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Form {...emailForm}>
@@ -85,8 +85,8 @@ export default function SettingsPage() {
                                     name="host"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>SMTP Host</FormLabel>
-                                            <FormControl><Input {...field} placeholder="smtp.gmail.com" /></FormControl>
+                                            <FormLabel className="text-foreground">SMTP Host</FormLabel>
+                                            <FormControl><Input {...field} placeholder="smtp.gmail.com" className="bg-background" /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -96,8 +96,8 @@ export default function SettingsPage() {
                                     name="port"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>SMTP Port</FormLabel>
-                                            <FormControl><Input {...field} type="number" onChange={e => field.onChange(parseInt(e.target.value))} /></FormControl>
+                                            <FormLabel className="text-foreground">SMTP Port</FormLabel>
+                                            <FormControl><Input {...field} type="number" onChange={e => field.onChange(parseInt(e.target.value))} className="bg-background" /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -107,8 +107,8 @@ export default function SettingsPage() {
                                     name="user"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>SMTP User</FormLabel>
-                                            <FormControl><Input {...field} placeholder="your-email@gmail.com" /></FormControl>
+                                            <FormLabel className="text-foreground">SMTP User</FormLabel>
+                                            <FormControl><Input {...field} placeholder="your-email@gmail.com" className="bg-background" /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -118,8 +118,8 @@ export default function SettingsPage() {
                                     name="password"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>SMTP Password</FormLabel>
-                                            <FormControl><Input {...field} type="password" placeholder="••••••••" /></FormControl>
+                                            <FormLabel className="text-foreground">SMTP Password</FormLabel>
+                                            <FormControl><Input {...field} type="password" placeholder="••••••••" className="bg-background" /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -129,8 +129,8 @@ export default function SettingsPage() {
                                     name="fromEmail"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>From Email Address</FormLabel>
-                                            <FormControl><Input {...field} placeholder="no-reply@lightmf.com" /></FormControl>
+                                            <FormLabel className="text-foreground">From Email Address</FormLabel>
+                                            <FormControl><Input {...field} placeholder="no-reply@lightmf.com" className="bg-background" /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -139,9 +139,9 @@ export default function SettingsPage() {
                                     control={emailForm.control}
                                     name="secure"
                                     render={({ field }) => (
-                                        <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                                        <FormItem className="flex items-center justify-between rounded-lg border border-border p-4 bg-background">
                                             <div className="space-y-0.5">
-                                                <FormLabel>Use SSL/TLS</FormLabel>
+                                                <FormLabel className="text-foreground">Use SSL/TLS</FormLabel>
                                             </div>
                                             <FormControl>
                                                 <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -156,7 +156,7 @@ export default function SettingsPage() {
                                     <Button 
                                         type="button" 
                                         variant="outline" 
-                                        className="w-full md:w-auto px-12"
+                                        className="w-full md:w-auto px-12 border-border hover:bg-muted text-foreground"
                                         disabled={testEmailMutation.isPending}
                                         onClick={() => testEmailMutation.mutate()}
                                     >

@@ -237,7 +237,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           <div className="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shrink-0 border border-slate-200/50 shadow-sm ring-1 ring-black/[0.08]">
             <img src="/images/logo.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="font-bold text-lg tracking-tight truncate text-slate-900 dark:text-white">AssetAlloc</span>
+          <span className="font-bold text-lg tracking-tight truncate text-foreground">AssetAlloc</span>
         </div>
         <div className="ml-auto flex items-center gap-2 shrink-0">
           <ThemeToggle />

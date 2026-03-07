@@ -27,7 +27,7 @@ export default function Dashboard() {
   return (
     <LayoutShell>
       <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
+        <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">Dashboard Overview</h1>
         <p className="text-sm text-muted-foreground mt-1">Real-time insight into your asset inventory.</p>
       </div>
 
@@ -94,7 +94,7 @@ export default function Dashboard() {
               {stats.assetsByStatus.map((item, index) => (
                 <div key={item.status} className="flex items-center gap-1 text-[10px] sm:text-sm">
                   <div className="w-1.5 h-1.5 sm:w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                  <span className="text-slate-600 dark:text-slate-400 font-medium truncate">{item.status}</span>
+                  <span className="text-muted-foreground font-medium truncate">{item.status}</span>
                 </div>
               ))}
             </div>

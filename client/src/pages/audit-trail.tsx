@@ -58,7 +58,7 @@ export default function AuditTrailPage() {
     <LayoutShell>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Audit Trail</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground">Audit Trail</h1>
           <p className="text-muted-foreground mt-1">Monitor system activities and user actions.</p>
         </div>
         <Button onClick={exportToExcel} variant="outline" className="flex items-center gap-2" data-testid="button-export-audit">
@@ -69,12 +69,12 @@ export default function AuditTrailPage() {
       <Card className="mb-6 shadow-sm border-slate-200 dark:border-slate-800">
         <CardContent className="p-4 flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input 
                     placeholder="Search actions or entities..." 
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-950"
+                    className="pl-9 bg-muted/20 border-border focus:bg-background"
                 />
             </div>
             <Select value={actionFilter} onValueChange={setActionFilter}>
@@ -100,13 +100,13 @@ export default function AuditTrailPage() {
 
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-x-auto">
         <Table className="min-w-[1000px] md:min-w-full">
-          <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
+          <TableHeader className="bg-muted/30">
             <TableRow>
-              <TableHead className="dark:text-slate-200">Timestamp</TableHead>
-              <TableHead className="dark:text-slate-200">User</TableHead>
-              <TableHead className="dark:text-slate-200">Action</TableHead>
-              <TableHead className="dark:text-slate-200">Entity</TableHead>
-              <TableHead className="dark:text-slate-200">Details</TableHead>
+              <TableHead className="text-foreground">Timestamp</TableHead>
+              <TableHead className="text-foreground">User</TableHead>
+              <TableHead className="text-foreground">Action</TableHead>
+              <TableHead className="text-foreground">Entity</TableHead>
+              <TableHead className="text-foreground">Details</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -115,7 +115,7 @@ export default function AuditTrailPage() {
               
               // Helper to render details clearly
               const renderDetails = () => {
-                if (!log.details) return <span className="text-slate-400 italic">No extra details</span>;
+                if (!log.details) return <span className="text-muted-foreground italic">No extra details</span>;
                 
                 const d = log.details as any;
                 
@@ -148,29 +148,29 @@ export default function AuditTrailPage() {
               };
 
               return (
-                <TableRow key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                  <TableCell className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                <TableRow key={log.id} className="hover:bg-muted/50">
+                  <TableCell className="text-xs text-muted-foreground font-mono">
                     {new Date(log.timestamp!).toLocaleString()}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                            <UserIcon className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+                        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                            <UserIcon className="w-3 h-3 text-muted-foreground" />
                         </div>
-                        <span className="text-sm font-medium dark:text-slate-200">{user?.username || 'System'}</span>
+                        <span className="text-sm font-medium text-foreground">{user?.username || 'System'}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="text-sm font-semibold dark:text-slate-200">{log.action}</span>
+                    <span className="text-sm font-semibold text-foreground">{log.action}</span>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                        <span className="text-sm font-medium dark:text-slate-200">{log.entityType}</span>
-                        <span className="text-xs text-slate-400 dark:text-slate-500">ID: {log.entityId}</span>
+                        <span className="text-sm font-medium text-foreground">{log.entityType}</span>
+                        <span className="text-xs text-muted-foreground">ID: {log.entityId}</span>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-md">
-                    <div className="text-xs dark:text-slate-400 leading-relaxed py-1">
+                    <div className="text-xs text-muted-foreground leading-relaxed py-1">
                         {renderDetails()}
                     </div>
                   </TableCell>

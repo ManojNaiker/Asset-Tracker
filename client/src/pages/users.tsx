@@ -173,26 +173,26 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
     });
 
     if (isLoading) {
-        const loadingContent = <div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div>;
+        const loadingContent = <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary" /></div>;
         return hideLayout ? loadingContent : <LayoutShell>{loadingContent}</LayoutShell>;
     }
 
     const content = (
         <>
             <div className="mb-8">
-                <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">System Settings</h1>
+                <h1 className="text-3xl font-display font-bold text-foreground">System Settings</h1>
                 <p className="text-muted-foreground mt-1">Configure system parameters and user access.</p>
             </div>
 
             <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="mb-6">
-                <TabsList className="bg-slate-100 dark:bg-slate-800 p-1">
-                    <TabsTrigger value="users" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
+                <TabsList className="bg-muted p-1">
+                    <TabsTrigger value="users" className="data-[state=active]:bg-card">
                         Users
                     </TabsTrigger>
-                    <TabsTrigger value="departments" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
+                    <TabsTrigger value="departments" className="data-[state=active]:bg-card">
                         Departments
                     </TabsTrigger>
-                    <TabsTrigger value="designations" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
+                    <TabsTrigger value="designations" className="data-[state=active]:bg-card">
                         Designations
                     </TabsTrigger>
                 </TabsList>
@@ -202,14 +202,14 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                 <>
                     <div className="flex justify-between items-center mb-6">
                         <div>
-                            <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">User Management</h2>
+                            <h2 className="text-2xl font-display font-bold text-foreground">User Management</h2>
                             <p className="text-muted-foreground mt-1">Manage system access and roles.</p>
                         </div>
                         <div className="flex gap-2">
                             <BulkUserUploadDialog />
                             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                                 <DialogTrigger asChild>
-                                    <Button className="bg-blue-600 hover:bg-blue-700">
+                                    <Button className="bg-primary hover:bg-primary/90">
                                         <UserPlus className="w-4 h-4 mr-2" /> Add User
                                     </Button>
                                 </DialogTrigger>
@@ -226,7 +226,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Full Name</FormLabel>
-                                                        <FormControl><Input {...field} placeholder="John Doe" /></FormControl>
+                                                        <FormControl><Input {...field} placeholder="John Doe" className="bg-background" /></FormControl>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -237,7 +237,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Email ID</FormLabel>
-                                                        <FormControl><Input {...field} placeholder="email@lightmf.com" /></FormControl>
+                                                        <FormControl><Input {...field} placeholder="email@lightmf.com" className="bg-background" /></FormControl>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -250,7 +250,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Employee Code</FormLabel>
-                                                        <FormControl><Input {...field} placeholder="EMP001" /></FormControl>
+                                                        <FormControl><Input {...field} placeholder="EMP001" className="bg-background" /></FormControl>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -262,7 +262,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                     <FormItem>
                                                         <FormLabel>Designation</FormLabel>
                                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                            <FormControl><SelectTrigger><SelectValue placeholder="Select designation" /></SelectTrigger></FormControl>
+                                                            <FormControl><SelectTrigger className="bg-background"><SelectValue placeholder="Select designation" /></SelectTrigger></FormControl>
                                                             <SelectContent>
                                                                 {designations?.map(d => (
                                                                     <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
@@ -282,7 +282,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                     <FormItem>
                                                         <FormLabel>Department</FormLabel>
                                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                            <FormControl><SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger></FormControl>
+                                                            <FormControl><SelectTrigger className="bg-background"><SelectValue placeholder="Select department" /></SelectTrigger></FormControl>
                                                             <SelectContent>
                                                                 {departments?.map(d => (
                                                                     <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
@@ -300,7 +300,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                     <FormItem>
                                                         <FormLabel>Role</FormLabel>
                                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                            <FormControl><SelectTrigger className="bg-background"><SelectValue /></SelectTrigger></FormControl>
                                                             <SelectContent>
                                                                 {userRoles.map(role => (
                                                                     <SelectItem key={role} value={role} className="capitalize">{role}</SelectItem>
@@ -318,7 +318,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Password</FormLabel>
-                                                    <FormControl><Input {...field} type="password" /></FormControl>
+                                                    <FormControl><Input {...field} type="password"  className="bg-background"/></FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -328,33 +328,33 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                     </Button>
                                 </form>
                             </Form>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            </div>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                    </div>
 
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-slate-50 dark:bg-slate-800/50">
-                                    <TableHead className="dark:text-slate-200">Username</TableHead>
-                                    <TableHead className="dark:text-slate-200">Role</TableHead>
-                                    <TableHead className="dark:text-slate-200">Status</TableHead>
-                                    <TableHead className="dark:text-slate-200">Created At</TableHead>
-                                    <TableHead className="text-right dark:text-slate-200">Actions</TableHead>
+                                <TableRow className="bg-muted/50">
+                                    <TableHead className="text-foreground">Username</TableHead>
+                                    <TableHead className="text-foreground">Role</TableHead>
+                                    <TableHead className="text-foreground">Status</TableHead>
+                                    <TableHead className="text-foreground">Created At</TableHead>
+                                    <TableHead className="text-right text-foreground">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {users?.map((u) => (
-                                    <TableRow key={u.id} className="dark:hover:bg-slate-800/30">
-                                        <TableCell className="font-medium dark:text-slate-200">{u.username}</TableCell>
-                                        <TableCell className="capitalize dark:text-slate-400">{u.role}</TableCell>
+                                    <TableRow key={u.id} className="hover:bg-muted/30 transition-colors">
+                                        <TableCell className="font-medium text-foreground">{u.username}</TableCell>
+                                        <TableCell className="capitalize text-muted-foreground">{u.role}</TableCell>
                                         <TableCell>
-                                            <span className={u.isLocked ? "text-red-600 dark:text-red-400 font-medium" : "text-green-600 dark:text-green-400 font-medium"}>
+                                            <span className={u.isLocked ? "text-destructive font-medium" : "text-green-600 font-medium"}>
                                                 {u.isLocked ? "Locked" : "Active"}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="text-slate-500 dark:text-slate-400">
+                                        <TableCell className="text-muted-foreground">
                                             {new Date(u.createdAt).toLocaleDateString()}
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -391,7 +391,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                                 });
                                                             }}
                                                         >
-                                                            <Edit2 className="w-4 h-4" />
+                                                            <Edit2 className="w-4 h-4 text-muted-foreground" />
                                                         </Button>
                                                     </DialogTrigger>
                                                     <DialogContent className="max-w-2xl">
@@ -407,8 +407,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                                         render={({ field }) => (
                                                                             <FormItem>
                                                                                 <FormLabel>Full Name</FormLabel>
-                                                                                <FormControl><Input {...field} /></FormControl>
-                                                                                <FormMessage />
+                                                                                <FormControl><Input {...field} className="bg-background" /></FormControl>
                                                                             </FormItem>
                                                                         )}
                                                                     />
@@ -418,8 +417,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                                         render={({ field }) => (
                                                                             <FormItem>
                                                                                 <FormLabel>Email ID</FormLabel>
-                                                                                <FormControl><Input {...field} /></FormControl>
-                                                                                <FormMessage />
+                                                                                <FormControl><Input {...field} className="bg-background" /></FormControl>
                                                                             </FormItem>
                                                                         )}
                                                                     />
@@ -431,26 +429,24 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                                         render={({ field }) => (
                                                                             <FormItem>
                                                                                 <FormLabel>Employee Code</FormLabel>
-                                                                                <FormControl><Input {...field} /></FormControl>
-                                                                                <FormMessage />
+                                                                                <FormControl><Input {...field} className="bg-background" /></FormControl>
                                                                             </FormItem>
                                                                         )}
                                                                     />
                                                                     <FormField
                                                                         control={editForm.control}
-                                                                        name="designation"
+                                                                        name="role"
                                                                         render={({ field }) => (
                                                                             <FormItem>
-                                                                                <FormLabel>Designation</FormLabel>
-                                                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                                                <FormLabel>Role</FormLabel>
+                                                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                                                    <FormControl><SelectTrigger className="bg-background"><SelectValue /></SelectTrigger></FormControl>
                                                                                     <SelectContent>
-                                                                                        {designations?.map(d => (
-                                                                                            <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
+                                                                                        {userRoles.map(role => (
+                                                                                            <SelectItem key={role} value={role} className="capitalize">{role}</SelectItem>
                                                                                         ))}
                                                                                     </SelectContent>
                                                                                 </Select>
-                                                                                <FormMessage />
                                                                             </FormItem>
                                                                         )}
                                                                     />
@@ -462,33 +458,31 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                                         render={({ field }) => (
                                                                             <FormItem>
                                                                                 <FormLabel>Department</FormLabel>
-                                                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                                                    <FormControl><SelectTrigger className="bg-background"><SelectValue /></SelectTrigger></FormControl>
                                                                                     <SelectContent>
                                                                                         {departments?.map(d => (
                                                                                             <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
                                                                                         ))}
                                                                                     </SelectContent>
                                                                                 </Select>
-                                                                                <FormMessage />
                                                                             </FormItem>
                                                                         )}
                                                                     />
                                                                     <FormField
                                                                         control={editForm.control}
-                                                                        name="role"
+                                                                        name="designation"
                                                                         render={({ field }) => (
                                                                             <FormItem>
-                                                                                <FormLabel>Role</FormLabel>
-                                                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                                                <FormLabel>Designation</FormLabel>
+                                                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                                                    <FormControl><SelectTrigger className="bg-background"><SelectValue /></SelectTrigger></FormControl>
                                                                                     <SelectContent>
-                                                                                        {userRoles.map(role => (
-                                                                                            <SelectItem key={role} value={role} className="capitalize">{role}</SelectItem>
+                                                                                        {designations?.map(d => (
+                                                                                            <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
                                                                                         ))}
                                                                                     </SelectContent>
                                                                                 </Select>
-                                                                                <FormMessage />
                                                                             </FormItem>
                                                                         )}
                                                                     />
@@ -498,24 +492,23 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                                     name="password"
                                                                     render={({ field }) => (
                                                                         <FormItem>
-                                                                            <FormLabel>New Password (optional)</FormLabel>
-                                                                            <FormControl><Input {...field} type="password" /></FormControl>
-                                                                            <FormMessage />
+                                                                            <FormLabel>New Password (Optional)</FormLabel>
+                                                                            <FormControl><Input {...field} type="password" placeholder="Leave blank to keep current" className="bg-background" /></FormControl>
                                                                         </FormItem>
                                                                     )}
                                                                 />
                                                                 <Button type="submit" className="w-full" disabled={updateMutation.isPending}>
-                                                                    {updateMutation.isPending ? "Updating..." : "Update User"}
+                                                                    {updateMutation.isPending ? "Saving..." : "Update User"}
                                                                 </Button>
                                                             </form>
                                                         </Form>
                                                     </DialogContent>
                                                 </Dialog>
-                                                
+
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" disabled={u.role === 'admin'}>
-                                                            <Trash2 className="w-4 h-4 text-red-600" />
+                                                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
+                                                            <Trash2 className="w-4 h-4" />
                                                         </Button>
                                                     </AlertDialogTrigger>
                                                     <AlertDialogContent>
@@ -527,7 +520,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>
                                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => deleteMutation.mutate(u.id)} className="bg-red-600 hover:bg-red-700">
+                                                            <AlertDialogAction onClick={() => deleteMutation.mutate(u.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                                                                 Delete
                                                             </AlertDialogAction>
                                                         </AlertDialogFooter>
@@ -547,48 +540,49 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                 <div className="space-y-6">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">Departments</h2>
-                            <p className="text-muted-foreground mt-1">Manage company departments.</p>
+                            <h2 className="text-2xl font-display font-bold text-foreground">Departments</h2>
+                            <p className="text-muted-foreground mt-1">Manage organization structure.</p>
                         </div>
                         <div className="flex gap-2">
                             <BulkDepartmentUploadDialog />
                             <Dialog open={isDeptDialogOpen} onOpenChange={setIsDeptDialogOpen}>
                                 <DialogTrigger asChild>
-                                    <Button className="bg-blue-600 hover:bg-blue-700">
-                                        <Building2 className="w-4 h-4 mr-2" /> Add Department
+                                    <Button className="bg-primary hover:bg-primary/90">
+                                        <Plus className="w-4 h-4 mr-2" /> Add Department
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent>
-                                    <DialogHeader><DialogTitle>Add Department</DialogTitle></DialogHeader>
-                                <form onSubmit={(e: any) => {
-                                    e.preventDefault();
-                                    createDeptMutation.mutate({ name: e.target.name.value });
-                                    e.target.reset();
-                                }} className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Department Name</label>
-                                        <Input name="name" required />
-                                    </div>
-                                    <Button type="submit" className="w-full" disabled={createDeptMutation.isPending}>
-                                        {createDeptMutation.isPending ? "Creating..." : "Create"}
-                                    </Button>
-                                </form>
-                            </DialogContent>
-                        </Dialog>
+                                    <DialogHeader><DialogTitle>New Department</DialogTitle></DialogHeader>
+                                    <form className="space-y-4" onSubmit={(e) => {
+                                        e.preventDefault();
+                                        const formData = new FormData(e.currentTarget);
+                                        createDeptMutation.mutate({ name: formData.get("name") });
+                                    }}>
+                                        <FormItem>
+                                            <FormLabel>Department Name</FormLabel>
+                                            <FormControl><Input name="name" required className="bg-background" /></FormControl>
+                                        </FormItem>
+                                        <Button type="submit" className="w-full">Create</Button>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
                         </div>
                     </div>
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
                         <Table>
-                            <TableHeader>
-                                <TableRow><TableHead>Name</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+                            <TableHeader className="bg-muted/50">
+                                <TableRow>
+                                    <TableHead className="text-foreground">Name</TableHead>
+                                    <TableHead className="text-right text-foreground">Actions</TableHead>
+                                </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {departments?.map(d => (
-                                    <TableRow key={d.id}>
-                                        <TableCell>{d.name}</TableCell>
+                                    <TableRow key={d.id} className="hover:bg-muted/30">
+                                        <TableCell className="text-foreground">{d.name}</TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => deleteDeptMutation.mutate(d.id)} disabled={deleteDeptMutation.isPending}>
-                                                <Trash2 className="w-4 h-4 text-red-600" />
+                                            <Button variant="ghost" size="icon" onClick={() => deleteDeptMutation.mutate(d.id)} className="text-destructive hover:bg-destructive/10">
+                                                <Trash2 className="w-4 h-4" />
                                             </Button>
                                         </TableCell>
                                     </TableRow>
@@ -603,48 +597,49 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                 <div className="space-y-6">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">Designations</h2>
-                            <p className="text-muted-foreground mt-1">Manage company designations.</p>
+                            <h2 className="text-2xl font-display font-bold text-foreground">Designations</h2>
+                            <p className="text-muted-foreground mt-1">Manage staff roles.</p>
                         </div>
                         <div className="flex gap-2">
                             <BulkDesignationUploadDialog />
                             <Dialog open={isDesigDialogOpen} onOpenChange={setIsDesigDialogOpen}>
                                 <DialogTrigger asChild>
-                                    <Button className="bg-blue-600 hover:bg-blue-700">
-                                        <Briefcase className="w-4 h-4 mr-2" /> Add Designation
+                                    <Button className="bg-primary hover:bg-primary/90">
+                                        <Plus className="w-4 h-4 mr-2" /> Add Designation
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent>
-                                    <DialogHeader><DialogTitle>Add Designation</DialogTitle></DialogHeader>
-                                <form onSubmit={(e: any) => {
-                                    e.preventDefault();
-                                    createDesigMutation.mutate({ name: e.target.name.value });
-                                    e.target.reset();
-                                }} className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Designation Name</label>
-                                        <Input name="name" required />
-                                    </div>
-                                    <Button type="submit" className="w-full" disabled={createDesigMutation.isPending}>
-                                        {createDesigMutation.isPending ? "Creating..." : "Create"}
-                                    </Button>
-                                </form>
-                            </DialogContent>
-                        </Dialog>
+                                    <DialogHeader><DialogTitle>New Designation</DialogTitle></DialogHeader>
+                                    <form className="space-y-4" onSubmit={(e) => {
+                                        e.preventDefault();
+                                        const formData = new FormData(e.currentTarget);
+                                        createDesigMutation.mutate({ name: formData.get("name") });
+                                    }}>
+                                        <FormItem>
+                                            <FormLabel>Designation Name</FormLabel>
+                                            <FormControl><Input name="name" required className="bg-background" /></FormControl>
+                                        </FormItem>
+                                        <Button type="submit" className="w-full">Create</Button>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
                         </div>
                     </div>
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
                         <Table>
-                            <TableHeader>
-                                <TableRow><TableHead>Name</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+                            <TableHeader className="bg-muted/50">
+                                <TableRow>
+                                    <TableHead className="text-foreground">Name</TableHead>
+                                    <TableHead className="text-right text-foreground">Actions</TableHead>
+                                </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {designations?.map(d => (
-                                    <TableRow key={d.id}>
-                                        <TableCell>{d.name}</TableCell>
+                                    <TableRow key={d.id} className="hover:bg-muted/30">
+                                        <TableCell className="text-foreground">{d.name}</TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => deleteDesigMutation.mutate(d.id)} disabled={deleteDesigMutation.isPending}>
-                                                <Trash2 className="w-4 h-4 text-red-600" />
+                                            <Button variant="ghost" size="icon" onClick={() => deleteDesigMutation.mutate(d.id)} className="text-destructive hover:bg-destructive/10">
+                                                <Trash2 className="w-4 h-4" />
                                             </Button>
                                         </TableCell>
                                     </TableRow>

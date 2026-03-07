@@ -21,92 +21,7 @@ import { BulkAllocationUploadDialog } from "@/components/bulk-upload-dialogs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-
 import { ImagePreview } from "@/components/image-preview";
-
-function ComboboxField({ 
-  options, 
-  value, 
-  onChange, 
-  placeholder,
-  label 
-}: { 
-  options: { label: string; value: string }[]; 
-  value: string; 
-  onChange: (value: string) => void;
-  placeholder: string;
-  label: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
-
-  return (
-    <FormItem className="flex flex-col">
-      <FormLabel>{label}</FormLabel>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <FormControl>
-            <Button
-              variant="outline"
-              role="combobox"
-              className={cn(
-                "w-full justify-between font-normal",
-                !value && "text-muted-foreground"
-              )}
-            >
-              {value || placeholder}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </FormControl>
-        </PopoverTrigger>
-        <PopoverContent className="w-[200px] p-0">
-          <Command>
-            <CommandInput 
-              placeholder={`Search ${label.toLowerCase()}...`} 
-              onValueChange={setSearchValue}
-            />
-            <CommandList>
-              <CommandEmpty>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-blue-600 font-medium"
-                  onClick={() => {
-                    onChange(searchValue);
-                    setOpen(false);
-                  }}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add "{searchValue}"
-                </Button>
-              </CommandEmpty>
-              <CommandGroup>
-                {options.map((option) => (
-                  <CommandItem
-                    value={option.label}
-                    key={option.value}
-                    onSelect={() => {
-                      onChange(option.value);
-                      setOpen(false);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        option.value === value ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {option.label}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-      <FormMessage />
-    </FormItem>
-  );
-}
 
 export default function AllocationsPage() {
   const { data: allocations, isLoading } = useAllocations();
@@ -115,7 +30,7 @@ export default function AllocationsPage() {
     <LayoutShell>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Allocations</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground">Allocations</h1>
           <p className="text-muted-foreground mt-1">Assign assets to employees.</p>
         </div>
         <div className="flex gap-2">
@@ -124,47 +39,47 @@ export default function AllocationsPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-x-auto">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-x-auto">
         <Table className="min-w-[800px] md:min-w-full">
-          <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
+          <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead className="dark:text-slate-200">Asset SN</TableHead>
-              <TableHead className="dark:text-slate-200">Employee</TableHead>
-              <TableHead className="dark:text-slate-200">Department</TableHead>
-              <TableHead className="dark:text-slate-200">Allocated Date</TableHead>
-              <TableHead className="dark:text-slate-200">Status</TableHead>
-              <TableHead className="text-right dark:text-slate-200">Actions</TableHead>
+              <TableHead className="text-foreground">Asset SN</TableHead>
+              <TableHead className="text-foreground">Employee</TableHead>
+              <TableHead className="text-foreground">Department</TableHead>
+              <TableHead className="text-foreground">Allocated Date</TableHead>
+              <TableHead className="text-foreground">Status</TableHead>
+              <TableHead className="text-right text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
                 <TableRow>
                     <TableCell colSpan={6} className="h-32 text-center">
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-500" />
+                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
                     </TableCell>
                 </TableRow>
             ) : allocations?.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-slate-500 dark:text-slate-400">
+                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                         No active allocations.
                     </TableCell>
                 </TableRow>
             ) : (
                 allocations?.map((alloc) => (
-                    <TableRow key={alloc.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                        <TableCell className="font-medium font-mono dark:text-slate-200">{alloc.asset.serialNumber}</TableCell>
-                        <TableCell>
+                    <TableRow key={alloc.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-medium font-mono text-foreground">{alloc.asset.serialNumber}</TableCell>
+                        <TableCell className="text-foreground">
                             <div className="flex flex-col">
-                                <span className="font-medium text-slate-900 dark:text-slate-200">{alloc.employee.name}</span>
-                                <span className="text-xs text-slate-500 dark:text-slate-400">{alloc.employee.empId}</span>
+                                <span className="font-medium">{alloc.employee.name}</span>
+                                <span className="text-xs text-muted-foreground">{alloc.employee.empId}</span>
                             </div>
                         </TableCell>
-                        <TableCell className="text-slate-600 dark:text-slate-400">{alloc.employee.department}</TableCell>
-                        <TableCell className="text-slate-500 dark:text-slate-400">
+                        <TableCell className="text-muted-foreground">{alloc.employee.department}</TableCell>
+                        <TableCell className="text-muted-foreground">
                             {new Date(alloc.allocatedAt!).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                            <Badge variant="outline" className={alloc.status === 'Active' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800' : 'bg-slate-100 dark:bg-slate-800 dark:text-slate-400'}>
+                            <Badge variant="outline" className={alloc.status === 'Active' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground'}>
                                 {alloc.status}
                             </Badge>
                         </TableCell>
@@ -211,7 +126,7 @@ function SendVerificationButton({ allocationId, disabled }: { allocationId: numb
             size="sm" 
             onClick={sendEmail} 
             disabled={disabled || loading}
-            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            className="text-primary hover:text-primary/80 hover:bg-primary/10"
         >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>
@@ -231,45 +146,45 @@ function ViewAllocationDetailsDialog({ allocation }: { allocation: any }) {
                 <div className="space-y-4 py-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <p className="text-xs text-slate-500 font-medium uppercase">Asset</p>
-                            <p className="font-mono">{allocation.asset.serialNumber}</p>
+                            <p className="text-xs text-muted-foreground font-medium uppercase">Asset</p>
+                            <p className="font-mono text-foreground">{allocation.asset.serialNumber}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-slate-500 font-medium uppercase">Employee</p>
-                            <p>{allocation.employee.name} ({allocation.employee.empId})</p>
+                            <p className="text-xs text-muted-foreground font-medium uppercase">Employee</p>
+                            <p className="text-foreground">{allocation.employee.name} ({allocation.employee.empId})</p>
                         </div>
                         <div>
-                            <p className="text-xs text-slate-500 font-medium uppercase">Date</p>
-                            <p>{new Date(allocation.allocatedAt).toLocaleDateString()}</p>
+                            <p className="text-xs text-muted-foreground font-medium uppercase">Date</p>
+                            <p className="text-foreground">{new Date(allocation.allocatedAt).toLocaleDateString()}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-slate-500 font-medium uppercase">Status</p>
+                            <p className="text-xs text-muted-foreground font-medium uppercase">Status</p>
                             <Badge variant="outline">{allocation.status}</Badge>
                         </div>
                     </div>
                     {allocation.returnReason && (
                         <div>
-                            <p className="text-xs text-slate-500 font-medium uppercase">Return Reason</p>
-                            <p className="text-slate-700">{allocation.returnReason}</p>
+                            <p className="text-xs text-muted-foreground font-medium uppercase">Return Reason</p>
+                            <p className="text-foreground">{allocation.returnReason}</p>
                         </div>
                     )}
-                    <div className="border-t pt-4">
-                        <p className="text-xs text-slate-500 font-medium uppercase mb-2">Audit Trail</p>
+                    <div className="border-t border-border pt-4">
+                        <p className="text-xs text-muted-foreground font-medium uppercase mb-2">Audit Trail</p>
                         <div className="space-y-2">
-                             <div className="text-sm bg-slate-50 dark:bg-slate-800/50 p-2 rounded border border-slate-100 dark:border-slate-800">
-                                <span className="text-slate-500 dark:text-slate-400">{new Date(allocation.allocatedAt).toLocaleString()}</span> - Asset Allocated
+                             <div className="text-sm bg-muted/50 p-2 rounded border border-border">
+                                <span className="text-muted-foreground">{new Date(allocation.allocatedAt).toLocaleString()}</span> - Asset Allocated
                              </div>
                              {allocation.verificationStatus && allocation.verificationStatus !== 'Pending' && (
-                                 <div className="text-sm bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-100 dark:border-blue-800">
-                                    <span className="text-slate-500 dark:text-slate-400">Verification Status:</span> 
+                                 <div className="text-sm bg-primary/10 p-2 rounded border border-primary/20">
+                                    <span className="text-muted-foreground">Verification Status:</span> 
                                     <Badge variant="outline" className="ml-2 h-5 text-[10px]">
                                         {allocation.verificationStatus}
                                     </Badge>
                                  </div>
                              )}
                              {allocation.returnDate && (
-                                 <div className="text-sm bg-slate-50 dark:bg-slate-800/50 p-2 rounded border border-slate-100 dark:border-slate-800">
-                                    <span className="text-slate-500 dark:text-slate-400">{new Date(allocation.returnDate).toLocaleString()}</span> - Asset Returned
+                                 <div className="text-sm bg-muted/50 p-2 rounded border border-border">
+                                    <span className="text-muted-foreground">{new Date(allocation.returnDate).toLocaleString()}</span> - Asset Returned
                                  </div>
                              )}
                         </div>
@@ -280,10 +195,54 @@ function ViewAllocationDetailsDialog({ allocation }: { allocation: any }) {
     );
 }
 
+function ReturnAssetDialog({ allocationId }: { allocationId: number }) {
+    const [open, setOpen] = useState(false);
+    const [reason, setRemarks] = useState("");
+    const { toast } = useToast();
+    const mutation = useReturnAllocation();
+
+    const onSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        mutation.mutate({ id: allocationId, returnReason: reason }, {
+            onSuccess: () => {
+                setOpen(false);
+                setRemarks("");
+                toast({ title: "Asset returned successfully" });
+            }
+        });
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10">Return</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Return Asset</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={onSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Return Reason</label>
+                        <Input 
+                            value={reason} 
+                            onChange={(e) => setRemarks(e.target.value)} 
+                            placeholder="e.g. Employee resignation, asset upgrade..."
+                            required
+                        />
+                    </div>
+                    <Button type="submit" variant="destructive" className="w-full" disabled={mutation.isPending}>
+                        {mutation.isPending ? "Processing..." : "Confirm Return"}
+                    </Button>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function CreateAllocationDialog() {
     const [open, setOpen] = useState(false);
     const mutation = useCreateAllocation();
-    // Only fetch AVAILABLE assets
     const { data: assets } = useAssets({ status: "Available" });
     const { data: employees } = useEmployees();
     const { data: assetTypes } = useAssetTypes();
@@ -308,8 +267,12 @@ function CreateAllocationDialog() {
             empId: "",
             name: "",
             email: "",
+            branch: "",
+            department: "",
+            designation: "",
+            mobile: "",
             serialNumber: "",
-            assetTypeName: "",
+            assetTypeId: "",
             status: "Active",
             remarks: ""
         }
@@ -346,7 +309,7 @@ function CreateAllocationDialog() {
         const payload: any = {
             status: data.status,
             remarks: data.remarks,
-            details: imageUrl ? { imageUrl } : {}
+            imageUrl: imageUrl || undefined
         };
 
         if (data.mode === "select") {
@@ -365,7 +328,7 @@ function CreateAllocationDialog() {
             };
             payload.assetData = {
                 serialNumber: data.serialNumber,
-                assetTypeName: data.assetTypeName,
+                assetTypeId: Number(data.assetTypeId),
                 status: "Available",
                 specifications: {}
             };
@@ -385,7 +348,7 @@ function CreateAllocationDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20">
+                <Button className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
                     <ArrowRightLeft className="w-4 h-4 mr-2" /> Allocate Asset
                 </Button>
             </DialogTrigger>
@@ -463,8 +426,8 @@ function CreateAllocationDialog() {
                                 />
                             </>
                         ) : (
-                            <div className="space-y-4 border-t pt-4 mt-4">
-                                <h3 className="font-medium text-sm text-slate-900">New Employee Info</h3>
+                            <div className="space-y-4 border-t border-border pt-4 mt-4">
+                                <h3 className="font-medium text-sm text-foreground">New Employee Info</h3>
                                 <div className="grid grid-cols-2 gap-2">
                                     <FormField
                                         control={form.control}
@@ -498,33 +461,21 @@ function CreateAllocationDialog() {
                                             </FormItem>
                                         )}
                                     />
-                                    <FormField
-                                        control={form.control}
-                                        name="department"
-                                        render={({ field }) => (
-                                            <ComboboxField
-                                                label="Department"
-                                                placeholder="Select or type..."
-                                                options={deptOptions}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                            />
-                                        )}
+                                    <ComboboxField 
+                                        label="Department"
+                                        options={deptOptions}
+                                        value={form.watch("department")}
+                                        onChange={(val) => form.setValue("department", val)}
+                                        placeholder="Select department"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <FormField
-                                        control={form.control}
-                                        name="designation"
-                                        render={({ field }) => (
-                                            <ComboboxField
-                                                label="Designation"
-                                                placeholder="Select or type..."
-                                                options={desigOptions}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                            />
-                                        )}
+                                    <ComboboxField 
+                                        label="Designation"
+                                        options={desigOptions}
+                                        value={form.watch("designation")}
+                                        onChange={(val) => form.setValue("designation", val)}
+                                        placeholder="Select designation"
                                     />
                                     <FormField
                                         control={form.control}
@@ -547,202 +498,93 @@ function CreateAllocationDialog() {
                                         </FormItem>
                                     )}
                                 />
-                                <h3 className="font-medium text-sm text-slate-900 border-t pt-4">New Asset Info</h3>
+
+                                <h3 className="font-medium text-sm text-foreground border-t border-border pt-4">New Asset Info</h3>
                                 <div className="grid grid-cols-2 gap-2">
                                     <FormField
                                         control={form.control}
                                         name="serialNumber"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Serial No</FormLabel>
-                                                <FormControl><Input {...field} /></FormControl>
+                                                <FormLabel>Serial Number</FormLabel>
+                                                <FormControl><Input {...field} onChange={e => field.onChange(e.target.value.toUpperCase())} /></FormControl>
                                             </FormItem>
                                         )}
                                     />
                                     <FormField
                                         control={form.control}
-                                        name="assetTypeName"
+                                        name="assetTypeId"
                                         render={({ field }) => (
-                                            <ComboboxField
-                                                label="Asset Type"
-                                                placeholder="Select or type..."
-                                                options={assetTypes?.map(t => ({ label: t.name, value: t.name })) || []}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                            />
+                                            <FormItem>
+                                                <FormLabel>Asset Type</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        {assetTypes?.map(t => (
+                                                            <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
                                         )}
                                     />
                                 </div>
                             </div>
                         )}
+
+                        <div className="space-y-2 border-t border-border pt-4">
+                            <FormLabel>Asset Photo (Optional)</FormLabel>
+                            <div 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="border-2 border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
+                            >
+                                <input 
+                                    type="file" 
+                                    ref={fileInputRef} 
+                                    className="hidden" 
+                                    accept="image/*"
+                                    onChange={handleFileUpload}
+                                />
+                                {imageUrl ? (
+                                    <div className="relative w-full aspect-video">
+                                        <img src={imageUrl} className="w-full h-full object-cover rounded" />
+                                        <Button 
+                                            size="icon" 
+                                            variant="destructive" 
+                                            className="absolute top-1 right-1 h-6 w-6"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setImageUrl(null);
+                                            }}
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center">
+                                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-6 h-6 text-muted-foreground" />}
+                                        <p className="text-xs text-muted-foreground mt-2">Click to upload asset image</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         <FormField
                             control={form.control}
                             name="remarks"
                             render={({ field }) => (
-                                <FormItem className="border-t pt-4">
+                                <FormItem>
                                     <FormLabel>Remarks</FormLabel>
-                                    <FormControl><Input {...field} placeholder="Internal notes..." /></FormControl>
+                                    <FormControl><Textarea {...field} placeholder="Allocation notes..." /></FormControl>
                                 </FormItem>
                             )}
                         />
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Asset Photo (Allocation)</label>
-                            <div className="flex items-center gap-4">
-                                <input 
-                                    type="file" 
-                                    className="hidden" 
-                                    ref={fileInputRef} 
-                                    accept="image/*" 
-                                    onChange={handleFileUpload}
-                                />
-                                {imageUrl ? (
-                                    <div className="relative w-24 h-24 rounded border overflow-hidden">
-                                        <ImagePreview src={imageUrl} alt="Asset" className="w-full h-full" />
-                                        <button 
-                                            type="button"
-                                            onClick={() => setImageUrl(null)}
-                                            className="absolute top-1 right-1 bg-white rounded-full p-0.5 shadow z-10"
-                                        >
-                                            <X className="w-3 h-3 text-red-500" />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <Button 
-                                        type="button" 
-                                        variant="outline" 
-                                        className="w-24 h-24 border-dashed"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        disabled={uploading}
-                                    >
-                                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-6 h-6 text-slate-400" />}
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                        <Button type="submit" className="w-full" disabled={mutation.isPending}>
-                            {mutation.isPending ? "Allocating..." : "Allocate Asset"}
+
+                        <Button type="submit" className="w-full" disabled={mutation.isPending || uploading}>
+                            {mutation.isPending ? "Creating..." : "Confirm Allocation"}
                         </Button>
                     </form>
                 </Form>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-function ReturnAssetDialog({ allocationId }: { allocationId: number }) {
-    const [open, setOpen] = useState(false);
-    const mutation = useReturnAllocation();
-    const [reason, setReason] = useState("");
-    const [status, setStatus] = useState("Available");
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const { toast } = useToast();
-
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append("image", file);
-
-        try {
-            const res = await fetch("/api/upload", {
-                method: "POST",
-                body: formData
-            });
-            const data = await res.json();
-            setImageUrl(data.url);
-        } catch (err) {
-            toast({ title: "Upload failed", variant: "destructive" });
-        }
-    };
-
-    const handleSubmit = () => {
-        mutation.mutate({ 
-            id: allocationId, 
-            returnReason: reason, 
-            status,
-            details: imageUrl ? { imageUrl } : {}
-        } as any, {
-            onSuccess: () => {
-                setOpen(false);
-                setImageUrl(null);
-                setReason("");
-            }
-        });
-    };
-
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200">
-                    Return
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Return Asset</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Return Reason</label>
-                        <Input 
-                            placeholder="e.g. Employee left, Upgrade" 
-                            value={reason} 
-                            onChange={e => setReason(e.target.value)} 
-                        />
-                    </div>
-                    <div className="space-y-2">
-                         <label className="text-sm font-medium">New Asset Status</label>
-                         <Select value={status} onValueChange={setStatus}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Available">Available</SelectItem>
-                                <SelectItem value="Damaged">Damaged</SelectItem>
-                                <SelectItem value="Scrapped">Scrapped</SelectItem>
-                            </SelectContent>
-                         </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Asset Photo (Return)</label>
-                        <div className="flex items-center gap-4">
-                            <input 
-                                type="file" 
-                                className="hidden" 
-                                ref={fileInputRef} 
-                                accept="image/*" 
-                                onChange={handleFileUpload}
-                            />
-                            {imageUrl ? (
-                                <div className="relative w-24 h-24 rounded border overflow-hidden">
-                                    <img src={imageUrl} alt="Asset" className="w-full h-full object-cover" />
-                                    <button 
-                                        onClick={() => setImageUrl(null)}
-                                        className="absolute top-1 right-1 bg-white rounded-full p-0.5 shadow"
-                                    >
-                                        <X className="w-3 h-3 text-red-500" />
-                                    </button>
-                                </div>
-                            ) : (
-                                <Button 
-                                    type="button" 
-                                    variant="outline" 
-                                    className="w-24 h-24 border-dashed"
-                                    onClick={() => fileInputRef.current?.click()}
-                                >
-                                    <Camera className="w-6 h-6 text-slate-400" />
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-
-                    <Button onClick={handleSubmit} className="w-full" disabled={mutation.isPending || !reason}>
-                        {mutation.isPending ? "Processing..." : "Confirm Return"}
-                    </Button>
-                </div>
             </DialogContent>
         </Dialog>
     );

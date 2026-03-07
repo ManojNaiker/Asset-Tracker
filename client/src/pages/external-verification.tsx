@@ -21,11 +21,6 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
     queryFn: async () => {
       const res = await fetch(`/api/verifications/token/${params.token}`);
       if (!res.ok) {
-        if (res.status === 401) {
-          // This should not happen for public token routes, but if it does, 
-          // it means the server is enforcing auth where it shouldn't.
-          console.error("Auth required for public token route");
-        }
         const errorText = await res.text();
         try {
           const errorJson = JSON.parse(errorText);
@@ -74,29 +69,29 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
     );
   };
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" /></div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center text-red-600 font-medium">{error.message}</div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin text-primary" /></div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center bg-background text-destructive font-medium">{error.message}</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 flex items-center justify-center">
-      <Card className="w-full max-w-lg">
+    <div className="min-h-screen bg-background p-4 flex items-center justify-center">
+      <Card className="w-full max-w-lg border-border">
         <CardHeader>
-          <CardTitle>Asset Verification</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-foreground">Asset Verification</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Hello {allocation.employee.name}, please select and verify the asset(s) allocated to you.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
-            <label className="text-sm font-medium flex items-center gap-2">
-              <Info className="w-4 h-4 text-blue-500" />
+            <label className="text-sm font-medium flex items-center gap-2 text-foreground">
+              <Info className="w-4 h-4 text-primary" />
               Allocated Assets
             </label>
             <div 
               className={`p-3 sm:p-4 rounded-lg border-2 transition-colors cursor-pointer flex items-start sm:items-center gap-3 sm:gap-4 ${
                 selectedAssets.includes(allocation.asset.id) 
-                  ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" 
-                  : "bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800"
+                  ? "bg-primary/10 border-primary/20" 
+                  : "bg-card border-border"
               }`}
               onClick={() => toggleAsset(allocation.asset.id)}
             >
@@ -108,12 +103,12 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
               </div>
               <div className="flex-1 space-y-1">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-                  <span className="font-medium text-slate-900 dark:text-slate-100 text-sm sm:text-base">{allocation.asset.type.name}</span>
-                  <span className="text-[10px] sm:text-xs font-mono bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-400 self-start">
+                  <span className="font-medium text-foreground text-sm sm:text-base">{allocation.asset.type.name}</span>
+                  <span className="text-[10px] sm:text-xs font-mono bg-muted text-muted-foreground px-2 py-1 rounded self-start">
                     {allocation.asset.serialNumber}
                   </span>
                 </div>
-                <p className="text-[10px] sm:text-xs text-slate-500">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
                   Select this asset to approve or reject its current status.
                 </p>
               </div>
@@ -121,19 +116,19 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Remarks (Optional)</label>
+            <label className="text-sm font-medium text-foreground">Remarks (Optional)</label>
             <Textarea 
               placeholder="e.g. Asset received in good condition..." 
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
-              className="min-h-[100px]"
+              className="min-h-[100px] bg-background text-foreground border-border"
             />
           </div>
         </CardContent>
         <CardFooter className="flex gap-4">
           <Button 
             variant="outline"
-            className="flex-1 border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+            className="flex-1 border-destructive/20 text-destructive hover:bg-destructive/10"
             onClick={() => mutation.mutate("Rejected")}
             disabled={mutation.isPending || selectedAssets.length === 0}
             data-testid="button-reject"

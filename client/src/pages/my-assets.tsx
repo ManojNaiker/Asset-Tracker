@@ -4,7 +4,7 @@ import { LayoutShell } from "@/components/layout-shell";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
-import { Box, CheckCircle2, AlertCircle } from "lucide-react";
+import { Box, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { Allocation, Asset } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -42,35 +42,35 @@ export default function MyAssetsPage() {
   return (
     <LayoutShell>
       <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Asset Allocation Confirmation</h1>
+        <h1 className="text-3xl font-display font-bold text-foreground">Asset Allocation Confirmation</h1>
         <p className="text-muted-foreground mt-1">Review equipment currently assigned to you and acknowledge receipt.</p>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto mb-6">
+      <div className="bg-card rounded-xl border border-border shadow-sm overflow-x-auto mb-6">
         <Table className="min-w-[900px] md:min-w-full">
           <TableHeader>
-            <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+            <TableRow className="bg-muted/50">
               <TableHead className="w-12"></TableHead>
-              <TableHead className="dark:text-slate-200">Inventory No.</TableHead>
-              <TableHead className="dark:text-slate-200">Asset No.</TableHead>
-              <TableHead className="dark:text-slate-200">Category</TableHead>
-              <TableHead className="dark:text-slate-200">Asset Name</TableHead>
-              <TableHead className="dark:text-slate-200">Description</TableHead>
-              <TableHead className="dark:text-slate-200">Allocated Date</TableHead>
+              <TableHead className="text-foreground">Inventory No.</TableHead>
+              <TableHead className="text-foreground">Asset No.</TableHead>
+              <TableHead className="text-foreground">Category</TableHead>
+              <TableHead className="text-foreground">Asset Name</TableHead>
+              <TableHead className="text-foreground">Description</TableHead>
+              <TableHead className="text-foreground">Allocated Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {allocations?.map((a) => (
-              <TableRow key={a.id} className="dark:hover:bg-slate-800/30">
+              <TableRow key={a.id} className="hover:bg-muted/30 transition-colors">
                 <TableCell>
-                  <input type="checkbox" defaultChecked className="rounded border-slate-300" />
+                  <input type="checkbox" defaultChecked className="rounded border-border bg-background" />
                 </TableCell>
-                <TableCell className="dark:text-slate-400 font-mono text-xs">{a.asset?.serialNumber}</TableCell>
-                <TableCell className="text-blue-600 underline dark:text-blue-400 text-xs">{a.asset?.serialNumber}</TableCell>
-                <TableCell className="dark:text-slate-400 text-xs">{a.asset?.type?.name || "General"}</TableCell>
-                <TableCell className="dark:text-slate-400 text-xs font-medium">{a.asset?.type?.name}</TableCell>
-                <TableCell className="dark:text-slate-400 text-xs">{a.remarks || "No description provided"}</TableCell>
-                <TableCell className="dark:text-slate-400 text-xs">{a.allocatedAt ? new Date(a.allocatedAt).toLocaleDateString() : "N/A"}</TableCell>
+                <TableCell className="text-muted-foreground font-mono text-xs">{a.asset?.serialNumber}</TableCell>
+                <TableCell className="text-primary underline text-xs">{a.asset?.serialNumber}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">{a.asset?.type?.name || "General"}</TableCell>
+                <TableCell className="text-foreground text-xs font-medium">{a.asset?.type?.name}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">{a.remarks || "No description provided"}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">{a.allocatedAt ? new Date(a.allocatedAt).toLocaleDateString() : "N/A"}</TableCell>
               </TableRow>
             ))}
             {allocations?.length === 0 && (
@@ -87,9 +87,9 @@ export default function MyAssetsPage() {
       {allocations && allocations.length > 0 && (
         <div className="space-y-4 max-w-2xl">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Comment</label>
+            <label className="text-sm font-medium text-foreground">Comment</label>
             <textarea 
-              className="w-full min-h-[100px] p-3 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full min-h-[100px] p-3 rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Add your comments here..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -114,7 +114,7 @@ export default function MyAssetsPage() {
             </Button>
             <Button 
               variant="destructive"
-              className="bg-red-600 hover:bg-red-700 min-w-[120px]"
+              className="min-w-[120px]"
               onClick={() => {
                 if (allocations && allocations.length > 0) {
                   verifyMutation.mutate({ 
@@ -130,7 +130,7 @@ export default function MyAssetsPage() {
             </Button>
             <Button 
               variant="outline"
-              className="bg-green-700 hover:bg-green-800 text-white border-none"
+              className="bg-primary/10 text-primary border-none hover:bg-primary/20"
             >
               View Other Assignment
             </Button>

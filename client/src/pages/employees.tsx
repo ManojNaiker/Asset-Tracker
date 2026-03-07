@@ -23,7 +23,7 @@ export default function EmployeesPage() {
     <LayoutShell>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Employees</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground">Employees</h1>
           <p className="text-muted-foreground mt-1">Directory of all staff members.</p>
         </div>
         <div className="flex gap-2">
@@ -32,54 +32,54 @@ export default function EmployeesPage() {
         </div>
       </div>
 
-      <Card className="mb-6 shadow-sm border-slate-200 dark:border-slate-800">
+      <Card className="mb-6 shadow-sm border-border">
         <CardContent className="p-4">
             <div className="relative max-w-md">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input 
                     placeholder="Search name or ID..." 
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-950"
+                    className="pl-9 bg-muted/20 border-border focus:bg-background"
                 />
             </div>
         </CardContent>
       </Card>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-x-auto">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-x-auto">
         <Table className="min-w-[800px] md:min-w-full">
-          <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
+          <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead className="dark:text-slate-200">Emp ID</TableHead>
-              <TableHead className="dark:text-slate-200">Name</TableHead>
-              <TableHead className="dark:text-slate-200">Department</TableHead>
-              <TableHead className="dark:text-slate-200">Designation</TableHead>
-              <TableHead className="dark:text-slate-200">Status</TableHead>
-              <TableHead className="text-right dark:text-slate-200">Action</TableHead>
+              <TableHead className="text-foreground">Emp ID</TableHead>
+              <TableHead className="text-foreground">Name</TableHead>
+              <TableHead className="text-foreground">Department</TableHead>
+              <TableHead className="text-foreground">Designation</TableHead>
+              <TableHead className="text-foreground">Status</TableHead>
+              <TableHead className="text-right text-foreground">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
                 <TableRow>
                     <TableCell colSpan={6} className="h-32 text-center">
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-500" />
+                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
                     </TableCell>
                 </TableRow>
             ) : employees?.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-slate-500 dark:text-slate-400">
+                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                         No employees found.
                     </TableCell>
                 </TableRow>
             ) : (
                 employees?.map((emp) => (
-                    <TableRow key={emp.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                        <TableCell className="font-mono text-slate-600 dark:text-slate-400">{emp.empId}</TableCell>
-                        <TableCell className="font-medium dark:text-slate-200">{emp.name}</TableCell>
-                        <TableCell className="dark:text-slate-400">{emp.department}</TableCell>
-                        <TableCell className="dark:text-slate-400">{emp.designation}</TableCell>
+                    <TableRow key={emp.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-mono text-muted-foreground">{emp.empId}</TableCell>
+                        <TableCell className="font-medium text-foreground">{emp.name}</TableCell>
+                        <TableCell className="text-muted-foreground">{emp.department}</TableCell>
+                        <TableCell className="text-muted-foreground">{emp.designation}</TableCell>
                         <TableCell>
-                            <Badge variant="outline" className={emp.status === 'Active' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'}>
+                            <Badge variant="outline" className={emp.status === 'Active' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-muted text-muted-foreground'}>
                                 {emp.status}
                             </Badge>
                         </TableCell>
@@ -109,7 +109,7 @@ function ViewAllocatedAssetsDialog({ employee }: { employee: Employee }) {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 hover:bg-primary/10">
                     <Eye className="w-4 h-4 mr-1" /> View Assets
                 </Button>
             </DialogTrigger>
@@ -120,10 +120,10 @@ function ViewAllocatedAssetsDialog({ employee }: { employee: Employee }) {
                 <div className="py-4">
                     {isLoading ? (
                         <div className="flex justify-center py-8">
-                            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                            <Loader2 className="w-6 h-6 animate-spin text-primary" />
                         </div>
                     ) : !employeeAllocations || employeeAllocations.length === 0 ? (
-                        <p className="text-center py-8 text-slate-500">No active allocations for this employee.</p>
+                        <p className="text-center py-8 text-muted-foreground">No active allocations for this employee.</p>
                     ) : (
                         <Table>
                             <TableHeader>
@@ -332,7 +332,7 @@ function CreateEmployeeDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20">
+                <Button className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
                     <Plus className="w-4 h-4 mr-2" /> Add Employee
                 </Button>
             </DialogTrigger>

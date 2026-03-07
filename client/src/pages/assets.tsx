@@ -26,7 +26,7 @@ export default function AssetsPage() {
     <LayoutShell>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Asset Inventory</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground">Asset Inventory</h1>
           <p className="text-muted-foreground mt-1">Manage and track company assets.</p>
         </div>
         <div className="flex gap-2">
@@ -35,21 +35,21 @@ export default function AssetsPage() {
         </div>
       </div>
 
-      <Card className="mb-6 shadow-sm border-slate-200 dark:border-slate-800">
+      <Card className="mb-6 shadow-sm border-border">
         <CardContent className="p-4 flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input 
                     placeholder="Search by serial number..." 
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-950 transition-colors"
+                    className="pl-9 bg-muted/20 border-border focus:bg-background transition-colors"
                 />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-[200px]">
                     <div className="flex items-center gap-2">
-                        <Filter className="w-4 h-4 text-slate-500" />
+                        <Filter className="w-4 h-4 text-muted-foreground" />
                         <SelectValue placeholder="Filter Status" />
                     </div>
                 </SelectTrigger>
@@ -67,39 +67,39 @@ export default function AssetsPage() {
         </CardContent>
       </Card>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-x-auto">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-x-auto">
         <Table className="min-w-[800px] md:min-w-full">
-          <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
+          <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead className="dark:text-slate-200">Serial Number</TableHead>
-              <TableHead className="dark:text-slate-200">Type</TableHead>
-              <TableHead className="dark:text-slate-200">Status</TableHead>
-              <TableHead className="dark:text-slate-200">Added Date</TableHead>
-              <TableHead className="text-right dark:text-slate-200">Actions</TableHead>
+              <TableHead className="text-foreground">Serial Number</TableHead>
+              <TableHead className="text-foreground">Type</TableHead>
+              <TableHead className="text-foreground">Status</TableHead>
+              <TableHead className="text-foreground">Added Date</TableHead>
+              <TableHead className="text-right text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
                 <TableRow>
                     <TableCell colSpan={5} className="h-32 text-center">
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-500" />
+                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
                     </TableCell>
                 </TableRow>
             ) : assets?.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-slate-500 dark:text-slate-400">
+                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                         No assets found.
                     </TableCell>
                 </TableRow>
             ) : (
                 assets?.map((asset) => (
-                    <TableRow key={asset.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                        <TableCell className="font-medium font-mono text-slate-700 dark:text-slate-200">{asset.serialNumber}</TableCell>
-                        <TableCell className="dark:text-slate-400">{asset.type.name}</TableCell>
+                    <TableRow key={asset.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-medium font-mono text-foreground">{asset.serialNumber}</TableCell>
+                        <TableCell className="text-muted-foreground">{asset.type.name}</TableCell>
                         <TableCell>
                             <StatusBadge status={asset.status} />
                         </TableCell>
-                        <TableCell className="text-slate-500 dark:text-slate-400 text-sm">
+                        <TableCell className="text-muted-foreground text-sm">
                             {new Date(asset.createdAt!).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
@@ -125,55 +125,55 @@ function ViewAssetLifecycleDialog({ asset }: { asset: any }) {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+                <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
                     <Eye className="w-4 h-4 mr-1" /> View
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] dark:bg-slate-900 dark:border-slate-800">
+            <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                    <DialogTitle className="dark:text-white">Asset Lifecycle: {asset.serialNumber}</DialogTitle>
+                    <DialogTitle>Asset Lifecycle: {asset.serialNumber}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6 py-4">
-                    <div className="grid grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
+                    <div className="grid grid-cols-3 gap-4 bg-muted/50 p-4 rounded-lg border border-border">
                         <div>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Type</p>
-                            <p className="text-sm font-medium dark:text-slate-200">{asset.type?.name}</p>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Type</p>
+                            <p className="text-sm font-medium text-foreground">{asset.type?.name}</p>
                         </div>
                         <div>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Status</p>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Status</p>
                             <StatusBadge status={asset.status} />
                         </div>
                         <div>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Added On</p>
-                            <p className="text-sm font-medium dark:text-slate-200">{new Date(asset.createdAt).toLocaleDateString()}</p>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Added On</p>
+                            <p className="text-sm font-medium text-foreground">{new Date(asset.createdAt).toLocaleDateString()}</p>
                         </div>
                     </div>
 
                     <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                             <History className="w-4 h-4" /> Allocation History
                         </h3>
                         {isLoading ? (
-                            <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-blue-500" /></div>
+                            <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
                         ) : !assetAllocations || assetAllocations.length === 0 ? (
-                            <p className="text-center py-4 text-slate-500 dark:text-slate-400 text-sm">No allocation history found.</p>
+                            <p className="text-center py-4 text-muted-foreground text-sm">No allocation history found.</p>
                         ) : (
-                            <div className="relative border-l-2 border-slate-100 dark:border-slate-800 ml-3 pl-6 space-y-6">
+                            <div className="relative border-l-2 border-border ml-3 pl-6 space-y-6">
                                 {assetAllocations.map((a, i) => (
                                     <div key={a.id} className="relative">
-                                        <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-white dark:bg-slate-950 border-2 border-blue-500" />
+                                        <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-background border-2 border-primary" />
                                         <div className="space-y-1">
                                             <div className="flex justify-between items-start">
-                                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                <p className="text-sm font-semibold text-foreground">
                                                     Allocated to {a.employee?.name}
                                                 </p>
-                                                <Badge variant="outline" className="text-[10px] dark:border-slate-700 dark:text-slate-400">{a.status}</Badge>
+                                                <Badge variant="outline" className="text-[10px] border-border text-muted-foreground">{a.status}</Badge>
                                             </div>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                            <p className="text-xs text-muted-foreground">
                                                 {new Date(a.allocatedAt).toLocaleString()}
                                             </p>
                                             {a.returnDate && (
-                                                <p className="text-xs text-orange-600 font-medium">
+                                                <p className="text-xs text-destructive font-medium">
                                                     Returned: {new Date(a.returnDate).toLocaleString()}
                                                 </p>
                                             )}
@@ -191,13 +191,13 @@ function ViewAssetLifecycleDialog({ asset }: { asset: any }) {
 
 function StatusBadge({ status }: { status: string }) {
     const styles: Record<string, string> = {
-        Available: "bg-green-100 text-green-700 border-green-200",
-        Allocated: "bg-blue-100 text-blue-700 border-blue-200",
-        Damaged: "bg-red-100 text-red-700 border-red-200",
-        Lost: "bg-orange-100 text-orange-700 border-orange-200",
-        Scrapped: "bg-slate-100 text-slate-700 border-slate-200",
+        Available: "bg-green-500/10 text-green-500 border-green-500/20",
+        Allocated: "bg-primary/10 text-primary border-primary/20",
+        Damaged: "bg-destructive/10 text-destructive border-destructive/20",
+        Lost: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+        Scrapped: "bg-muted text-muted-foreground border-border",
     };
-    return <Badge variant="outline" className={`${styles[status] || "bg-slate-100"} px-2 py-0.5 rounded-full`}>{status}</Badge>;
+    return <Badge variant="outline" className={`${styles[status] || "bg-muted"} px-2 py-0.5 rounded-full`}>{status}</Badge>;
 }
 
 function CreateAssetDialog({ assetTypes }: { assetTypes: any[] }) {
@@ -231,7 +231,7 @@ function CreateAssetDialog({ assetTypes }: { assetTypes: any[] }) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20">
+                <Button className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
                     <Plus className="w-4 h-4 mr-2" /> Add Asset
                 </Button>
             </DialogTrigger>

@@ -54,12 +54,12 @@ export default function AssetTypesPage() {
     <LayoutShell>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Asset Types</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground">Asset Types</h1>
           <p className="text-muted-foreground mt-1">Manage asset categories and their custom fields.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-primary hover:bg-primary/90">
               <Plus className="w-4 h-4 mr-2" />
               Add Type
             </Button>
@@ -76,7 +76,7 @@ export default function AssetTypesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Name</FormLabel>
-                      <FormControl><Input {...field} placeholder="e.g. Laptop" /></FormControl>
+                      <FormControl><Input {...field} placeholder="e.g. Laptop" className="bg-background" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -87,7 +87,7 @@ export default function AssetTypesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Description</FormLabel>
-                      <FormControl><Textarea {...field} /></FormControl>
+                      <FormControl><Textarea {...field} className="bg-background" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -101,25 +101,25 @@ export default function AssetTypesPage() {
         </Dialog>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto">
+      <div className="bg-card rounded-xl border border-border shadow-sm overflow-x-auto">
         <Table className="min-w-[600px] md:min-w-full">
-          <TableHeader>
-            <TableRow className="bg-slate-50 dark:bg-slate-800/50">
-              <TableHead className="dark:text-slate-200">Name</TableHead>
-              <TableHead className="dark:text-slate-200">Description</TableHead>
-              <TableHead className="dark:text-slate-200">Fields</TableHead>
-              <TableHead className="text-right dark:text-slate-200">Actions</TableHead>
+          <TableHeader className="bg-muted/50">
+            <TableRow>
+              <TableHead className="text-foreground">Name</TableHead>
+              <TableHead className="text-foreground">Description</TableHead>
+              <TableHead className="text-foreground">Fields</TableHead>
+              <TableHead className="text-right text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {types?.map((type) => (
-              <TableRow key={type.id} className="dark:hover:bg-slate-800/30">
-                <TableCell className="font-medium dark:text-slate-200">{type.name}</TableCell>
-                <TableCell className="dark:text-slate-400">{type.description}</TableCell>
-                <TableCell className="dark:text-slate-400">{(type.schema as any[])?.length || 0} fields</TableCell>
+              <TableRow key={type.id} className="hover:bg-muted/30 transition-colors">
+                <TableCell className="font-medium text-foreground">{type.name}</TableCell>
+                <TableCell className="text-muted-foreground">{type.description}</TableCell>
+                <TableCell className="text-muted-foreground">{(type.schema as any[])?.length || 0} fields</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" className="dark:text-slate-400 dark:hover:text-white"><Settings2 className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" className="dark:text-slate-400 dark:hover:text-white"><Pencil className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><Settings2 className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></Button>
                 </TableCell>
               </TableRow>
             ))}
