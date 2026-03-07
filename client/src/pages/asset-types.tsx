@@ -101,8 +101,8 @@ export default function AssetTypesPage() {
         </Dialog>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-        <Table>
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto">
+        <Table className="min-w-[600px] md:min-w-full">
           <TableHeader>
             <TableRow className="bg-slate-50 dark:bg-slate-800/50">
               <TableHead className="dark:text-slate-200">Name</TableHead>

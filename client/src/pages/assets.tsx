@@ -67,8 +67,8 @@ export default function AssetsPage() {
         </CardContent>
       </Card>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <Table>
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-x-auto">
+        <Table className="min-w-[800px] md:min-w-full">
           <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
             <TableRow>
               <TableHead className="dark:text-slate-200">Serial Number</TableHead>

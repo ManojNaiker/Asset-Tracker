@@ -120,6 +120,10 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                     <div className={`p-3 rounded-lg transition-all duration-200 ${isChildActive ? "bg-slate-800 text-white" : "text-slate-500 hover:text-white hover:bg-slate-800"}`}>
                       <item.icon className="w-6 h-6" />
                     </div>
+                    {/* Tooltip for collapsed state */}
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                      {item.name}
+                    </div>
                   </div>
                 );
               }
@@ -224,18 +228,18 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         <Button 
           variant="ghost" 
           size="icon"
-          className="hover:bg-accent"
+          className="hover:bg-accent shrink-0"
           onClick={() => setMobileOpen(true)}
         >
           <Menu className="w-6 h-6" />
         </Button>
-        <div className="ml-3 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-slate-900 p-1 flex items-center justify-center">
+        <div className="ml-3 flex items-center gap-2 overflow-hidden">
+          <div className="w-8 h-8 rounded-lg bg-slate-900 p-1 flex items-center justify-center shrink-0">
             <img src="/images/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
           </div>
-          <span className="font-bold text-lg tracking-tight">AssetAlloc</span>
+          <span className="font-bold text-lg tracking-tight truncate">AssetAlloc</span>
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 shrink-0">
           <ThemeToggle />
         </div>
       </header>
@@ -264,8 +268,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       </Sheet>
 
       {/* Main Content */}
-      <main className={`flex-1 transition-all duration-300 ${desktopCollapsed ? "lg:ml-20" : "lg:ml-64"} min-h-screen`}>
-        <div className="container max-w-7xl mx-auto p-4 md:p-8 pt-20 lg:pt-8 animate-in fade-in duration-500">
+      <main className={`flex-1 transition-all duration-300 ${desktopCollapsed ? "lg:ml-20" : "lg:ml-64"} min-h-screen w-full overflow-x-hidden`}>
+        <div className="max-w-7xl mx-auto p-3 sm:p-6 md:p-8 pt-20 lg:pt-8 animate-in fade-in duration-500">
           {children}
         </div>
       </main>

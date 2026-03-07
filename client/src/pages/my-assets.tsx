@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { LayoutShell } from "@/components/layout-shell";
 import { 
@@ -45,8 +46,8 @@ export default function MyAssetsPage() {
         <p className="text-muted-foreground mt-1">Review equipment currently assigned to you and acknowledge receipt.</p>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden mb-6">
-        <Table>
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto mb-6">
+        <Table className="min-w-[900px] md:min-w-full">
           <TableHeader>
             <TableRow className="bg-slate-50 dark:bg-slate-800/50">
               <TableHead className="w-12"></TableHead>

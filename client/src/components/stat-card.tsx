@@ -13,14 +13,14 @@ interface StatCardProps {
 
 export function StatCard({ title, value, icon: Icon, trend, trendUp, color = "blue" }: StatCardProps) {
   const colorStyles = {
-    blue: "bg-blue-50 text-blue-600",
-    green: "bg-emerald-50 text-emerald-600",
-    orange: "bg-orange-50 text-orange-600",
-    purple: "bg-purple-50 text-purple-600",
+    blue: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
+    green: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400",
+    orange: "bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400",
+    purple: "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400",
   };
 
   return (
-    <Card className="border-none shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+    <Card className="border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
       <CardContent className="p-3 sm:p-6">
         <div className="flex items-center justify-between gap-2">
           <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl ${colorStyles[color]}`}>
@@ -35,8 +35,8 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, color = "bl
           )}
         </div>
         <div className="mt-3 sm:mt-4">
-          <p className="text-[10px] sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
-          <h3 className="text-lg sm:text-2xl font-bold font-display mt-0.5 tracking-tight text-slate-900 dark:text-white leading-none">{value}</h3>
+          <p className="text-[10px] sm:text-sm font-medium text-muted-foreground uppercase tracking-wider truncate">{title}</p>
+          <h3 className="text-lg sm:text-2xl font-bold font-display mt-0.5 tracking-tight text-slate-900 dark:text-white leading-none truncate">{value}</h3>
         </div>
       </CardContent>
     </Card>

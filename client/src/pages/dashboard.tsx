@@ -27,8 +27,8 @@ export default function Dashboard() {
   return (
     <LayoutShell>
       <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
-        <p className="text-muted-foreground mt-1">Real-time insight into your asset inventory.</p>
+        <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
+        <p className="text-sm text-muted-foreground mt-1">Real-time insight into your asset inventory.</p>
       </div>
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-8">
@@ -60,23 +60,23 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+      <div className="grid gap-4 md:gap-6 grid-cols-2 lg:grid-cols-7">
         {/* Status Chart */}
-        <Card className="col-span-3 shadow-sm border-slate-200">
-          <CardHeader>
-            <CardTitle>Asset Status Distribution</CardTitle>
+        <Card className="col-span-2 md:col-span-1 lg:col-span-3 shadow-sm border-slate-200 overflow-hidden">
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-sm sm:text-xl font-bold">Status</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
+          <CardContent className="p-2 sm:p-6">
+            <div className="h-[180px] sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={stats.assetsByStatus}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
+                    innerRadius={35}
+                    outerRadius={55}
+                    paddingAngle={2}
                     dataKey="count"
                     nameKey="status"
                   >
@@ -85,16 +85,16 @@ export default function Dashboard() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '10px' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-4">
+            <div className="flex flex-wrap justify-center gap-2 mt-2">
               {stats.assetsByStatus.map((item, index) => (
-                <div key={item.status} className="flex items-center gap-2 text-sm">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                  <span className="text-slate-600 dark:text-slate-400 font-medium">{item.status}: {item.count}</span>
+                <div key={item.status} className="flex items-center gap-1 text-[10px] sm:text-sm">
+                  <div className="w-1.5 h-1.5 sm:w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                  <span className="text-slate-600 dark:text-slate-400 font-medium truncate">{item.status}</span>
                 </div>
               ))}
             </div>
@@ -102,32 +102,32 @@ export default function Dashboard() {
         </Card>
 
         {/* Type Chart */}
-        <Card className="col-span-4 shadow-sm border-slate-200">
-          <CardHeader>
-            <CardTitle>Assets by Category</CardTitle>
+        <Card className="col-span-2 md:col-span-1 lg:col-span-4 shadow-sm border-slate-200 overflow-hidden">
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-sm sm:text-xl font-bold">Category</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
+          <CardContent className="p-2 sm:p-6">
+            <div className="h-[180px] sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats.assetsByType}>
+                <BarChart data={stats.assetsByType} margin={{ left: -30, right: 5, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis 
                     dataKey="name" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fill: '#64748b', fontSize: 12 }} 
-                    dy={10}
+                    tick={{ fill: '#64748b', fontSize: 8 }} 
+                    interval={0}
                   />
                   <YAxis 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fill: '#64748b', fontSize: 12 }} 
+                    tick={{ fill: '#64748b', fontSize: 8 }} 
                   />
                   <Tooltip 
                     cursor={{ fill: '#f1f5f9' }}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '10px' }}
                   />
-                  <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} />
+                  <Bar dataKey="count" fill="#3b82f6" radius={[2, 2, 0, 0]} barSize={20} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
