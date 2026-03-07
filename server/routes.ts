@@ -84,6 +84,18 @@ export async function registerRoutes(
     return "https://localhost";
   };
 
+  const normalizeCert = (cert: string): string => {
+    let normalized = cert
+      .replace(/-----BEGIN CERTIFICATE-----/g, '')
+      .replace(/-----END CERTIFICATE-----/g, '')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/\n/g, '')
+      .replace(/\s/g, '')
+      .trim();
+    return normalized;
+  };
+
   const setupSso = async () => {
     try {
       const settings = await storage.getSsoSettings();
@@ -97,8 +109,10 @@ export async function registerRoutes(
 
       const baseUrl = getSsoBaseUrl(settings.spEntityId);
       const callbackUrl = baseUrl + "/api/auth/saml/callback";
+      const idpCert = normalizeCert(settings.publicKey);
 
       console.log("SAML Config: Issuer=" + settings.spEntityId + ", CallbackUrl=" + callbackUrl);
+      console.log("IdP Certificate length:", idpCert.length, "chars");
 
       const samlStrategy = new SamlStrategy(
         {
@@ -106,11 +120,13 @@ export async function registerRoutes(
           entryPoint: settings.entryPoint,
           issuer: settings.spEntityId,
           idpIssuer: settings.idpEntityId,
-          idpCert: settings.publicKey,
+          idpCert: idpCert,
           logoutUrl: settings.logoutUrl || undefined,
           signatureAlgorithm: 'sha256' as const,
           digestAlgorithm: 'sha256' as const,
           disableRequestedAuthnContext: true,
+          wantAssertionsSigned: false,
+          wantAuthnResponseSigned: false,
         } as any,
         async (profile: any, done: any) => {
           try {
@@ -175,10 +191,11 @@ export async function registerRoutes(
   });
 
   app.post("/api/auth/saml/callback", (req, res, next) => {
-    console.log("SAML callback received");
+    console.log("SAML callback received. Body keys:", Object.keys(req.body || {}));
     passport.authenticate("saml", (err: any, user: any, info: any) => {
       if (err) {
         console.error("SAML callback authentication error:", err.message || err);
+        if (err.stack) console.error("Stack:", err.stack);
         return res.redirect("/auth?error=sso_error");
       }
       if (!user) {
