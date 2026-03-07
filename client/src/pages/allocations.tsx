@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { ImagePreview } from "@/components/image-preview";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function AllocationsPage() {
   const { data: allocations, isLoading } = useAllocations();

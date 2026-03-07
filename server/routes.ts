@@ -45,6 +45,7 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   app.set("trust proxy", 1);
+  const isSecureEnv = process.env.NODE_ENV === "production" || !!(process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS);
   app.use(session({
     store: storage.sessionStore,
     secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
@@ -53,9 +54,9 @@ export async function registerRoutes(
     proxy: true,
     cookie: { 
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: false, // Set to false since we might not be on HTTPS in dev
+      secure: isSecureEnv,
       httpOnly: true,
-      sameSite: 'lax'
+      sameSite: isSecureEnv ? 'none' : 'lax'
     }
   }));
 
@@ -191,13 +192,13 @@ export async function registerRoutes(
         }
         console.log("SAML login successful for user:", (user as User).username);
         
-        // Ensure session is saved before redirecting to prevent race conditions where 
-        // the subsequent request arrives before the session is persisted.
         req.session.save((err) => {
           if (err) {
             console.error("SAML callback: Session save error:", err);
           }
-          return res.redirect("/");
+          res.setHeader("Content-Type", "text/html");
+          res.setHeader("Cache-Control", "no-store");
+          res.send(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=/"></head><body><p>Redirecting...</p><script>window.location.href="/";</script></body></html>`);
         });
       });
     })(req, res, next);
