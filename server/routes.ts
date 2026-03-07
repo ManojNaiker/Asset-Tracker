@@ -9,7 +9,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import bcrypt from "bcryptjs";
-import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, insertEmployeeSchema, allocations, ssoSettings as ssoSettingsTable } from "@shared/schema";
+import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, insertEmployeeSchema, allocations, ssoSettings as ssoSettingsTable, pageSettings } from "@shared/schema";
 import crypto from "node:crypto";
 import { db } from "./db";
 import { desc } from "drizzle-orm";
@@ -240,6 +240,21 @@ export async function registerRoutes(
       res.json(settings);
     } catch (err) {
       res.status(500).json({ message: "Failed to update SSO settings" });
+    }
+  });
+
+  // Page Settings
+  app.get("/api/settings/page", async (req, res) => {
+    const settings = await storage.getPageSettings();
+    res.json(settings || { companyName: "AssetAlloc", logoUrl: "/images/logo.png" });
+  });
+
+  app.put("/api/settings/page", requireAdmin, async (req, res) => {
+    try {
+      const settings = await storage.updatePageSettings(req.body);
+      res.json(settings);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to update page settings" });
     }
   });
 

@@ -2,6 +2,7 @@ import { useState, memo } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Users,
@@ -73,6 +74,10 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   
+  const { data: pageSettings } = useQuery({
+    queryKey: ["/api/settings/page"],
+  });
+
   // Track open state for collapsible menus
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
@@ -93,11 +98,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0 border border-slate-200/50 shadow-sm ring-1 ring-black/[0.08]">
-              <img src="/images/logo.png" alt="Light Microfinance" className="w-full h-full object-contain" />
+              <img src={pageSettings?.logoUrl || "/images/logo.png"} alt={pageSettings?.companyName || "AssetAlloc"} className="w-full h-full object-contain" />
             </div>
             {!isCollapsed && (
                   <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-                      <h1 className="text-xl font-display font-bold tracking-tight text-white">AssetAlloc</h1>
+                      <h1 className="text-xl font-display font-bold tracking-tight text-white">{pageSettings?.companyName || "AssetAlloc"}</h1>
                       <p className="text-xs text-blue-200/70 font-medium">Light Finance</p>
                   </div>
                 )}
@@ -235,9 +240,9 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         </Button>
         <div className="ml-3 flex items-center gap-2 overflow-hidden">
           <div className="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shrink-0 border border-slate-200/50 shadow-sm ring-1 ring-black/[0.08]">
-            <img src="/images/logo.png" alt="Logo" className="w-full h-full object-contain" />
+            <img src={pageSettings?.logoUrl || "/images/logo.png"} alt="Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="font-bold text-lg tracking-tight truncate text-foreground">AssetAlloc</span>
+          <span className="font-bold text-lg tracking-tight truncate text-foreground">{pageSettings?.companyName || "AssetAlloc"}</span>
         </div>
         <div className="ml-auto flex items-center gap-2 shrink-0">
           <ThemeToggle />

@@ -129,6 +129,14 @@ export const ssoSettings = pgTable("sso_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const pageSettings = pgTable("page_settings", {
+  id: serial("id").primaryKey(),
+  companyName: text("company_name").default("AssetAlloc"),
+  logoUrl: text("logo_url").default("/images/logo.png"),
+  faviconUrl: text("favicon_url"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // === Relations ===
 export const assetsRelations = relations(assets, ({ one, many }) => ({
   type: one(assetTypes, {
@@ -161,6 +169,7 @@ export const insertDepartmentSchema = createInsertSchema(departments).omit({ id:
 export const insertDesignationSchema = createInsertSchema(designations).omit({ id: true, createdAt: true });
 export const insertEmailSettingsSchema = createInsertSchema(emailSettings).omit({ id: true, updatedAt: true });
 export const insertSsoSettingsSchema = createInsertSchema(ssoSettings).omit({ id: true, updatedAt: true });
+export const insertPageSettingsSchema = createInsertSchema(pageSettings).omit({ id: true, updatedAt: true });
 
 // === Types ===
 export type User = typeof users.$inferSelect;
@@ -184,6 +193,8 @@ export type EmailSettings = typeof emailSettings.$inferSelect;
 export type InsertEmailSettings = z.infer<typeof insertEmailSettingsSchema>;
 export type SsoSettings = typeof ssoSettings.$inferSelect;
 export type InsertSsoSettings = z.infer<typeof insertSsoSettingsSchema>;
+export type PageSettings = typeof pageSettings.$inferSelect;
+export type InsertPageSettings = z.infer<typeof insertPageSettingsSchema>;
 
 // Request Types
 export type LoginRequest = { username: string; password: string };

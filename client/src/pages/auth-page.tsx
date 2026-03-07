@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Building2, ArrowRight, AlertCircle } from "lucide-react";
 import { Redirect } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -20,6 +21,10 @@ export default function AuthPage() {
   const { user, loginMutation } = useAuth();
   const { toast } = useToast();
   const [ssoLoading, setSsoLoading] = useState(false);
+
+  const { data: pageSettings } = useQuery({
+    queryKey: ["/api/settings/page"],
+  });
 
   const urlParams = new URLSearchParams(window.location.search);
   const ssoError = urlParams.get("error");
@@ -87,17 +92,27 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Left: Branding */}
+    <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-2">
+      {/* Mobile Header: Branding */}
+      <div className="lg:hidden flex items-center justify-between p-4 bg-slate-900 text-white border-b border-slate-800">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded bg-white p-1 flex items-center justify-center">
+            <img src={pageSettings?.logoUrl || "/images/logo.png"} alt="Logo" className="w-full h-full object-contain" />
+          </div>
+          <span className="font-display font-bold text-lg">{pageSettings?.companyName || "AssetAlloc"}</span>
+        </div>
+      </div>
+
+      {/* Left: Branding (Desktop) */}
       <div className="hidden lg:flex flex-col bg-slate-900 text-white p-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-primary/10 z-0"></div>
         <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-slate-900 to-transparent z-10"></div>
         
         <div className="relative z-20 flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg bg-white p-2 flex items-center justify-center border border-border shadow-sm">
-            <img src="/images/logo.png" alt="Logo" className="w-full h-full object-contain" />
+            <img src={pageSettings?.logoUrl || "/images/logo.png"} alt="Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="font-display font-bold text-2xl">AssetAlloc</span>
+          <span className="font-display font-bold text-2xl">{pageSettings?.companyName || "AssetAlloc"}</span>
         </div>
 
         <div className="relative z-20 flex-1 flex flex-col justify-center max-w-lg">
@@ -115,7 +130,7 @@ export default function AuthPage() {
       </div>
 
       {/* Right: Login Form */}
-      <div className="flex items-center justify-center p-6 bg-background">
+      <div className="flex-1 flex items-center justify-center p-6 bg-background">
         <Card className="w-full max-w-md shadow-xl border-border bg-card">
           <CardHeader className="space-y-1 pb-8">
             <CardTitle className="text-2xl font-bold text-center text-foreground">Sign in to your account</CardTitle>
