@@ -9,7 +9,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import bcrypt from "bcryptjs";
-import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, insertEmployeeSchema, allocations, ssoSettings as ssoSettingsTable, pageSettings } from "@shared/schema";
+import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, insertEmployeeSchema, insertCustomFieldSchema, allocations, ssoSettings as ssoSettingsTable, pageSettings } from "@shared/schema";
 import crypto from "node:crypto";
 import { db } from "./db";
 import { desc } from "drizzle-orm";
@@ -1229,6 +1229,70 @@ export async function registerRoutes(
     } catch (err) {
       res.status(500).json({ message: "Bulk import failed" });
     }
+  });
+
+  // Custom Fields
+  app.get("/api/custom-fields", requireAuth, async (req, res) => {
+    const entity = req.query.entity as string | undefined;
+    const fields = await storage.getCustomFields(entity);
+    res.json(fields);
+  });
+
+  app.post("/api/custom-fields", requireAdmin, async (req, res) => {
+    try {
+      const input = insertCustomFieldSchema.parse(req.body);
+      const field = await storage.createCustomField(input);
+      res.status(201).json(field);
+    } catch (err: any) {
+      if (err.name === "ZodError") {
+        return res.status(400).json({ message: "Invalid field data", errors: err.errors });
+      }
+      if (err.code === "23505") {
+        return res.status(409).json({ message: "A field with this key already exists for this entity" });
+      }
+      res.status(500).json({ message: err.message || "Failed to create custom field" });
+    }
+  });
+
+  app.patch("/api/custom-fields/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const existing = await storage.getCustomField(id);
+      if (!existing) return res.status(404).json({ message: "Custom field not found" });
+      const partial = insertCustomFieldSchema.partial().parse(req.body);
+      const field = await storage.updateCustomField(id, partial);
+      res.json(field);
+    } catch (err: any) {
+      if (err.name === "ZodError") {
+        return res.status(400).json({ message: "Invalid field data", errors: err.errors });
+      }
+      if (err.code === "23505") {
+        return res.status(409).json({ message: "A field with this key already exists for this entity" });
+      }
+      res.status(500).json({ message: err.message || "Failed to update custom field" });
+    }
+  });
+
+  app.delete("/api/custom-fields/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const existing = await storage.getCustomField(id);
+      if (!existing) return res.status(404).json({ message: "Custom field not found" });
+      await storage.deleteCustomField(id);
+      res.json({ message: "Field deleted" });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to delete custom field" });
+    }
+  });
+
+  app.get("/api/custom-fields/dropdown-sources", requireAdmin, async (req, res) => {
+    res.json([
+      { value: "departments", label: "Departments" },
+      { value: "designations", label: "Designations" },
+      { value: "employees", label: "Employees" },
+      { value: "asset_types", label: "Asset Types" },
+      { value: "assets", label: "Assets" },
+    ]);
   });
 
   // Employees

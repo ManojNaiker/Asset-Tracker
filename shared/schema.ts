@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, date, uniqueIndex } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -137,6 +137,23 @@ export const pageSettings = pgTable("page_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const fieldTypeOptions = ["text", "number", "dropdown"] as const;
+
+export const customFields = pgTable("custom_fields", {
+  id: serial("id").primaryKey(),
+  entity: text("entity").notNull(),
+  fieldName: text("field_name").notNull(),
+  fieldKey: text("field_key").notNull(),
+  fieldType: text("field_type", { enum: fieldTypeOptions }).notNull().default("text"),
+  required: boolean("required").default(false),
+  options: jsonb("options").default({}),
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("custom_fields_entity_key_idx").on(table.entity, table.fieldKey),
+]);
+
 // === Relations ===
 export const assetsRelations = relations(assets, ({ one, many }) => ({
   type: one(assetTypes, {
@@ -170,6 +187,7 @@ export const insertDesignationSchema = createInsertSchema(designations).omit({ i
 export const insertEmailSettingsSchema = createInsertSchema(emailSettings).omit({ id: true, updatedAt: true });
 export const insertSsoSettingsSchema = createInsertSchema(ssoSettings).omit({ id: true, updatedAt: true });
 export const insertPageSettingsSchema = createInsertSchema(pageSettings).omit({ id: true, updatedAt: true });
+export const insertCustomFieldSchema = createInsertSchema(customFields).omit({ id: true, createdAt: true });
 
 // === Types ===
 export type User = typeof users.$inferSelect;
@@ -195,6 +213,8 @@ export type SsoSettings = typeof ssoSettings.$inferSelect;
 export type InsertSsoSettings = z.infer<typeof insertSsoSettingsSchema>;
 export type PageSettings = typeof pageSettings.$inferSelect;
 export type InsertPageSettings = z.infer<typeof insertPageSettingsSchema>;
+export type CustomField = typeof customFields.$inferSelect;
+export type InsertCustomField = z.infer<typeof insertCustomFieldSchema>;
 
 // Request Types
 export type LoginRequest = { username: string; password: string };

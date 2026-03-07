@@ -62,6 +62,7 @@ Pages are organized in `client/src/pages/` with a `LayoutShell` component provid
 - `allocations` — Asset-to-employee assignments with status (Active/Returned)
 - `verifications` — Verification records with approval/rejection workflow
 - `audit_logs` — System-wide activity logging
+- `custom_fields` — Admin-configurable custom fields per entity (department, designation, employee, asset, allocation). Supports text, number, and dropdown field types. Dropdown fields can pull options from existing tables (departments, designations, employees, asset_types, assets) or use custom-defined options. Unique constraint on (entity, field_key).
 
 ### Shared Layer (`shared/`)
 - `schema.ts` — Drizzle table definitions, Zod insert schemas, TypeScript types exported for both client and server

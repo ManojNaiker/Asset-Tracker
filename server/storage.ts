@@ -2,8 +2,9 @@ import {
   User, InsertUser, Employee, InsertEmployee, AssetType, Asset, InsertAsset, 
   Allocation, InsertAllocation, Verification, InsertVerification, AuditLog,
   Department, InsertDepartment, Designation, InsertDesignation,
+  CustomField, InsertCustomField,
   users, employees, assetTypes, assets, allocations, verifications, auditLogs,
-  departments, designations,
+  departments, designations, customFields,
   EmailSettings, InsertEmailSettings, emailSettings,
   SsoSettings, InsertSsoSettings, ssoSettings,
   PageSettings, InsertPageSettings, pageSettings
@@ -70,6 +71,13 @@ export interface IStorage {
   createDesignation(desig: InsertDesignation): Promise<Designation>;
   createDesignationsBulk(desigs: InsertDesignation[]): Promise<Designation[]>;
   deleteDesignation(id: number): Promise<void>;
+
+  // Custom Fields
+  getCustomFields(entity?: string): Promise<CustomField[]>;
+  getCustomField(id: number): Promise<CustomField | undefined>;
+  createCustomField(field: InsertCustomField): Promise<CustomField>;
+  updateCustomField(id: number, updates: Partial<CustomField>): Promise<CustomField>;
+  deleteCustomField(id: number): Promise<void>;
 
   // Audit Logs
   createAuditLog(log: Partial<AuditLog>): Promise<AuditLog>;
@@ -376,6 +384,33 @@ export class DatabaseStorage implements IStorage {
 
   async deleteDesignation(id: number): Promise<void> {
     await db.delete(designations).where(eq(designations.id, id));
+  }
+
+  // Custom Fields
+  async getCustomFields(entity?: string): Promise<CustomField[]> {
+    if (entity) {
+      return db.select().from(customFields).where(eq(customFields.entity, entity)).orderBy(customFields.sortOrder);
+    }
+    return db.select().from(customFields).orderBy(customFields.sortOrder);
+  }
+
+  async getCustomField(id: number): Promise<CustomField | undefined> {
+    const [field] = await db.select().from(customFields).where(eq(customFields.id, id));
+    return field;
+  }
+
+  async createCustomField(field: InsertCustomField): Promise<CustomField> {
+    const [created] = await db.insert(customFields).values(field).returning();
+    return created;
+  }
+
+  async updateCustomField(id: number, updates: Partial<CustomField>): Promise<CustomField> {
+    const [updated] = await db.update(customFields).set(updates).where(eq(customFields.id, id)).returning();
+    return updated;
+  }
+
+  async deleteCustomField(id: number): Promise<void> {
+    await db.delete(customFields).where(eq(customFields.id, id));
   }
 
   // Audit Logs
