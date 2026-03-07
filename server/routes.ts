@@ -9,7 +9,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import bcrypt from "bcryptjs";
-import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, insertEmployeeSchema, insertCustomFieldSchema, allocations, ssoSettings as ssoSettingsTable, pageSettings } from "@shared/schema";
+import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, insertEmployeeSchema, insertCustomFieldSchema, allocations, ssoSettings as ssoSettingsTable, pageSettings, insertPageSettingsSchema } from "@shared/schema";
 import crypto from "node:crypto";
 import { db } from "./db";
 import { desc } from "drizzle-orm";
@@ -269,9 +269,13 @@ export async function registerRoutes(
 
   app.put("/api/settings/page", requireAdmin, async (req, res) => {
     try {
-      const settings = await storage.updatePageSettings(req.body);
+      const validated = insertPageSettingsSchema.parse(req.body);
+      const settings = await storage.updatePageSettings(validated);
       res.json(settings);
     } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid page settings", errors: err.errors });
+      }
       res.status(500).json({ message: "Failed to update page settings" });
     }
   });
