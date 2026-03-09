@@ -38,14 +38,6 @@ export default function Dashboard() {
       </div>
 
       <div className="flex gap-3 mb-8">
-        <Button 
-          onClick={() => navigate('/assets')}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-          data-testid="button-inventory"
-        >
-          <Box className="w-4 h-4 mr-2" />
-          Inventory
-        </Button>
         <AssetSearchModal open={searchModalOpen} onOpenChange={setSearchModalOpen}>
           <Button 
             variant="outline"

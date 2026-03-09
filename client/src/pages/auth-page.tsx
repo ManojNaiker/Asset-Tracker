@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Building2, ArrowRight, AlertCircle } from "lucide-react";
+import { Building2, ArrowRight, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { Redirect } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -21,6 +21,7 @@ export default function AuthPage() {
   const { user, loginMutation } = useAuth();
   const { toast } = useToast();
   const [ssoLoading, setSsoLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { data: pageSettings } = useQuery({
     queryKey: ["/api/settings/page"],
@@ -161,7 +162,26 @@ export default function AuthPage() {
                     <FormItem>
                       <FormLabel className="text-foreground">Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Enter password" className="h-11 bg-background text-foreground border-border" {...field} />
+                        <div className="relative">
+                          <Input 
+                            type={showPassword ? "text" : "password"} 
+                            placeholder="Enter password" 
+                            className="h-11 bg-background text-foreground border-border pr-10" 
+                            {...field} 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            data-testid="button-toggle-password"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
