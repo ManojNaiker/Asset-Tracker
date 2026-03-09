@@ -6,15 +6,22 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Image as ImageIcon, Upload } from "lucide-react";
+import { Loader2, Image as ImageIcon, Upload, Mail } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 export default function SettingsPage() {
+    const [location] = useLocation();
     const { toast } = useToast();
     const queryClient = useQueryClient();
 
     const { data: pageSettings, isLoading: isLoadingPage } = useQuery({
         queryKey: ["/api/settings/page"]
+    });
+
+    const { data: emailSettings, isLoading: isLoadingEmail } = useQuery({
+        queryKey: ["/api/settings/email"]
     });
 
     const updatePageMutation = useMutation({
@@ -31,10 +38,48 @@ export default function SettingsPage() {
         }
     });
 
+    const updateEmailMutation = useMutation({
+        mutationFn: async (values: any) => {
+            const res = await apiRequest("POST", "/api/settings/email", values);
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/settings/email"] });
+            toast({ title: "Success", description: "Email settings updated successfully" });
+        },
+        onError: () => {
+            toast({ title: "Error", description: "Failed to update email settings", variant: "destructive" });
+        }
+    });
+
+    const testEmailMutation = useMutation({
+        mutationFn: async () => {
+            const res = await apiRequest("POST", "/api/settings/email/test", {});
+            return res.json();
+        },
+        onSuccess: (data) => {
+            toast({ title: "Success", description: data.message });
+        },
+        onError: (err: Error) => {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        }
+    });
+
     const pageForm = useForm<any>({
         values: pageSettings || {
             companyName: "AssetAlloc",
             logoUrl: "/images/logo.png"
+        }
+    });
+
+    const emailForm = useForm<any>({
+        values: emailSettings || {
+            host: "",
+            port: 465,
+            secure: true,
+            user: "",
+            password: "",
+            fromEmail: ""
         }
     });
 
@@ -58,11 +103,116 @@ export default function SettingsPage() {
         }
     };
 
-    if (isLoadingPage) {
+    if ((location === "/settings" && isLoadingPage) || (location === "/email-settings" && isLoadingEmail)) {
         return (
             <LayoutShell>
                 <div className="flex items-center justify-center min-h-[400px]">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            </LayoutShell>
+        );
+    }
+
+    if (location === "/email-settings") {
+        return (
+            <LayoutShell>
+                <div className="mb-8">
+                    <h1 className="text-3xl font-display font-bold text-foreground">Email Notification Settings</h1>
+                    <p className="text-muted-foreground mt-1">Configure SMTP settings for sending automated allocation notifications.</p>
+                </div>
+
+                <div className="space-y-6">
+                    <Card className="border-border bg-card">
+                        <CardContent className="pt-6">
+                            <Form {...emailForm}>
+                                <form onSubmit={emailForm.handleSubmit((v) => updateEmailMutation.mutate(v))} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <FormField
+                                        control={emailForm.control}
+                                        name="host"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-foreground">SMTP Host</FormLabel>
+                                                <FormControl><Input {...field} placeholder="smtp.gmail.com" className="bg-background" /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={emailForm.control}
+                                        name="port"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-foreground">SMTP Port</FormLabel>
+                                                <FormControl><Input {...field} type="number" onChange={e => field.onChange(parseInt(e.target.value))} className="bg-background" /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={emailForm.control}
+                                        name="user"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-foreground">SMTP User</FormLabel>
+                                                <FormControl><Input {...field} placeholder="your-email@gmail.com" className="bg-background" /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={emailForm.control}
+                                        name="password"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-foreground">SMTP Password</FormLabel>
+                                                <FormControl><Input {...field} type="password" placeholder="••••••••" className="bg-background" /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={emailForm.control}
+                                        name="fromEmail"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-foreground">From Email Address</FormLabel>
+                                                <FormControl><Input {...field} placeholder="no-reply@lightmf.com" className="bg-background" /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={emailForm.control}
+                                        name="secure"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center justify-between rounded-lg border border-border p-4 bg-background">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel className="text-foreground">Use SSL/TLS</FormLabel>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <div className="md:col-span-2 flex gap-4">
+                                        <Button type="submit" className="w-full md:w-auto px-12" disabled={updateEmailMutation.isPending}>
+                                            {updateEmailMutation.isPending ? "Saving..." : "Save Settings"}
+                                        </Button>
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            className="w-full md:w-auto px-12 border-border hover:bg-muted text-foreground"
+                                            disabled={testEmailMutation.isPending}
+                                            onClick={() => testEmailMutation.mutate()}
+                                        >
+                                            {testEmailMutation.isPending ? "Testing..." : "Test Email"}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </Form>
+                        </CardContent>
+                    </Card>
                 </div>
             </LayoutShell>
         );
