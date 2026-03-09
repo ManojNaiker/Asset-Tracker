@@ -1357,5 +1357,153 @@ export async function registerRoutes(
     }
   });
 
+  // Report APIs
+  app.get("/api/reports/asset-inventory", requireAuth, async (req, res) => {
+    try {
+      const result = await db.execute(db.raw(`
+        SELECT 
+          at.name as type,
+          COUNT(*) as count,
+          SUM(CASE WHEN a.status = 'Available' THEN 1 ELSE 0 END) as available,
+          SUM(CASE WHEN a.status = 'Allocated' THEN 1 ELSE 0 END) as allocated,
+          SUM(CASE WHEN a.status = 'Damaged' THEN 1 ELSE 0 END) as damaged,
+          SUM(CASE WHEN a.status = 'Lost' THEN 1 ELSE 0 END) as lost,
+          SUM(CASE WHEN a.status = 'Scrapped' THEN 1 ELSE 0 END) as scrapped
+        FROM assets a
+        JOIN asset_types at ON a.asset_type_id = at.id
+        GROUP BY at.id, at.name
+        ORDER BY at.name
+      `));
+      res.json(result.rows || []);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch asset inventory report" });
+    }
+  });
+
+  app.get("/api/reports/employee-assets", requireAuth, async (req, res) => {
+    try {
+      const result = await db.execute(db.raw(`
+        SELECT 
+          e.emp_id,
+          e.name as employee_name,
+          e.department,
+          e.designation,
+          COUNT(DISTINCT a.id) as total_assets,
+          SUM(CASE WHEN alloc.status = 'Active' THEN 1 ELSE 0 END) as active_assets,
+          SUM(CASE WHEN alloc.status = 'Returned' THEN 1 ELSE 0 END) as returned_assets
+        FROM employees e
+        LEFT JOIN allocations alloc ON e.id = alloc.employee_id
+        LEFT JOIN assets a ON alloc.asset_id = a.id
+        GROUP BY e.id, e.emp_id, e.name, e.department, e.designation
+        ORDER BY e.name
+      `));
+      res.json(result.rows || []);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch employee assets report" });
+    }
+  });
+
+  app.get("/api/reports/department-assets", requireAuth, async (req, res) => {
+    try {
+      const result = await db.execute(db.raw(`
+        SELECT 
+          COALESCE(e.department, 'Unassigned') as department,
+          COUNT(DISTINCT a.id) as total_assets,
+          SUM(CASE WHEN a.status = 'Available' THEN 1 ELSE 0 END) as available,
+          SUM(CASE WHEN a.status = 'Allocated' THEN 1 ELSE 0 END) as allocated,
+          SUM(CASE WHEN a.status = 'Damaged' THEN 1 ELSE 0 END) as damaged,
+          COUNT(DISTINCT alloc.employee_id) as employee_count
+        FROM assets a
+        LEFT JOIN allocations alloc ON a.id = alloc.asset_id AND alloc.status = 'Active'
+        LEFT JOIN employees e ON alloc.employee_id = e.id
+        GROUP BY COALESCE(e.department, 'Unassigned')
+        ORDER BY COALESCE(e.department, 'Unassigned')
+      `));
+      res.json(result.rows || []);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch department assets report" });
+    }
+  });
+
+  app.get("/api/reports/asset-status", requireAuth, async (req, res) => {
+    try {
+      const result = await db.execute(db.raw(`
+        SELECT 
+          a.serial_number,
+          at.name as asset_type,
+          a.status,
+          COALESCE(e.name, 'Not Allocated') as employee_name,
+          COALESCE(e.emp_id, '-') as employee_id,
+          COALESCE(e.department, '-') as department,
+          COALESCE(TO_CHAR(alloc.allocated_at, 'YYYY-MM-DD'), '-') as allocated_date,
+          COALESCE(TO_CHAR(alloc.return_date, 'YYYY-MM-DD'), '-') as return_date
+        FROM assets a
+        JOIN asset_types at ON a.asset_type_id = at.id
+        LEFT JOIN allocations alloc ON a.id = alloc.asset_id AND alloc.status = 'Active'
+        LEFT JOIN employees e ON alloc.employee_id = e.id
+        ORDER BY a.serial_number
+      `));
+      res.json(result.rows || []);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch asset status report" });
+    }
+  });
+
+  app.get("/api/reports/asset-returns", requireAuth, async (req, res) => {
+    try {
+      const result = await db.execute(db.raw(`
+        SELECT 
+          a.serial_number,
+          at.name as asset_type,
+          e.name as employee_name,
+          e.emp_id,
+          e.department,
+          TO_CHAR(alloc.allocated_at, 'YYYY-MM-DD') as allocated_date,
+          TO_CHAR(alloc.return_date, 'YYYY-MM-DD') as return_date,
+          CASE 
+            WHEN alloc.return_date IS NOT NULL THEN 'Returned'
+            ELSE CASE WHEN a.status IN ('Damaged', 'Lost', 'Scrapped') THEN a.status ELSE 'N/A' END
+          END as final_status,
+          alloc.return_reason
+        FROM assets a
+        JOIN asset_types at ON a.asset_type_id = at.id
+        LEFT JOIN allocations alloc ON a.id = alloc.asset_id
+        LEFT JOIN employees e ON alloc.employee_id = e.id
+        WHERE alloc.return_date IS NOT NULL OR a.status IN ('Damaged', 'Lost', 'Scrapped')
+        ORDER BY COALESCE(alloc.return_date, a.updated_at) DESC
+      `));
+      res.json(result.rows || []);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch asset returns report" });
+    }
+  });
+
+  app.get("/api/reports/verification-status", requireAuth, async (req, res) => {
+    try {
+      const result = await db.execute(db.raw(`
+        SELECT 
+          a.serial_number,
+          at.name as asset_type,
+          COALESCE(e.name, 'Not Allocated') as employee_name,
+          COALESCE(e.emp_id, '-') as employee_id,
+          alloc.verification_status,
+          TO_CHAR(alloc.allocated_at, 'YYYY-MM-DD') as allocated_date,
+          TO_CHAR(v.verified_at, 'YYYY-MM-DD') as verified_date,
+          COALESCE(u.full_name, 'N/A') as verified_by
+        FROM assets a
+        JOIN asset_types at ON a.asset_type_id = at.id
+        LEFT JOIN allocations alloc ON a.id = alloc.asset_id
+        LEFT JOIN employees e ON alloc.employee_id = e.id
+        LEFT JOIN verifications v ON a.id = v.asset_id
+        LEFT JOIN users u ON v.verifier_id = u.id
+        WHERE alloc.id IS NOT NULL
+        ORDER BY a.serial_number
+      `));
+      res.json(result.rows || []);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch verification status report" });
+    }
+  });
+
   return httpServer;
 }
