@@ -33,8 +33,21 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
   const startCamera = async () => {
     try {
       setIsScanning(true);
+      
+      // Check if camera API is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error("Camera API not available in your browser");
+        setIsScanning(false);
+        alert("Camera is not available in your browser. Please use a modern browser with camera support.");
+        return;
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment" } 
+        video: { 
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -43,8 +56,14 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
         setIsCameraActive(true);
         scanVideo();
       }
-    } catch (err) {
-      console.error("Camera access denied:", err);
+    } catch (err: any) {
+      console.error("Camera access error:", err);
+      const errorMessage = err.name === 'NotAllowedError' 
+        ? "Camera access was denied. Please allow camera access in your browser settings."
+        : err.name === 'NotFoundError'
+        ? "No camera device found."
+        : "Failed to access camera. Please try again.";
+      alert(errorMessage);
       setIsScanning(false);
     }
   };
@@ -128,10 +147,6 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
             type="button"
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10 p-1"
             title="Scan QR/Barcode"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
           >
             <QrCode className="w-4 h-4" />
           </button>
