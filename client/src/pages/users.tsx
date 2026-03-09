@@ -562,13 +562,17 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                     <form className="space-y-4" onSubmit={(e) => {
                                         e.preventDefault();
                                         const formData = new FormData(e.currentTarget);
-                                        createDeptMutation.mutate({ name: formData.get("name") });
+                                        createDeptMutation.mutate({ name: String(formData.get("name")) }, {
+                                          onSuccess: () => setIsDeptDialogOpen(false)
+                                        });
                                     }}>
-                                        <FormItem>
-                                            <FormLabel>Department Name</FormLabel>
-                                            <FormControl><Input name="name" required className="bg-background" /></FormControl>
-                                        </FormItem>
-                                        <Button type="submit" className="w-full">Create</Button>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-foreground">Department Name</label>
+                                            <Input name="name" required className="bg-background" placeholder="Enter department name" />
+                                        </div>
+                                        <Button type="submit" className="w-full" disabled={createDeptMutation.isPending}>
+                                          {createDeptMutation.isPending ? "Creating..." : "Create"}
+                                        </Button>
                                     </form>
                                 </DialogContent>
                             </Dialog>
@@ -619,13 +623,17 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                                     <form className="space-y-4" onSubmit={(e) => {
                                         e.preventDefault();
                                         const formData = new FormData(e.currentTarget);
-                                        createDesigMutation.mutate({ name: formData.get("name") });
+                                        createDesigMutation.mutate({ name: String(formData.get("name")) }, {
+                                          onSuccess: () => setIsDesigDialogOpen(false)
+                                        });
                                     }}>
-                                        <FormItem>
-                                            <FormLabel>Designation Name</FormLabel>
-                                            <FormControl><Input name="name" required className="bg-background" /></FormControl>
-                                        </FormItem>
-                                        <Button type="submit" className="w-full">Create</Button>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-foreground">Designation Name</label>
+                                            <Input name="name" required className="bg-background" placeholder="Enter designation name" />
+                                        </div>
+                                        <Button type="submit" className="w-full" disabled={createDesigMutation.isPending}>
+                                          {createDesigMutation.isPending ? "Creating..." : "Create"}
+                                        </Button>
                                     </form>
                                 </DialogContent>
                             </Dialog>
