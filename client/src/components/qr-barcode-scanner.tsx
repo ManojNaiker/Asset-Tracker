@@ -9,9 +9,10 @@ import jsQR from "jsqr";
 interface QRBarcodeScannerProps {
   onDetected: (value: string) => void;
   placeholder?: string;
+  inline?: boolean;
 }
 
-export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan serial number" }: QRBarcodeScannerProps) {
+export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan serial number", inline = false }: QRBarcodeScannerProps) {
   const [open, setOpen] = useState(false);
   const [manualInput, setManualInput] = useState("");
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -118,6 +119,125 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
     };
     reader.readAsDataURL(file);
   };
+
+  if (inline) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <button 
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            title="Scan QR/Barcode"
+          >
+            <Camera className="w-4 h-4" />
+          </button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Get Serial Number</DialogTitle>
+          </DialogHeader>
+          
+          <Tabs defaultValue="manual" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="manual" className="text-xs">
+                <Type className="w-3 h-3 mr-1" />
+                Text
+              </TabsTrigger>
+              <TabsTrigger value="camera" className="text-xs">
+                <Camera className="w-3 h-3 mr-1" />
+                Camera
+              </TabsTrigger>
+              <TabsTrigger value="image" className="text-xs">
+                <Upload className="w-3 h-3 mr-1" />
+                Image
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="manual" className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  placeholder={placeholder}
+                  value={manualInput}
+                  onChange={(e) => setManualInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleManualSubmit();
+                  }}
+                />
+              </div>
+              <Button onClick={handleManualSubmit} className="w-full">
+                Confirm
+              </Button>
+            </TabsContent>
+
+            <TabsContent value="camera" className="space-y-4">
+              {!isCameraActive ? (
+                <Button 
+                  onClick={startCamera} 
+                  disabled={isScanning}
+                  className="w-full"
+                >
+                  {isScanning ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Starting Camera...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="w-4 h-4 mr-2" />
+                      Start Camera
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <>
+                  <div className="bg-black rounded-lg overflow-hidden">
+                    <video
+                      ref={videoRef}
+                      className="w-full aspect-video"
+                      style={{ transform: "scaleX(-1)" }}
+                    />
+                  </div>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Point camera at QR code or barcode
+                  </p>
+                  <Button 
+                    onClick={stopCamera}
+                    variant="destructive"
+                    className="w-full"
+                  >
+                    Stop Camera
+                  </Button>
+                </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="image" className="space-y-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                className="w-full"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Choose Image
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Upload an image containing QR code or barcode
+              </p>
+            </TabsContent>
+          </Tabs>
+
+          <canvas ref={canvasRef} className="hidden" />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

@@ -19,11 +19,17 @@ import { QRBarcodeScanner } from "@/components/qr-barcode-scanner";
 
 export default function AssetsPage() {
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<"inventory" | "search">("inventory");
   const [searchResult, setSearchResult] = useState<any | null>(null);
   const { data: assets, isLoading } = useAssets({ search, status: statusFilter });
   const { data: assetTypes } = useAssetTypes();
+
+  const filteredAssets = assets?.filter(asset => {
+    if (typeFilter && asset.type.id !== Number(typeFilter)) return false;
+    return true;
+  });
 
   const handleSearchDetected = (serialNumber: string) => {
     setSearch(serialNumber);
@@ -47,33 +53,44 @@ export default function AssetsPage() {
       {activeTab === "inventory" && (
       <>
       <Card className="mb-6 shadow-sm border-border">
-        <CardContent className="p-4 flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input 
-                    placeholder="Search by serial number..." 
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 bg-muted/20 border-border focus:bg-background transition-colors"
-                />
+        <CardContent className="p-4 space-y-4">
+            <div className="flex flex-col md:flex-row gap-3">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search by serial number..." 
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 bg-muted/20 border-border focus:bg-background transition-colors"
+                    />
+                </div>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectValue placeholder="Asset Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {assetTypes?.map(t => (
+                            <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Available">Available</SelectItem>
+                        <SelectItem value="Allocated">Allocated</SelectItem>
+                        <SelectItem value="Damaged">Damaged</SelectItem>
+                        <SelectItem value="Lost">Lost</SelectItem>
+                        <SelectItem value="Scrapped">Scrapped</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                    <div className="flex items-center gap-2">
-                        <Filter className="w-4 h-4 text-muted-foreground" />
-                        <SelectValue placeholder="Filter Status" />
-                    </div>
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="Available">Available</SelectItem>
-                    <SelectItem value="Allocated">Allocated</SelectItem>
-                    <SelectItem value="Damaged">Damaged</SelectItem>
-                    <SelectItem value="Lost">Lost</SelectItem>
-                    <SelectItem value="Scrapped">Scrapped</SelectItem>
-                </SelectContent>
-            </Select>
-            {statusFilter && (
-                <Button variant="ghost" onClick={() => setStatusFilter(undefined)}>Clear</Button>
+            {(search || typeFilter || statusFilter) && (
+                <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilter(undefined); setStatusFilter(undefined); }} className="w-full">
+                    Clear All Filters
+                </Button>
             )}
         </CardContent>
       </Card>
@@ -103,7 +120,7 @@ export default function AssetsPage() {
                     </TableCell>
                 </TableRow>
             ) : (
-                assets?.map((asset) => (
+                filteredAssets?.map((asset) => (
                     <TableRow key={asset.id} className="hover:bg-muted/30 transition-colors">
                         <TableCell className="font-medium font-mono text-foreground">{asset.serialNumber}</TableCell>
                         <TableCell className="text-muted-foreground">{asset.type.name}</TableCell>
@@ -346,15 +363,17 @@ function CreateAssetDialog({ assetTypes }: { assetTypes: any[] }) {
                             name="serialNumber"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Serial Number</FormLabel>
-                                    <QRBarcodeScanner onDetected={handleSNDetected} placeholder="SN-12345" />
+                                            <FormLabel>Serial Number</FormLabel>
                                     <FormControl>
-                                        <Input 
-                                            placeholder="Or type manually..." 
-                                            {...field} 
-                                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                                            className="mt-2"
-                                        />
+                                        <div className="relative">
+                                            <Input 
+                                                placeholder="SN-12345" 
+                                                {...field} 
+                                                onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                                className="pr-10"
+                                            />
+                                            <QRBarcodeScanner onDetected={handleSNDetected} placeholder="SN-12345" inline={true} />
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
