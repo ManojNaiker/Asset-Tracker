@@ -293,7 +293,7 @@ function ReturnAssetDialog({ allocationId }: { allocationId: number }) {
 
     const onSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        mutation.mutate({ id: allocationId, returnReason: reason }, {
+        mutation.mutate({ id: allocationId, returnReason: reason, status: "Returned" }, {
             onSuccess: () => {
                 setOpen(false);
                 setRemarks("");
@@ -351,7 +351,7 @@ function CreateAllocationDialog() {
       [designations]
     );
 
-    const handleAddDepartment = async (name: string) => {
+    const handleAddDepartment = async (name: string): Promise<void> => {
       return new Promise((resolve, reject) => {
         createDeptMutation.mutate({ name }, {
           onSuccess: () => resolve(),
@@ -360,7 +360,7 @@ function CreateAllocationDialog() {
       });
     };
 
-    const handleAddDesignation = async (name: string) => {
+    const handleAddDesignation = async (name: string): Promise<void> => {
       return new Promise((resolve, reject) => {
         createDesigMutation.mutate({ name }, {
           onSuccess: () => resolve(),
