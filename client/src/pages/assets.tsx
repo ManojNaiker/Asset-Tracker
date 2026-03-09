@@ -10,17 +10,26 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertAssetSchema, type InsertAsset } from "@shared/schema";
-import { Plus, Search, Filter, Loader2, FileText, Eye, History, Upload, Download } from "lucide-react";
+import { Plus, Search, Filter, Loader2, FileText, Eye, History, Upload, Download, Tabs } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { BulkAssetUploadDialog } from "@/components/bulk-upload-dialogs";
+import { QRBarcodeScanner } from "@/components/qr-barcode-scanner";
 
 export default function AssetsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState<"inventory" | "search">("inventory");
+  const [searchResult, setSearchResult] = useState<any | null>(null);
   const { data: assets, isLoading } = useAssets({ search, status: statusFilter });
   const { data: assetTypes } = useAssetTypes();
+
+  const handleSearchDetected = (serialNumber: string) => {
+    setSearch(serialNumber);
+    const found = assets?.find(a => a.serialNumber === serialNumber);
+    setSearchResult(found || null);
+  };
 
   return (
     <LayoutShell>
@@ -35,6 +44,8 @@ export default function AssetsPage() {
         </div>
       </div>
 
+      {activeTab === "inventory" && (
+      <>
       <Card className="mb-6 shadow-sm border-border">
         <CardContent className="p-4 flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
@@ -110,6 +121,89 @@ export default function AssetsPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+      </>
+      )}
+
+      {activeTab === "search" && (
+      <div className="space-y-6">
+        <Card className="shadow-sm border-border">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-foreground">Search Asset by Serial Number</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <QRBarcodeScanner onDetected={handleSearchDetected} placeholder="Scan or enter asset serial number" />
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Or type serial number..." 
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value.toUpperCase());
+                      const found = assets?.find(a => a.serialNumber.includes(e.target.value.toUpperCase()));
+                      setSearchResult(found || null);
+                    }}
+                    className="pl-9 bg-muted/20 border-border focus:bg-background transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {searchResult ? (
+          <Card className="shadow-sm border-border bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-900">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Asset Found</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground font-bold uppercase">Serial Number</p>
+                  <p className="font-mono text-foreground">{searchResult.serialNumber}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-bold uppercase">Type</p>
+                  <p className="text-foreground">{searchResult.type?.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-bold uppercase">Status</p>
+                  <StatusBadge status={searchResult.status} />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-bold uppercase">Added</p>
+                  <p className="text-foreground">{new Date(searchResult.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : search ? (
+          <Card className="shadow-sm border-border bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900">
+            <CardContent className="p-6">
+              <p className="text-center text-muted-foreground">No asset found with serial number: <span className="font-mono font-semibold">{search}</span></p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="shadow-sm border-border">
+            <CardContent className="p-6">
+              <p className="text-center text-muted-foreground">Scan a QR code, barcode, or enter a serial number to search</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+      )}
+
+      <div className="fixed bottom-8 right-8 flex gap-2">
+        <Button 
+          variant={activeTab === "inventory" ? "default" : "outline"}
+          onClick={() => setActiveTab("inventory")}
+        >
+          Inventory
+        </Button>
+        <Button 
+          variant={activeTab === "search" ? "default" : "outline"}
+          onClick={() => setActiveTab("search")}
+        >
+          Asset Search
+        </Button>
       </div>
     </LayoutShell>
   );
@@ -228,6 +322,10 @@ function CreateAssetDialog({ assetTypes }: { assetTypes: any[] }) {
         });
     };
 
+    const handleSNDetected = (serialNumber: string) => {
+        form.setValue("serialNumber", serialNumber);
+    };
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -247,11 +345,13 @@ function CreateAssetDialog({ assetTypes }: { assetTypes: any[] }) {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Serial Number</FormLabel>
+                                    <QRBarcodeScanner onDetected={handleSNDetected} placeholder="SN-12345" />
                                     <FormControl>
                                         <Input 
-                                            placeholder="SN-12345" 
+                                            placeholder="Or type manually..." 
                                             {...field} 
                                             onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                            className="mt-2"
                                         />
                                     </FormControl>
                                     <FormMessage />
