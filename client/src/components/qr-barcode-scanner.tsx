@@ -52,9 +52,40 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        setIsCameraActive(true);
-        scanVideo();
+        
+        // Wait for video metadata to load before starting scan
+        const videoPlayPromise = videoRef.current.play();
+        if (videoPlayPromise !== undefined) {
+          videoPlayPromise.catch((err: any) => {
+            console.error("Video play failed:", err);
+          });
+        }
+        
+        // Listen for loadedmetadata event
+        const handleLoadedMetadata = () => {
+          console.log("Video metadata loaded, starting scan...");
+          setIsCameraActive(true);
+          setIsScanning(false);
+          if (videoRef.current) {
+            videoRef.current.removeEventListener("loadedmetadata", handleLoadedMetadata);
+          }
+          scanVideo();
+        };
+        
+        videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
+        
+        // Timeout fallback in case metadata never loads
+        const timeoutId = setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.removeEventListener("loadedmetadata", handleLoadedMetadata);
+            setIsCameraActive(true);
+            setIsScanning(false);
+            scanVideo();
+          }
+        }, 3000);
+        
+        // Store timeout to clean up
+        videoRef.current.dataset.timeoutId = String(timeoutId);
       }
     } catch (err: any) {
       console.error("Camera access error:", err);
@@ -77,25 +108,42 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
   };
 
   const scanVideo = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current || !isCameraActive) return;
 
+    const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
+    // Check if video has valid dimensions
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      if (isCameraActive) {
+        requestAnimationFrame(scanVideo);
+      }
+      return;
+    }
 
-    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height);
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-    if (code) {
-      onDetected(code.data);
-      stopCamera();
-      setOpen(false);
-      setManualInput("");
-    } else if (isCameraActive) {
+    try {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+      if (code) {
+        console.log("QR Code detected:", code.data);
+        onDetected(code.data);
+        stopCamera();
+        setOpen(false);
+        setManualInput("");
+        return;
+      }
+    } catch (err) {
+      console.error("Error processing frame:", err);
+    }
+
+    if (isCameraActive) {
       requestAnimationFrame(scanVideo);
     }
   };
