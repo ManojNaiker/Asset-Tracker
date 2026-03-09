@@ -246,9 +246,8 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full">
-          <Camera className="w-4 h-4 mr-2" />
-          Scan or Enter SN
+        <Button variant="outline" size="sm" className="w-full" title="Scan QR Code or Barcode">
+          <QrCode className="w-4 h-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
