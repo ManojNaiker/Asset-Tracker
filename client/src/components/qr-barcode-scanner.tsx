@@ -1,10 +1,18 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Camera, Type, Upload, QrCode } from "lucide-react";
 import jsQR from "jsqr";
+
+declare global {
+  interface Window {
+    BarcodeDetector?: new (options?: { formats: string[] }) => {
+      detect: (source: ImageBitmapSource) => Promise<Array<{ rawValue: string; format: string }>>;
+    };
+  }
+}
 
 interface QRBarcodeScannerProps {
   onDetected: (value: string) => void;
@@ -23,6 +31,24 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
   const streamRef = useRef<MediaStream | null>(null);
   const scanningActiveRef = useRef(false);
   const animationFrameRef = useRef<number | null>(null);
+  const onDetectedRef = useRef(onDetected);
+  const barcodeDetectorRef = useRef<InstanceType<NonNullable<typeof window.BarcodeDetector>> | null>(null);
+
+  useEffect(() => {
+    onDetectedRef.current = onDetected;
+  }, [onDetected]);
+
+  useEffect(() => {
+    if (window.BarcodeDetector) {
+      try {
+        barcodeDetectorRef.current = new window.BarcodeDetector({
+          formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'code_93', 'codabar', 'itf', 'upc_a', 'upc_e', 'data_matrix', 'aztec', 'pdf417']
+        });
+      } catch (e) {
+        barcodeDetectorRef.current = null;
+      }
+    }
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -36,13 +62,18 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
     };
   }, []);
 
-  const doScanFrame = () => {
+  const handleDetection = useCallback((value: string) => {
+    onDetectedRef.current(value);
+    stopCamera();
+    setOpen(false);
+    setManualInput("");
+  }, []);
+
+  const doScanFrame = useCallback(async () => {
     if (!scanningActiveRef.current || !videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
     if (video.readyState < video.HAVE_ENOUGH_DATA || video.videoWidth === 0 || video.videoHeight === 0) {
       animationFrameRef.current = requestAnimationFrame(doScanFrame);
@@ -52,26 +83,43 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    try {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
+    let detectorSucceeded = false;
 
-      if (code) {
-        onDetected(code.data);
-        stopCamera();
-        setOpen(false);
-        setManualInput("");
-        return;
+    if (barcodeDetectorRef.current) {
+      try {
+        const codes = await barcodeDetectorRef.current.detect(video);
+        if (!scanningActiveRef.current) return;
+        if (codes.length > 0) {
+          handleDetection(codes[0].rawValue);
+          return;
+        }
+        detectorSucceeded = true;
+      } catch (err) {
+        barcodeDetectorRef.current = null;
       }
-    } catch (err) {
-      console.error("Error processing frame:", err);
+    }
+
+    if (!detectorSucceeded) {
+      try {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          if (code) {
+            handleDetection(code.data);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Error processing frame:", err);
+      }
     }
 
     if (scanningActiveRef.current) {
       animationFrameRef.current = requestAnimationFrame(doScanFrame);
     }
-  };
+  }, [handleDetection]);
 
   const startCamera = async () => {
     try {
@@ -150,31 +198,50 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        if (!canvasRef.current) return;
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
 
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
+    img.onload = async () => {
+      if (!canvasRef.current) { URL.revokeObjectURL(objectUrl); return; }
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { URL.revokeObjectURL(objectUrl); return; }
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      let detected = false;
+
+      if (barcodeDetectorRef.current) {
+        try {
+          const codes = await barcodeDetectorRef.current.detect(canvas);
+          if (codes.length > 0) {
+            onDetected(codes[0].rawValue);
+            detected = true;
+          }
+        } catch (err) {
+          console.error("BarcodeDetector error on image:", err);
+        }
+      }
+
+      if (!detected) {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height);
-
         if (code) {
           onDetected(code.data);
-          setManualInput("");
-          setOpen(false);
-          if (fileInputRef.current) fileInputRef.current.value = "";
+          detected = true;
         }
-      };
-      img.src = event.target?.result as string;
+      }
+
+      if (detected) {
+        setManualInput("");
+        setOpen(false);
+      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      URL.revokeObjectURL(objectUrl);
     };
-    reader.readAsDataURL(file);
+    img.src = objectUrl;
   };
 
   if (inline) {
