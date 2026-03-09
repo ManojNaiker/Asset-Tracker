@@ -301,7 +301,7 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
                   playsInline
                   muted
                   className="w-full aspect-video"
-                  style={{ transform: "scaleX(-1)" }}
+                  
                   data-testid="camera-video-feed"
                 />
               </div>
@@ -420,7 +420,7 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
                 playsInline
                 muted
                 className="w-full aspect-video"
-                style={{ transform: "scaleX(-1)" }}
+                
                 data-testid="camera-video-feed"
               />
             </div>
