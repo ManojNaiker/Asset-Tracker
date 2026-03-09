@@ -21,105 +21,31 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const scanningActiveRef = useRef(false);
+  const animationFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
+      scanningActiveRef.current = false;
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
 
-  const startCamera = async () => {
-    try {
-      setIsScanning(true);
-      
-      // Check if camera API is available
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.error("Camera API not available in your browser");
-        setIsScanning(false);
-        alert("Camera is not available in your browser. Please use a modern browser with camera support.");
-        return;
-      }
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        
-        // Wait for video metadata to load before starting scan
-        const videoPlayPromise = videoRef.current.play();
-        if (videoPlayPromise !== undefined) {
-          videoPlayPromise.catch((err: any) => {
-            console.error("Video play failed:", err);
-          });
-        }
-        
-        // Listen for loadedmetadata event
-        const handleLoadedMetadata = () => {
-          console.log("Video metadata loaded, starting scan...");
-          setIsCameraActive(true);
-          setIsScanning(false);
-          if (videoRef.current) {
-            videoRef.current.removeEventListener("loadedmetadata", handleLoadedMetadata);
-          }
-          scanVideo();
-        };
-        
-        videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
-        
-        // Timeout fallback in case metadata never loads
-        const timeoutId = setTimeout(() => {
-          if (videoRef.current) {
-            videoRef.current.removeEventListener("loadedmetadata", handleLoadedMetadata);
-            setIsCameraActive(true);
-            setIsScanning(false);
-            scanVideo();
-          }
-        }, 3000);
-        
-        // Store timeout to clean up
-        videoRef.current.dataset.timeoutId = String(timeoutId);
-      }
-    } catch (err: any) {
-      console.error("Camera access error:", err);
-      const errorMessage = err.name === 'NotAllowedError' 
-        ? "Camera access was denied. Please allow camera access in your browser settings."
-        : err.name === 'NotFoundError'
-        ? "No camera device found."
-        : "Failed to access camera. Please try again.";
-      alert(errorMessage);
-      setIsScanning(false);
-    }
-  };
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-    }
-    setIsCameraActive(false);
-    setIsScanning(false);
-  };
-
-  const scanVideo = () => {
-    if (!videoRef.current || !canvasRef.current || !isCameraActive) return;
+  const doScanFrame = () => {
+    if (!scanningActiveRef.current || !videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Check if video has valid dimensions
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
-      if (isCameraActive) {
-        requestAnimationFrame(scanVideo);
-      }
+    if (video.readyState < video.HAVE_ENOUGH_DATA || video.videoWidth === 0 || video.videoHeight === 0) {
+      animationFrameRef.current = requestAnimationFrame(doScanFrame);
       return;
     }
 
@@ -132,7 +58,6 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
       const code = jsQR(imageData.data, imageData.width, imageData.height);
 
       if (code) {
-        console.log("QR Code detected:", code.data);
         onDetected(code.data);
         stopCamera();
         setOpen(false);
@@ -143,9 +68,74 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
       console.error("Error processing frame:", err);
     }
 
-    if (isCameraActive) {
-      requestAnimationFrame(scanVideo);
+    if (scanningActiveRef.current) {
+      animationFrameRef.current = requestAnimationFrame(doScanFrame);
     }
+  };
+
+  const startCamera = async () => {
+    try {
+      setIsScanning(true);
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setIsScanning(false);
+        alert("Camera is not available in your browser. Please use a modern browser with camera support.");
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play().then(() => {
+              setIsCameraActive(true);
+              setIsScanning(false);
+              scanningActiveRef.current = true;
+              doScanFrame();
+            }).catch((err) => {
+              console.error("Video play failed:", err);
+              setIsScanning(false);
+            });
+          }
+        };
+      }
+    } catch (err: any) {
+      console.error("Camera access error:", err);
+      const errorMessage = err.name === 'NotAllowedError'
+        ? "Camera access was denied. Please allow camera access in your browser settings."
+        : err.name === 'NotFoundError'
+        ? "No camera device found."
+        : "Failed to access camera. Please try again.";
+      alert(errorMessage);
+      setIsScanning(false);
+    }
+  };
+
+  const stopCamera = () => {
+    scanningActiveRef.current = false;
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+    setIsScanning(false);
   };
 
   const handleManualSubmit = () => {
@@ -189,7 +179,7 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
 
   if (inline) {
     return (
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) stopCamera(); setOpen(isOpen); }}>
         <DialogTrigger asChild>
           <button 
             type="button"
@@ -237,44 +227,47 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
             </TabsContent>
 
             <TabsContent value="camera" className="space-y-4">
-              {!isCameraActive ? (
-                <Button 
-                  onClick={startCamera} 
-                  disabled={isScanning}
+              <div className={`bg-black rounded-lg overflow-hidden ${!(isScanning || isCameraActive) ? 'hidden' : ''}`}>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full aspect-video"
+                  style={{ transform: "scaleX(-1)" }}
+                  data-testid="camera-video-feed"
+                />
+              </div>
+              {isScanning && (
+                <p className="text-xs text-center text-muted-foreground">
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin inline" />
+                  Starting Camera...
+                </p>
+              )}
+              {isCameraActive && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Point camera at QR code or barcode
+                </p>
+              )}
+              {!isScanning && !isCameraActive && (
+                <Button
+                  onClick={startCamera}
                   className="w-full"
+                  data-testid="button-start-camera"
                 >
-                  {isScanning ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Starting Camera...
-                    </>
-                  ) : (
-                    <>
-                      <Camera className="w-4 h-4 mr-2" />
-                      Start Camera
-                    </>
-                  )}
+                  <Camera className="w-4 h-4 mr-2" />
+                  Start Camera
                 </Button>
-              ) : (
-                <>
-                  <div className="bg-black rounded-lg overflow-hidden">
-                    <video
-                      ref={videoRef}
-                      className="w-full aspect-video"
-                      style={{ transform: "scaleX(-1)" }}
-                    />
-                  </div>
-                  <p className="text-xs text-center text-muted-foreground">
-                    Point camera at QR code or barcode
-                  </p>
-                  <Button 
-                    onClick={stopCamera}
-                    variant="destructive"
-                    className="w-full"
-                  >
-                    Stop Camera
-                  </Button>
-                </>
+              )}
+              {(isScanning || isCameraActive) && (
+                <Button
+                  onClick={stopCamera}
+                  variant="destructive"
+                  className="w-full"
+                  data-testid="button-stop-camera"
+                >
+                  Stop Camera
+                </Button>
               )}
             </TabsContent>
 
@@ -290,6 +283,7 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
                 className="w-full"
+                data-testid="button-choose-image"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Choose Image
@@ -307,9 +301,9 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) stopCamera(); setOpen(isOpen); }}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full" title="Scan QR Code or Barcode">
+        <Button variant="outline" size="sm" className="w-full" title="Scan QR Code or Barcode" data-testid="button-scan-qr">
           <QrCode className="w-4 h-4" />
         </Button>
       </DialogTrigger>
@@ -343,52 +337,56 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleManualSubmit();
                 }}
+                data-testid="input-serial-number"
               />
             </div>
-            <Button onClick={handleManualSubmit} className="w-full">
+            <Button onClick={handleManualSubmit} className="w-full" data-testid="button-confirm-serial">
               Confirm
             </Button>
           </TabsContent>
 
           <TabsContent value="camera" className="space-y-4">
-            {!isCameraActive ? (
-              <Button 
-                onClick={startCamera} 
-                disabled={isScanning}
+            <div className={`bg-black rounded-lg overflow-hidden ${!(isScanning || isCameraActive) ? 'hidden' : ''}`}>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full aspect-video"
+                style={{ transform: "scaleX(-1)" }}
+                data-testid="camera-video-feed"
+              />
+            </div>
+            {isScanning && (
+              <p className="text-xs text-center text-muted-foreground">
+                <Loader2 className="w-4 h-4 mr-1 animate-spin inline" />
+                Starting Camera...
+              </p>
+            )}
+            {isCameraActive && (
+              <p className="text-xs text-center text-muted-foreground">
+                Point camera at QR code or barcode
+              </p>
+            )}
+            {!isScanning && !isCameraActive && (
+              <Button
+                onClick={startCamera}
                 className="w-full"
+                data-testid="button-start-camera"
               >
-                {isScanning ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Starting Camera...
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-4 h-4 mr-2" />
-                    Start Camera
-                  </>
-                )}
+                <Camera className="w-4 h-4 mr-2" />
+                Start Camera
               </Button>
-            ) : (
-              <>
-                <div className="bg-black rounded-lg overflow-hidden">
-                  <video
-                    ref={videoRef}
-                    className="w-full aspect-video"
-                    style={{ transform: "scaleX(-1)" }}
-                  />
-                </div>
-                <p className="text-xs text-center text-muted-foreground">
-                  Point camera at QR code or barcode
-                </p>
-                <Button 
-                  onClick={stopCamera}
-                  variant="destructive"
-                  className="w-full"
-                >
-                  Stop Camera
-                </Button>
-              </>
+            )}
+            {(isScanning || isCameraActive) && (
+              <Button
+                onClick={stopCamera}
+                variant="destructive"
+                className="w-full"
+                data-testid="button-stop-camera"
+              >
+                Stop Camera
+              </Button>
             )}
           </TabsContent>
 
@@ -404,6 +402,7 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
               onClick={() => fileInputRef.current?.click()}
               variant="outline"
               className="w-full"
+              data-testid="button-choose-image"
             >
               <Upload className="w-4 h-4 mr-2" />
               Choose Image
