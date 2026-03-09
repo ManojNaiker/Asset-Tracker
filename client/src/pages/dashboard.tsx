@@ -7,10 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { AssetSearchModal } from "@/components/asset-search-modal";
+import { useState } from "react";
 
 export default function Dashboard() {
   const { data: stats, isLoading } = useStats();
   const [, navigate] = useLocation();
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#6366f1"];
 
@@ -43,14 +46,15 @@ export default function Dashboard() {
           <Box className="w-4 h-4 mr-2" />
           Inventory
         </Button>
-        <Button 
-          onClick={() => navigate('/assets')}
-          variant="outline"
-          data-testid="button-asset-search"
-        >
-          <Search className="w-4 h-4 mr-2" />
-          Asset Search
-        </Button>
+        <AssetSearchModal open={searchModalOpen} onOpenChange={setSearchModalOpen}>
+          <Button 
+            variant="outline"
+            data-testid="button-asset-search"
+          >
+            <Search className="w-4 h-4 mr-2" />
+            Asset Search
+          </Button>
+        </AssetSearchModal>
       </div>
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-8">
