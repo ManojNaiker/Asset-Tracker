@@ -2,7 +2,7 @@ import { useState, useRef, useMemo } from "react";
 import { useAllocations, useCreateAllocation, useReturnAllocation } from "@/hooks/use-allocations";
 import { useAssets, useAssetTypes } from "@/hooks/use-assets";
 import { useEmployees } from "@/hooks/use-employees";
-import { useDepartments, useDesignations } from "@/hooks/use-settings";
+import { useDepartments, useDesignations, useCreateDepartment, useCreateDesignation } from "@/hooks/use-settings";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -24,42 +24,81 @@ import { cn } from "@/lib/utils";
 import { ImagePreview } from "@/components/image-preview";
 import { Textarea } from "@/components/ui/textarea";
 
-function ComboboxField({ label, options, value, onChange, placeholder }: {
+function ComboboxFieldWithAdd({ label, options, value, onChange, placeholder, onAddNew }: {
   label: string;
   options: { label: string; value: string }[];
   value: string;
   onChange: (val: string) => void;
+  onAddNew?: (name: string) => Promise<void>;
   placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const { toast } = useToast();
+
+  const handleAddNew = async () => {
+    if (!inputValue.trim() || !onAddNew) return;
+    try {
+      setIsAdding(true);
+      await onAddNew(inputValue.trim());
+      setInputValue("");
+      onChange(inputValue.trim());
+      toast({ title: "Success", description: `${label} added successfully` });
+    } catch (error) {
+      toast({ title: "Error", description: `Failed to add ${label}`, variant: "destructive" });
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   return (
-    <FormItem>
+    <div className="space-y-2">
       <FormLabel>{label}</FormLabel>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <FormControl>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              className={cn("w-full justify-between font-normal", !value && "text-muted-foreground")}
-            >
-              {value ? options.find(o => o.value === value)?.label || value : (placeholder || "Select...")}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </FormControl>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn("w-full justify-between font-normal", !value && "text-muted-foreground")}
+          >
+            {value ? options.find(o => o.value === value)?.label || value : (placeholder || "Select...")}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
           <Command>
-            <CommandInput placeholder={`Search ${label.toLowerCase()}...`} />
+            <CommandInput 
+              placeholder={`Search ${label.toLowerCase()}...`}
+              value={inputValue}
+              onValueChange={setInputValue}
+            />
             <CommandList>
-              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandEmpty>
+                {inputValue && onAddNew ? (
+                  <div className="flex flex-col gap-2 p-2">
+                    <p className="text-xs text-muted-foreground">"{inputValue}" not found</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleAddNew}
+                      disabled={isAdding}
+                      className="w-full"
+                    >
+                      {isAdding ? "Adding..." : `Add "${inputValue}"`}
+                    </Button>
+                  </div>
+                ) : (
+                  "No results found."
+                )}
+              </CommandEmpty>
               <CommandGroup>
                 {options.map((option) => (
                   <CommandItem
                     key={option.value}
                     value={option.label}
-                    onSelect={() => { onChange(option.value); setOpen(false); }}
+                    onSelect={() => { onChange(option.value); setOpen(false); setInputValue(""); }}
                   >
                     <Check className={cn("mr-2 h-4 w-4", value === option.value ? "opacity-100" : "opacity-0")} />
                     {option.label}
@@ -70,7 +109,7 @@ function ComboboxField({ label, options, value, onChange, placeholder }: {
           </Command>
         </PopoverContent>
       </Popover>
-    </FormItem>
+    </div>
   );
 }
 
@@ -299,6 +338,8 @@ function CreateAllocationDialog() {
     const { data: assetTypes } = useAssetTypes();
     const { data: departments } = useDepartments();
     const { data: designations } = useDesignations();
+    const createDeptMutation = useCreateDepartment();
+    const createDesigMutation = useCreateDesignation();
 
     const deptOptions = useMemo(() => 
       departments?.map(d => ({ label: d.name, value: d.name })) || [], 
@@ -309,6 +350,24 @@ function CreateAllocationDialog() {
       designations?.map(d => ({ label: d.name, value: d.name })) || [], 
       [designations]
     );
+
+    const handleAddDepartment = async (name: string) => {
+      return new Promise((resolve, reject) => {
+        createDeptMutation.mutate({ name }, {
+          onSuccess: () => resolve(),
+          onError: reject
+        });
+      });
+    };
+
+    const handleAddDesignation = async (name: string) => {
+      return new Promise((resolve, reject) => {
+        createDesigMutation.mutate({ name }, {
+          onSuccess: () => resolve(),
+          onError: reject
+        });
+      });
+    };
 
     const form = useForm<any>({
         defaultValues: {
@@ -512,21 +571,23 @@ function CreateAllocationDialog() {
                                             </FormItem>
                                         )}
                                     />
-                                    <ComboboxField 
+                                    <ComboboxFieldWithAdd 
                                         label="Department"
                                         options={deptOptions}
                                         value={form.watch("department")}
                                         onChange={(val) => form.setValue("department", val)}
-                                        placeholder="Select department"
+                                        onAddNew={handleAddDepartment}
+                                        placeholder="Select or add department"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <ComboboxField 
+                                    <ComboboxFieldWithAdd 
                                         label="Designation"
                                         options={desigOptions}
                                         value={form.watch("designation")}
                                         onChange={(val) => form.setValue("designation", val)}
-                                        placeholder="Select designation"
+                                        onAddNew={handleAddDesignation}
+                                        placeholder="Select or add designation"
                                     />
                                     <FormField
                                         control={form.control}
