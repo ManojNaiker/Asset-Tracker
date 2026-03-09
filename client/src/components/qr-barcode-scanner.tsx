@@ -126,8 +126,12 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
         <DialogTrigger asChild>
           <button 
             type="button"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10 p-1"
             title="Scan QR/Barcode"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
           >
             <Camera className="w-4 h-4" />
           </button>
