@@ -1,13 +1,16 @@
 import { useStats } from "@/hooks/use-stats";
 import { LayoutShell } from "@/components/layout-shell";
 import { StatCard } from "@/components/stat-card";
-import { Box, Users, Repeat, CheckCircle2 } from "lucide-react";
+import { Box, Users, Repeat, CheckCircle2, Search } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 
 export default function Dashboard() {
   const { data: stats, isLoading } = useStats();
+  const [, navigate] = useLocation();
 
   const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#6366f1"];
 
@@ -29,6 +32,25 @@ export default function Dashboard() {
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">Dashboard Overview</h1>
         <p className="text-sm text-muted-foreground mt-1">Real-time insight into your asset inventory.</p>
+      </div>
+
+      <div className="flex gap-3 mb-8">
+        <Button 
+          onClick={() => navigate('/assets')}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+          data-testid="button-inventory"
+        >
+          <Box className="w-4 h-4 mr-2" />
+          Inventory
+        </Button>
+        <Button 
+          onClick={() => navigate('/assets')}
+          variant="outline"
+          data-testid="button-asset-search"
+        >
+          <Search className="w-4 h-4 mr-2" />
+          Asset Search
+        </Button>
       </div>
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-8">
