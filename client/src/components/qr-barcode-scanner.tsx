@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Camera, Type, Upload } from "lucide-react";
+import { Loader2, Camera, Type, Upload, QrCode } from "lucide-react";
 import jsQR from "jsqr";
 
 interface QRBarcodeScannerProps {
@@ -133,7 +133,7 @@ export function QRBarcodeScanner({ onDetected, placeholder = "Enter or scan seri
               e.stopPropagation();
             }}
           >
-            <Camera className="w-4 h-4" />
+            <QrCode className="w-4 h-4" />
           </button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
