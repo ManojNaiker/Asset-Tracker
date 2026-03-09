@@ -4,6 +4,13 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { useState } from "react";
 import { Allocation, Asset, Employee } from "@shared/schema";
 import { Search, Loader2, Download, Filter } from "lucide-react";
@@ -87,6 +94,11 @@ const exportToExcel = (data: any[], fileName: string, sheetName: string) => {
 
 export default function ReportsPage() {
   const [search, setSearch] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState("AssetAlloc");
+
+  const { data: pageSettings } = useQuery({
+    queryKey: ["/api/settings/page"]
+  });
 
   const { data: allocations, isLoading: allocLoading } = useQuery<AllocationWithDetails[]>({ 
     queryKey: ["/api/allocations"] 
@@ -135,6 +147,20 @@ export default function ReportsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-display font-bold text-foreground">Reports & Analytics</h1>
         <p className="text-muted-foreground mt-1">View detailed reports on asset allocation, inventory, and verification status.</p>
+        
+        <div className="mt-6 mb-6">
+          <label className="block text-sm font-medium text-foreground mb-2">Select Company</label>
+          <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+            <SelectTrigger className="w-64 bg-background border-border">
+              <SelectValue placeholder="Select a company" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={pageSettings?.companyName || "AssetAlloc"} data-testid="dropdown-company">
+                {pageSettings?.companyName || "AssetAlloc"}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Tabs defaultValue="allocation" className="w-full">
