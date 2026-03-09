@@ -191,16 +191,18 @@ export default function AssetsPage() {
       </div>
       )}
 
-      <div className="fixed bottom-8 right-8 flex gap-2">
+      <div className="fixed bottom-8 right-8 flex gap-2 shadow-lg">
         <Button 
           variant={activeTab === "inventory" ? "default" : "outline"}
           onClick={() => setActiveTab("inventory")}
+          className="font-semibold"
         >
           Inventory
         </Button>
         <Button 
           variant={activeTab === "search" ? "default" : "outline"}
           onClick={() => setActiveTab("search")}
+          className="font-semibold"
         >
           Asset Search
         </Button>

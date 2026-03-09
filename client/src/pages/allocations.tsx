@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { api, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { BulkAllocationUploadDialog } from "@/components/bulk-upload-dialogs";
+import { QRBarcodeScanner } from "@/components/qr-barcode-scanner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -619,7 +620,11 @@ function CreateAllocationDialog() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Serial Number</FormLabel>
-                                                <FormControl><Input {...field} onChange={e => field.onChange(e.target.value.toUpperCase())} /></FormControl>
+                                                <QRBarcodeScanner 
+                                                    onDetected={(value) => field.onChange(value)} 
+                                                    placeholder="SN-12345"
+                                                />
+                                                <FormControl><Input {...field} onChange={e => field.onChange(e.target.value.toUpperCase())} placeholder="Or type manually..." className="mt-2" /></FormControl>
                                             </FormItem>
                                         )}
                                     />
