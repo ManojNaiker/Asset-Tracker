@@ -620,11 +620,14 @@ function CreateAllocationDialog() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Serial Number</FormLabel>
-                                                <QRBarcodeScanner 
-                                                    onDetected={(value) => field.onChange(value)} 
-                                                    placeholder="SN-12345"
-                                                />
-                                                <FormControl><Input {...field} onChange={e => field.onChange(e.target.value.toUpperCase())} placeholder="Or type manually..." className="mt-2" /></FormControl>
+                                                <div className="relative">
+                                                    <FormControl><Input {...field} onChange={e => field.onChange(e.target.value.toUpperCase())} placeholder="SN-12345" className="pr-10" /></FormControl>
+                                                    <QRBarcodeScanner 
+                                                        onDetected={(value) => field.onChange(value)} 
+                                                        placeholder="SN-12345"
+                                                        inline
+                                                    />
+                                                </div>
                                             </FormItem>
                                         )}
                                     />
