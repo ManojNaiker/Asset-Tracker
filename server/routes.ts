@@ -1142,6 +1142,10 @@ export async function registerRoutes(
                   name: row["Employee Name"] || "Unnamed",
                   email: row["Employee Email"] || "",
                   empId: row["Employee ID"] || `EMP-${Date.now()}`,
+                  department: row["Department"] || undefined,
+                  designation: row["Designation"] || undefined,
+                  branch: row["Branch"] || undefined,
+                  mobile: row["Mobile"] || undefined,
                   status: "Active"
                 });
               }
@@ -1516,6 +1520,10 @@ export async function registerRoutes(
           "Employee Name": employees[0]?.name || "John Doe",
           "Employee Email": employees[0]?.email || "john.doe@company.com",
           "Employee ID": employees[0]?.empId || "EMP001",
+          "Department": employees[0]?.department || "Engineering",
+          "Designation": employees[0]?.designation || "Developer",
+          "Branch": employees[0]?.branch || "Main",
+          "Mobile": employees[0]?.mobile || "+1234567890",
           "Status": "Active",
           "Remarks": ""
         }
