@@ -146,6 +146,7 @@ export function BulkAssetUploadDialog({ assetTypes }: { assetTypes: any[] }) {
 export function BulkAllocationUploadDialog() {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [report, setReport] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
 
@@ -164,6 +165,13 @@ export function BulkAllocationUploadDialog() {
         }
     };
 
+    const downloadBatchFile = (type: 'failed' | 'created', data: any[]) => {
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+        XLSX.writeFile(workbook, `allocations_${type}_${Date.now()}.xlsx`);
+    };
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -178,12 +186,13 @@ export function BulkAllocationUploadDialog() {
                 const ws = wb.Sheets[wsname];
                 const data = XLSX.utils.sheet_to_json(ws);
 
-                await apiRequest("POST", "/api/allocations/bulk-import", data);
+                const result = await apiRequest("POST", "/api/allocations/bulk-import", data);
+                setReport(result);
                 queryClient.invalidateQueries({ queryKey: ["/api/allocations"] });
                 queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
                 queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
-                toast({ title: "Allocations processed successfully" });
-                setOpen(false);
+                queryClient.invalidateQueries({ queryKey: ["/api/allocations/bulk-uploads"] });
+                toast({ title: "Upload complete", description: `Created: ${result.created}, Failed: ${result.failed}` });
             } catch (err: any) {
                 toast({ title: "Failed to process allocations", description: err.message, variant: "destructive" });
             } finally {
@@ -193,6 +202,78 @@ export function BulkAllocationUploadDialog() {
         };
         reader.readAsBinaryString(file);
     };
+
+    if (report) {
+        return (
+            <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) setReport(null); }}>
+                <DialogTrigger asChild>
+                    <Button variant="outline">
+                        <Upload className="w-4 h-4 mr-2" /> Bulk Upload
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Bulk Upload Report</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                                <p className="text-sm text-muted-foreground">Created</p>
+                                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{report.created}</p>
+                            </div>
+                            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+                                <p className="text-sm text-muted-foreground">Failed</p>
+                                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{report.failed}</p>
+                            </div>
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                                <p className="text-sm text-muted-foreground">Pending</p>
+                                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{report.pending}</p>
+                            </div>
+                        </div>
+
+                        {report.failed > 0 && (
+                            <div className="space-y-2">
+                                <h3 className="font-medium text-sm">Failed Records ({report.failed})</h3>
+                                <div className="max-h-40 overflow-y-auto border rounded p-2 bg-muted/30">
+                                    {report.failedData?.map((row: any, idx: number) => (
+                                        <div key={idx} className="text-xs text-muted-foreground py-1 border-b">
+                                            {Object.entries(row).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(" | ")} ... {row.error}
+                                        </div>
+                                    ))}
+                                </div>
+                                <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    onClick={() => downloadBatchFile('failed', report.failedData)}
+                                    className="w-full"
+                                >
+                                    <Download className="w-3 h-3 mr-2" /> Download Failed Records
+                                </Button>
+                            </div>
+                        )}
+
+                        {report.created > 0 && (
+                            <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => downloadBatchFile('created', report.createdData)}
+                                className="w-full"
+                            >
+                                <Download className="w-3 h-3 mr-2" /> Download Created Records
+                            </Button>
+                        )}
+
+                        <Button 
+                            onClick={() => { setReport(null); setOpen(false); }}
+                            className="w-full"
+                        >
+                            Close
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
+    }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>

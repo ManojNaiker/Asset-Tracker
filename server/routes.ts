@@ -9,7 +9,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import bcrypt from "bcryptjs";
-import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, insertEmployeeSchema, insertCustomFieldSchema, allocations, ssoSettings as ssoSettingsTable, pageSettings, insertPageSettingsSchema } from "@shared/schema";
+import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, insertEmployeeSchema, insertCustomFieldSchema, allocations, ssoSettings as ssoSettingsTable, pageSettings, insertPageSettingsSchema, bulkUploadLogs, insertBulkUploadLogSchema } from "@shared/schema";
 import crypto from "node:crypto";
 import { db } from "./db";
 import { desc } from "drizzle-orm";
@@ -1096,11 +1096,15 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Expected an array of allocations" });
       }
 
-      const results = [];
+      const created = [];
+      const failed = [];
+      const pending = [];
+
       for (const row of allocationsData) {
         try {
           let finalAssetId: number | null = null;
           let finalEmployeeId: number | null = null;
+          let error = null;
 
           // Handle Basic template: Asset ID and Employee ID directly
           if (row["Asset ID"] && row["Employee ID"]) {
@@ -1154,7 +1158,8 @@ export async function registerRoutes(
           }
 
           if (!finalAssetId || !finalEmployeeId) {
-            console.error("Missing asset or employee data:", row);
+            error = "Missing asset or employee data";
+            failed.push({ ...row, error });
             continue;
           }
 
@@ -1168,22 +1173,64 @@ export async function registerRoutes(
           });
 
           await storage.updateAsset(finalAssetId, { status: "Allocated" });
-          results.push(allocation);
-        } catch (e) {
-          console.error("Failed to create allocation from row:", row, e);
+          created.push({ ...row, status: "success", allocationId: allocation.id });
+        } catch (e: any) {
+          failed.push({ ...row, error: e.message || "Unknown error" });
         }
       }
+
+      // Save upload log
+      const uploadLog = await db.insert(bulkUploadLogs).values({
+        userId: (req.user as User).id,
+        uploadType: "allocations",
+        totalRows: allocationsData.length,
+        createdCount: created.length,
+        failedCount: failed.length,
+        pendingCount: pending.length,
+        createdData: created,
+        failedData: failed,
+        pendingData: pending,
+      }).returning();
 
       await storage.createAuditLog({ 
         userId: (req.user as User).id, 
         action: "Bulk Import Allocations", 
-        details: { count: results.length } 
+        details: { created: created.length, failed: failed.length, total: allocationsData.length } 
       });
       
-      res.status(201).json({ count: results.length, allocations: results });
+      res.status(201).json({ 
+        uploadLogId: uploadLog[0]?.id,
+        total: allocationsData.length,
+        created: created.length, 
+        failed: failed.length, 
+        pending: pending.length,
+        createdData: created,
+        failedData: failed
+      });
     } catch (err) {
       console.error("Bulk allocation import error:", err);
       res.status(500).json({ message: "Failed to import allocations" });
+    }
+  });
+
+  app.get("/api/allocations/bulk-uploads", requireAdmin, async (req, res) => {
+    try {
+      const logs = await db.select().from(bulkUploadLogs).orderBy(db.desc(bulkUploadLogs.createdAt));
+      res.json(logs);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch upload logs" });
+    }
+  });
+
+  app.get("/api/allocations/bulk-uploads/:id", requireAdmin, async (req, res) => {
+    try {
+      const log = await db.select().from(bulkUploadLogs).where(db.eq(bulkUploadLogs.id, parseInt(req.params.id)));
+      if (!log.length) {
+        return res.status(404).json({ message: "Upload log not found" });
+      }
+      res.json(log[0]);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch upload log" });
     }
   });
 

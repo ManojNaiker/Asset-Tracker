@@ -138,6 +138,20 @@ export const pageSettings = pgTable("page_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const bulkUploadLogs = pgTable("bulk_upload_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  uploadType: text("upload_type").notNull(), // "allocations", "employees", "assets"
+  totalRows: integer("total_rows").default(0),
+  createdCount: integer("created_count").default(0),
+  failedCount: integer("failed_count").default(0),
+  pendingCount: integer("pending_count").default(0),
+  createdData: jsonb("created_data").default([]),
+  failedData: jsonb("failed_data").default([]),
+  pendingData: jsonb("pending_data").default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const fieldTypeOptions = ["text", "number", "dropdown"] as const;
 
 export const customFields = pgTable("custom_fields", {
@@ -189,6 +203,7 @@ export const insertEmailSettingsSchema = createInsertSchema(emailSettings).omit(
 export const insertSsoSettingsSchema = createInsertSchema(ssoSettings).omit({ id: true, updatedAt: true });
 export const insertPageSettingsSchema = createInsertSchema(pageSettings).omit({ id: true, updatedAt: true });
 export const insertCustomFieldSchema = createInsertSchema(customFields).omit({ id: true, createdAt: true });
+export const insertBulkUploadLogSchema = createInsertSchema(bulkUploadLogs).omit({ id: true, createdAt: true });
 
 // === Types ===
 export type User = typeof users.$inferSelect;
@@ -216,6 +231,8 @@ export type PageSettings = typeof pageSettings.$inferSelect;
 export type InsertPageSettings = z.infer<typeof insertPageSettingsSchema>;
 export type CustomField = typeof customFields.$inferSelect;
 export type InsertCustomField = z.infer<typeof insertCustomFieldSchema>;
+export type BulkUploadLog = typeof bulkUploadLogs.$inferSelect;
+export type InsertBulkUploadLog = z.infer<typeof insertBulkUploadLogSchema>;
 
 // Request Types
 export type LoginRequest = { username: string; password: string };
