@@ -157,34 +157,34 @@ export default function ReportsPage() {
 
   return (
     <LayoutShell>
-      <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold text-foreground">Reports & Analytics</h1>
-        <p className="text-muted-foreground mt-1">View detailed reports on asset allocation, inventory, and verification status.</p>
-        
-        <div className="mt-6 mb-6">
-          <label className="block text-sm font-medium text-foreground mb-2">Select Company</label>
-          <Select value={selectedCompany} onValueChange={setSelectedCompany}>
-            <SelectTrigger className="w-64 bg-background border-border">
-              <SelectValue placeholder="Select a company" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={pageSettings?.companyName || "AssetAlloc"} data-testid="dropdown-company">
-                {pageSettings?.companyName || "AssetAlloc"}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-display font-bold text-foreground mb-2">Reports & Analytics</h1>
+        <p className="text-muted-foreground">View detailed reports on asset allocation, inventory, and verification status.</p>
+      </div>
+
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-foreground mb-3">Select Company</label>
+        <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+          <SelectTrigger className="w-full sm:w-96 bg-background border-2 border-red-200 hover:border-red-300 focus:border-red-400" data-testid="dropdown-company-trigger">
+            <SelectValue placeholder="Select a company" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={pageSettings?.companyName || "AssetAlloc"} data-testid="dropdown-company">
+              {pageSettings?.companyName || "AssetAlloc"}
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Tabs defaultValue="allocation" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-6">
-          <TabsTrigger value="allocation">Allocations</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="employees">Employees</TabsTrigger>
-          <TabsTrigger value="departments">Departments</TabsTrigger>
-          <TabsTrigger value="status">Asset Status</TabsTrigger>
-          <TabsTrigger value="returns">Returns</TabsTrigger>
-          <TabsTrigger value="verification">Verification</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7 gap-2 bg-transparent mb-6 p-0 h-auto border-b border-red-200 pb-0"  data-testid="reports-tabs">
+          <TabsTrigger value="allocation" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-allocations">Allocations</TabsTrigger>
+          <TabsTrigger value="inventory" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-inventory">Inventory</TabsTrigger>
+          <TabsTrigger value="employees" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-employees">Employees</TabsTrigger>
+          <TabsTrigger value="departments" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-departments">Departments</TabsTrigger>
+          <TabsTrigger value="status" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-status">Asset Status</TabsTrigger>
+          <TabsTrigger value="returns" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-returns">Returns</TabsTrigger>
+          <TabsTrigger value="verification" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-verification">Verification</TabsTrigger>
         </TabsList>
 
         {/* Allocations Report */}
