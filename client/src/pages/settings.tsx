@@ -67,7 +67,8 @@ export default function SettingsPage() {
 
     const pageForm = useForm<any>({
         values: pageSettings || {
-            companyName: "AssetAlloc",
+            softwareName: "AssetAlloc",
+            companyName: "Light Finance",
             logoUrl: "/images/logo.png"
         }
     });
@@ -226,21 +227,42 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-6">
-                <Card className="border-border bg-card">
-                    <CardContent className="pt-6">
+                <Card className="border-border bg-card shadow-sm overflow-hidden">
+                    <CardHeader className="bg-muted/50 border-b border-border">
+                        <CardTitle className="text-lg font-display font-bold text-foreground">General Information</CardTitle>
+                        <CardDescription>Update the software name and company name displayed in the application.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
                         <Form {...pageForm}>
-                            <form onSubmit={pageForm.handleSubmit((v) => updatePageMutation.mutate(v))} className="space-y-6">
-                                <FormField
-                                    control={pageForm.control}
-                                    name="companyName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="text-foreground">Company Name</FormLabel>
-                                            <FormControl><Input {...field} placeholder="AssetAlloc" className="bg-background" /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                            <form onSubmit={pageForm.handleSubmit((data) => updatePageMutation.mutate(data))} className="space-y-6">
+                                <div className="grid sm:grid-cols-2 gap-6">
+                                    <FormField
+                                        control={pageForm.control}
+                                        name="softwareName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-foreground">Software Name</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} placeholder="AssetAlloc" className="bg-background border-border" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={pageForm.control}
+                                        name="companyName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-foreground">Company Name</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} placeholder="Light Finance" className="bg-background border-border" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                                 
                                 <div className="space-y-4">
                                     <FormLabel className="text-foreground">Company Logo</FormLabel>
@@ -264,7 +286,7 @@ export default function SettingsPage() {
                                                 <Button 
                                                     type="button" 
                                                     variant="outline" 
-                                                    className="border-border"
+                                                    className="border-border hover:bg-muted"
                                                     onClick={() => document.getElementById("logo-upload")?.click()}
                                                 >
                                                     <Upload className="w-4 h-4 mr-2" />
@@ -276,7 +298,7 @@ export default function SettingsPage() {
                                                 name="logoUrl"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormControl><Input {...field} placeholder="/images/logo.png" className="bg-background" /></FormControl>
+                                                        <FormControl><Input {...field} placeholder="/images/logo.png" className="bg-background border-border" /></FormControl>
                                                         <p className="text-xs text-muted-foreground">Or provide a direct URL to your logo image.</p>
                                                         <FormMessage />
                                                     </FormItem>
@@ -286,8 +308,9 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
 
-                                <Button type="submit" className="px-12" disabled={updatePageMutation.isPending}>
-                                    {updatePageMutation.isPending ? "Saving..." : "Save Page Settings"}
+                                <Button type="submit" className="w-full md:w-auto px-12" disabled={updatePageMutation.isPending}>
+                                    {updatePageMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                                    Save Page Settings
                                 </Button>
                             </form>
                         </Form>

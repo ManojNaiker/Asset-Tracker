@@ -264,7 +264,7 @@ export async function registerRoutes(
   // Page Settings
   app.get("/api/settings/page", async (req, res) => {
     const settings = await storage.getPageSettings();
-    res.json(settings || { companyName: "AssetAlloc", logoUrl: "/images/logo.png" });
+    res.json(settings || { softwareName: "AssetAlloc", companyName: "Light Finance", logoUrl: "/images/logo.png" });
   });
 
   app.put("/api/settings/page", requireAdmin, async (req, res) => {

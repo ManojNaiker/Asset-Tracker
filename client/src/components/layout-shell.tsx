@@ -103,8 +103,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             </div>
             {!isCollapsed && (
                   <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-                      <h1 className="text-xl font-display font-bold tracking-tight text-white">{pageSettings?.companyName || "AssetAlloc"}</h1>
-                      <p className="text-xs text-blue-200/70 font-medium">Light Finance</p>
+                      <h1 className="text-xl font-display font-bold tracking-tight text-white">{pageSettings?.softwareName || "AssetAlloc"}</h1>
+                      <p className="text-xs text-blue-200/70 font-medium">{pageSettings?.companyName || "Light Finance"}</p>
                   </div>
                 )}
             </div>

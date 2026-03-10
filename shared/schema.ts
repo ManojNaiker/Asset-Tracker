@@ -131,7 +131,8 @@ export const ssoSettings = pgTable("sso_settings", {
 
 export const pageSettings = pgTable("page_settings", {
   id: serial("id").primaryKey(),
-  companyName: text("company_name").default("AssetAlloc"),
+  softwareName: text("software_name").default("AssetAlloc"),
+  companyName: text("company_name").default("Light Finance"),
   logoUrl: text("logo_url").default("/images/logo.png"),
   faviconUrl: text("favicon_url"),
   updatedAt: timestamp("updated_at").defaultNow(),
