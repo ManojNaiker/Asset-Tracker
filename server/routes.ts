@@ -836,6 +836,28 @@ export async function registerRoutes(
     res.status(201).json(asset);
   });
 
+  app.post("/api/assets/import", requireAdmin, async (req, res) => {
+    try {
+      const assetsData = req.body;
+      if (!Array.isArray(assetsData)) {
+        return res.status(400).json({ message: "Expected an array of assets" });
+      }
+
+      const results = await storage.createAssetsBulk(assetsData);
+      
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Bulk Import Assets", 
+        details: { count: results.length } 
+      });
+      
+      res.status(201).json({ count: results.length, assets: results });
+    } catch (err) {
+      console.error("Asset import error:", err);
+      res.status(500).json({ message: "Failed to import assets" });
+    }
+  });
+
   app.put(api.assets.update.path, requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id as string);
     const asset = await storage.updateAsset(id, req.body);
@@ -1064,6 +1086,84 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Allocation error:", err);
       res.status(500).json({ message: "Failed to create allocation" });
+    }
+  });
+
+  app.post("/api/allocations/bulk-import", requireAdmin, async (req, res) => {
+    try {
+      const allocationsData = req.body;
+      if (!Array.isArray(allocationsData)) {
+        return res.status(400).json({ message: "Expected an array of allocations" });
+      }
+
+      const results = [];
+      for (const allocationData of allocationsData) {
+        try {
+          const { assetId, employeeId, employeeData, assetData, status, remarks, details } = allocationData;
+          
+          let finalAssetId = assetId;
+          let finalEmployeeId = employeeId;
+
+          if (employeeData) {
+            if (employeeData.department) {
+              const depts = await storage.getDepartments();
+              if (!depts.find(d => d.name === employeeData.department)) {
+                await storage.createDepartment({ name: employeeData.department });
+              }
+            }
+            if (employeeData.designation) {
+              const desigs = await storage.getDesignations();
+              if (!desigs.find(d => d.name === employeeData.designation)) {
+                await storage.createDesignation({ name: employeeData.designation });
+              }
+            }
+
+            const employee = await storage.createEmployee(employeeData);
+            finalEmployeeId = employee.id;
+          }
+
+          if (assetData) {
+            if (assetData.assetTypeName) {
+              const types = await storage.getAssetTypes();
+              let type = types.find(t => t.name === assetData.assetTypeName);
+              if (!type) {
+                type = await storage.createAssetType({ name: assetData.assetTypeName, schema: [] });
+              }
+              assetData.assetTypeId = type.id;
+              delete assetData.assetTypeName;
+            }
+            const asset = await storage.createAsset(assetData);
+            finalAssetId = asset.id;
+          }
+
+          const token = crypto.randomBytes(32).toString('hex');
+
+          const allocation = await storage.createAllocation({
+            assetId: finalAssetId,
+            employeeId: finalEmployeeId,
+            status: status || "Active",
+            remarks,
+            imageUrl: details?.imageUrl,
+            verificationToken: token
+          });
+
+          await storage.updateAsset(finalAssetId, { status: "Allocated" });
+          results.push(allocation);
+        } catch (e) {
+          console.error("Failed to create allocation", allocationData, e);
+        }
+      }
+
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Bulk Import Allocations", 
+        details: { count: results.length } 
+      });
+      
+      res.status(201).json({ count: results.length, allocations: results });
+    } catch (err) {
+      console.error("Bulk allocation import error:", err);
+      res.status(500).json({ message: "Failed to import allocations" });
     }
   });
 
@@ -1340,6 +1440,26 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/employees/import", requireAdmin, async (req, res) => {
+    try {
+      const employees = req.body;
+      if (!Array.isArray(employees)) return res.status(400).json({ message: "Expected array" });
+      
+      let count = 0;
+      for (const e of employees) {
+        try {
+          await storage.createEmployee(e);
+          count++;
+        } catch (err) {}
+      }
+      
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Import Employees", details: { count } });
+      res.status(201).json({ count });
+    } catch (err) {
+      res.status(500).json({ message: "Bulk import failed" });
+    }
+  });
+
   // Email Settings
   app.get("/api/settings/email", requireAdmin, async (req, res) => {
     const settings = await storage.getEmailSettings();
@@ -1354,6 +1474,40 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Failed to update email settings:", err);
       res.status(500).json({ message: "Failed to update email settings" });
+    }
+  });
+
+  // Bulk Upload Templates
+  app.get("/api/templates/allocations", requireAuth, async (req, res) => {
+    try {
+      const assets = await storage.getAssets();
+      const employees = await storage.getEmployees();
+      const assetTypes = await storage.getAssetTypes();
+      
+      const basic = [
+        {
+          "Asset ID": assets[0]?.id || 1,
+          "Employee ID": employees[0]?.id || 1,
+          "Status": "Active",
+          "Remarks": "Sample allocation"
+        }
+      ];
+
+      const autoCreate = [
+        {
+          "Asset Serial Number": assets[0]?.serialNumber || "SN001",
+          "Asset Type": assetTypes[0]?.name || "Laptop",
+          "Employee Name": employees[0]?.name || "John Doe",
+          "Employee Email": employees[0]?.email || "john@example.com",
+          "Employee ID": employees[0]?.empId || "EMP001",
+          "Status": "Active",
+          "Remarks": "Auto-created allocation"
+        }
+      ];
+
+      res.json({ basic, autoCreate });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to generate templates" });
     }
   });
 
