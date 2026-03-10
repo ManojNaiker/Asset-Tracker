@@ -1097,60 +1097,76 @@ export async function registerRoutes(
       }
 
       const results = [];
-      for (const allocationData of allocationsData) {
+      for (const row of allocationsData) {
         try {
-          const { assetId, employeeId, employeeData, assetData, status, remarks, details } = allocationData;
-          
-          let finalAssetId = assetId;
-          let finalEmployeeId = employeeId;
+          let finalAssetId: number | null = null;
+          let finalEmployeeId: number | null = null;
 
-          if (employeeData) {
-            if (employeeData.department) {
-              const depts = await storage.getDepartments();
-              if (!depts.find(d => d.name === employeeData.department)) {
-                await storage.createDepartment({ name: employeeData.department });
+          // Handle Basic template: Asset ID and Employee ID directly
+          if (row["Asset ID"] && row["Employee ID"]) {
+            finalAssetId = parseInt(row["Asset ID"]);
+            finalEmployeeId = parseInt(row["Employee ID"]);
+          }
+          // Handle Auto-Create template: Serial Number and Employee Name
+          else if (row["Asset Serial Number"] || row["Asset Type"] || row["Employee Name"]) {
+            // Find or create asset by serial number
+            if (row["Asset Serial Number"]) {
+              const assets = await storage.getAssets();
+              let asset = assets.find(a => a.serialNumber === row["Asset Serial Number"]);
+              
+              if (!asset && row["Asset Type"]) {
+                const types = await storage.getAssetTypes();
+                let type = types.find(t => t.name === row["Asset Type"]);
+                if (!type) {
+                  type = await storage.createAssetType({ name: row["Asset Type"], schema: [] });
+                }
+                asset = await storage.createAsset({
+                  serialNumber: row["Asset Serial Number"],
+                  assetTypeId: type.id,
+                  status: "Available"
+                });
               }
-            }
-            if (employeeData.designation) {
-              const desigs = await storage.getDesignations();
-              if (!desigs.find(d => d.name === employeeData.designation)) {
-                await storage.createDesignation({ name: employeeData.designation });
-              }
+              if (asset) finalAssetId = asset.id;
             }
 
-            const employee = await storage.createEmployee(employeeData);
-            finalEmployeeId = employee.id;
+            // Find or create employee
+            if (row["Employee Name"] || row["Employee Email"]) {
+              const employees = await storage.getEmployees();
+              let employee = employees.find(e => 
+                e.name === row["Employee Name"] || 
+                (row["Employee Email"] && e.email === row["Employee Email"])
+              );
+
+              if (!employee) {
+                employee = await storage.createEmployee({
+                  name: row["Employee Name"] || "Unnamed",
+                  email: row["Employee Email"] || "",
+                  empId: row["Employee ID"] || `EMP-${Date.now()}`,
+                  status: "Active"
+                });
+              }
+              if (employee) finalEmployeeId = employee.id;
+            }
           }
 
-          if (assetData) {
-            if (assetData.assetTypeName) {
-              const types = await storage.getAssetTypes();
-              let type = types.find(t => t.name === assetData.assetTypeName);
-              if (!type) {
-                type = await storage.createAssetType({ name: assetData.assetTypeName, schema: [] });
-              }
-              assetData.assetTypeId = type.id;
-              delete assetData.assetTypeName;
-            }
-            const asset = await storage.createAsset(assetData);
-            finalAssetId = asset.id;
+          if (!finalAssetId || !finalEmployeeId) {
+            console.error("Missing asset or employee data:", row);
+            continue;
           }
 
           const token = crypto.randomBytes(32).toString('hex');
-
           const allocation = await storage.createAllocation({
             assetId: finalAssetId,
             employeeId: finalEmployeeId,
-            status: status || "Active",
-            remarks,
-            imageUrl: details?.imageUrl,
+            status: row["Status"] || "Active",
+            remarks: row["Remarks"] || null,
             verificationToken: token
           });
 
           await storage.updateAsset(finalAssetId, { status: "Allocated" });
           results.push(allocation);
         } catch (e) {
-          console.error("Failed to create allocation", allocationData, e);
+          console.error("Failed to create allocation from row:", row, e);
         }
       }
 
@@ -1486,10 +1502,10 @@ export async function registerRoutes(
       
       const basic = [
         {
-          "Asset ID": assets[0]?.id || 1,
-          "Employee ID": employees[0]?.id || 1,
+          "Asset ID": assets[0]?.id || "1",
+          "Employee ID": employees[0]?.id || "1",
           "Status": "Active",
-          "Remarks": "Sample allocation"
+          "Remarks": ""
         }
       ];
 
@@ -1498,10 +1514,10 @@ export async function registerRoutes(
           "Asset Serial Number": assets[0]?.serialNumber || "SN001",
           "Asset Type": assetTypes[0]?.name || "Laptop",
           "Employee Name": employees[0]?.name || "John Doe",
-          "Employee Email": employees[0]?.email || "john@example.com",
+          "Employee Email": employees[0]?.email || "john.doe@company.com",
           "Employee ID": employees[0]?.empId || "EMP001",
           "Status": "Active",
-          "Remarks": "Auto-created allocation"
+          "Remarks": ""
         }
       ];
 
