@@ -95,6 +95,8 @@ const exportToExcel = (data: any[], fileName: string, sheetName: string) => {
 export default function ReportsPage() {
   const [search, setSearch] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("AssetAlloc");
+  const [sortBy, setSortBy] = useState<string>("date");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
 
   const { data: pageSettings } = useQuery({
     queryKey: ["/api/settings/page"]
@@ -130,12 +132,23 @@ export default function ReportsPage() {
 
   const filteredAllocations = allocations?.filter(alloc => {
     const searchLower = search.toLowerCase();
-    return (
+    const matchesSearch = (
       alloc.asset.serialNumber.toLowerCase().includes(searchLower) ||
       alloc.employee.name.toLowerCase().includes(searchLower) ||
       alloc.employee.empId.toLowerCase().includes(searchLower) ||
       (alloc.employee.department && alloc.employee.department.toLowerCase().includes(searchLower))
     );
+    const matchesStatus = filterStatus === "all" || alloc.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    if (sortBy === "date") {
+      return new Date(b.allocatedAt || 0).getTime() - new Date(a.allocatedAt || 0).getTime();
+    } else if (sortBy === "employee") {
+      return a.employee.name.localeCompare(b.employee.name);
+    } else if (sortBy === "serial") {
+      return a.asset.serialNumber.localeCompare(b.asset.serialNumber);
+    }
+    return 0;
   });
 
   if (allocLoading || inventoryLoading || employeeLoading || departmentLoading || statusLoading || returnLoading || verificationLoading) {
@@ -189,14 +202,44 @@ export default function ReportsPage() {
 
           <Card className="mb-6 shadow-sm border-border">
             <CardContent className="p-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search by Serial Number, Employee Name, ID or Department..." 
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 bg-muted/20 border-border"
-                />
+              <div className="space-y-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search by Serial Number, Employee Name, ID or Department..." 
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 bg-muted/20 border-border"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-2">Sort By</label>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className="bg-background border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="date">Latest First</SelectItem>
+                        <SelectItem value="employee">Employee Name</SelectItem>
+                        <SelectItem value="serial">Serial Number</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-2">Filter by Status</label>
+                    <Select value={filterStatus} onValueChange={setFilterStatus}>
+                      <SelectTrigger className="bg-background border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Returned">Returned</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
