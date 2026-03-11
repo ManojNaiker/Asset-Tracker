@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { api } from "@/lib/queryClient";
 import { 
   Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle 
 } from "@/components/ui/card";
@@ -15,6 +16,7 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   const { data: allocation, isLoading, error } = useQuery<any>({
     queryKey: ["/api/verifications/token", params.token],
@@ -51,6 +53,8 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
       return res.json();
     },
     onSuccess: (verification: any) => {
+      // Invalidate allocations cache to refresh the UI
+      queryClient.invalidateQueries({ queryKey: [api.allocations.list.path] });
       toast({ title: "Verification submitted successfully" });
       setLocation(`/verification-success?id=${verification.id}`);
     },

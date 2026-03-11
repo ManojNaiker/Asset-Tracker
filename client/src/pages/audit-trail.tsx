@@ -182,7 +182,6 @@ export default function AuditTrailPage() {
                   "username": "Username",
                   "role": "Role",
                   "fullName": "Full Name",
-                  "employeeCode": "Employee Code",
                   "reason": "Reason"
                 };
                 return labels[fieldName] || fieldName.charAt(0).toUpperCase() + fieldName.slice(1);

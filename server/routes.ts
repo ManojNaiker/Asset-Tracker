@@ -800,6 +800,11 @@ export async function registerRoutes(
         verifierId: 0 // System/External verifier
       });
 
+      // Update the allocation's verification status to match the external approval
+      await storage.updateAllocation(allocation.id, { 
+        verificationStatus: status 
+      });
+
       // We no longer clear the token so the link remains valid for the employee to see their selection
       // await storage.updateAllocation(allocation.id, { verificationToken: null });
 
