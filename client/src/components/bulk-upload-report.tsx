@@ -48,6 +48,8 @@ export function BulkUploadReport() {
         const log = await res.json();
         setSelectedDetails(log);
         setDetailsOpen(true);
+      } else {
+        console.error("Failed to fetch details:", res.statusText);
       }
     } catch (err) {
       console.error("Failed to fetch details:", err);
@@ -149,11 +151,12 @@ export function BulkUploadReport() {
                       onClick={() => viewDetails(report.id)}
                       className="text-primary hover:text-primary/80"
                       title="View Details"
+                      data-testid="button-view-bulk-details"
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
                   </DialogTrigger>
-                  {selectedDetails && (
+                  {selectedDetails && selectedDetails.id === report.id && (
                     <DialogContent className="max-w-4xl max-h-[80vh]">
                       <DialogHeader>
                         <DialogTitle>Bulk Upload Details - Batch {selectedDetails.id}</DialogTitle>
@@ -229,6 +232,7 @@ export function BulkUploadReport() {
                   onClick={() => downloadDetailedReport(report.id)}
                   className="text-primary hover:text-primary/80"
                   title="Download Report"
+                  data-testid="button-download-bulk-report"
                 >
                   <Download className="w-4 h-4" />
                 </Button>

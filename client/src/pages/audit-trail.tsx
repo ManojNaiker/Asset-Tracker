@@ -7,14 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select";
 import { useState } from "react";
 import { AuditLog, User } from "@shared/schema";
-import { Search, Filter, Loader2, User as UserIcon, Download } from "lucide-react";
+import { Search, Filter, Loader2, User as UserIcon, Download, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import * as XLSX from "xlsx";
 
 export default function AuditTrailPage() {
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
+  const [selectedDetails, setSelectedDetails] = useState<AuditLog | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   
   const { data: logs, isLoading } = useQuery<AuditLog[]>({ 
     queryKey: ["/api/audit/logs"] 
@@ -107,6 +110,7 @@ export default function AuditTrailPage() {
               <TableHead className="text-foreground">Action</TableHead>
               <TableHead className="text-foreground">Entity</TableHead>
               <TableHead className="text-foreground">Details</TableHead>
+              <TableHead className="text-center text-foreground w-12">View</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -143,6 +147,9 @@ export default function AuditTrailPage() {
                 if (log.action === "Update User") {
                   return `Updated fields: ${Object.keys(d).join(', ')}`;
                 }
+                if (log.action === "Bulk Import Allocations") {
+                  return `Bulk imported allocations - ${d.count || '?'} records`;
+                }
                 
                 return JSON.stringify(d);
               };
@@ -173,6 +180,65 @@ export default function AuditTrailPage() {
                     <div className="text-xs text-muted-foreground leading-relaxed py-1">
                         {renderDetails()}
                     </div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Dialog open={detailsOpen && selectedDetails?.id === log.id} onOpenChange={setDetailsOpen}>
+                      <DialogTrigger asChild>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => setSelectedDetails(log)}
+                          className="text-primary hover:text-primary/80"
+                          title="View Full Details"
+                          data-testid="button-view-audit-details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </DialogTrigger>
+                      {selectedDetails && (
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>Audit Log Details</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 p-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <span className="text-xs font-semibold text-muted-foreground">Timestamp</span>
+                                <p className="text-sm font-mono">{new Date(selectedDetails.timestamp!).toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <span className="text-xs font-semibold text-muted-foreground">User</span>
+                                <p className="text-sm">{user?.username || 'System'}</p>
+                              </div>
+                              <div>
+                                <span className="text-xs font-semibold text-muted-foreground">Action</span>
+                                <p className="text-sm font-semibold">{selectedDetails.action}</p>
+                              </div>
+                              <div>
+                                <span className="text-xs font-semibold text-muted-foreground">Entity Type</span>
+                                <p className="text-sm">{selectedDetails.entityType}</p>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <span className="text-xs font-semibold text-muted-foreground">Entity ID</span>
+                              <p className="text-sm font-mono">{selectedDetails.entityId}</p>
+                            </div>
+                            
+                            {selectedDetails.details && (
+                              <div>
+                                <span className="text-xs font-semibold text-muted-foreground">Full Details (JSON)</span>
+                                <div className="bg-muted p-3 rounded border border-border overflow-x-auto mt-2">
+                                  <pre className="text-xs whitespace-pre-wrap break-words">
+                                    {JSON.stringify(selectedDetails.details, null, 2)}
+                                  </pre>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </DialogContent>
+                      )}
+                    </Dialog>
                   </TableCell>
                 </TableRow>
               );
