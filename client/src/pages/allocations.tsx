@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo } from "react";
 import { useAllocations, useCreateAllocation, useReturnAllocation } from "@/hooks/use-allocations";
-import { useAssets, useAssetTypes } from "@/hooks/use-assets";
+import { useAssets, useAssetTypes, useCreateAssetType } from "@/hooks/use-assets";
 import { useEmployees } from "@/hooks/use-employees";
 import { useDepartments, useDesignations, useCreateDepartment, useCreateDesignation } from "@/hooks/use-settings";
 import { LayoutShell } from "@/components/layout-shell";
@@ -341,6 +341,7 @@ function CreateAllocationDialog() {
     const { data: designations } = useDesignations();
     const createDeptMutation = useCreateDepartment();
     const createDesigMutation = useCreateDesignation();
+    const createAssetTypeMutation = useCreateAssetType();
 
     const deptOptions = useMemo(() => 
       departments?.map(d => ({ label: d.name, value: d.name })) || [], 
@@ -350,6 +351,11 @@ function CreateAllocationDialog() {
     const desigOptions = useMemo(() => 
       designations?.map(d => ({ label: d.name, value: d.name })) || [], 
       [designations]
+    );
+
+    const assetTypeOptions = useMemo(() => 
+      assetTypes?.map(t => ({ label: t.name, value: String(t.id) })) || [], 
+      [assetTypes]
     );
 
     const handleAddDepartment = async (name: string): Promise<void> => {
@@ -364,6 +370,15 @@ function CreateAllocationDialog() {
     const handleAddDesignation = async (name: string): Promise<void> => {
       return new Promise((resolve, reject) => {
         createDesigMutation.mutate({ name }, {
+          onSuccess: () => resolve(),
+          onError: reject
+        });
+      });
+    };
+
+    const handleAddAssetType = async (name: string): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        createAssetTypeMutation.mutate({ name }, {
           onSuccess: () => resolve(),
           onError: reject
         });
@@ -635,17 +650,14 @@ function CreateAllocationDialog() {
                                         control={form.control}
                                         name="assetTypeId"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Asset Type</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                                                    <SelectContent>
-                                                        {assetTypes?.map(t => (
-                                                            <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormItem>
+                                            <ComboboxFieldWithAdd
+                                                label="Asset Type"
+                                                options={assetTypeOptions}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Select or add asset type"
+                                                onAddNew={handleAddAssetType}
+                                            />
                                         )}
                                     />
                                 </div>
