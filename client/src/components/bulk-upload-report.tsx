@@ -190,7 +190,7 @@ export function BulkUploadReport() {
                                     {selectedDetails.createdData.map((row: any, idx: number) => (
                                       <tr key={idx} className="border-t hover:bg-muted/50">
                                         {Object.values(row).map((val: any, i: number) => (
-                                          <td key={i} className="px-2 py-1">{String(val)}</td>
+                                          <td key={i} className="px-2 py-1 break-words max-w-xs">{String(val)}</td>
                                         ))}
                                       </tr>
                                     ))}
@@ -216,7 +216,7 @@ export function BulkUploadReport() {
                                     {selectedDetails.failedData.map((row: any, idx: number) => (
                                       <tr key={idx} className="border-t hover:bg-red-100/50 dark:hover:bg-red-900/30">
                                         {Object.values(row).map((val: any, i: number) => (
-                                          <td key={i} className="px-2 py-1">{String(val)}</td>
+                                          <td key={i} className="px-2 py-1 break-words max-w-xs">{String(val)}</td>
                                         ))}
                                       </tr>
                                     ))}
