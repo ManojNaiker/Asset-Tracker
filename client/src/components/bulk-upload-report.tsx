@@ -160,7 +160,7 @@ export function BulkUploadReport() {
                     </Button>
                   </DialogTrigger>
                   {selectedDetails && selectedDetails.id === report.id && (
-                    <DialogContent className="max-w-4xl max-h-[80vh]">
+                    <DialogContent className="max-w-6xl max-h-[80vh]">
                       <DialogHeader>
                         <DialogTitle>Bulk Upload Details - Batch {selectedDetails.id}</DialogTitle>
                       </DialogHeader>
@@ -177,12 +177,12 @@ export function BulkUploadReport() {
                           {selectedDetails.createdData?.length > 0 && (
                             <div>
                               <h3 className="font-semibold mb-2">Successfully Created ({selectedDetails.createdData.length})</h3>
-                              <div className="overflow-x-auto border rounded">
-                                <table className="w-full text-sm">
+                              <div className="border rounded w-full overflow-x-auto">
+                                <table className="w-full text-sm" style={{ tableLayout: 'auto' }}>
                                   <thead className="bg-muted">
                                     <tr>
                                       {Object.keys(selectedDetails.createdData[0] || {}).map(key => (
-                                        <th key={key} className="px-2 py-1 text-left">{key}</th>
+                                        <th key={key} className="px-2 py-2 text-left" style={{ minWidth: '100px', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>{key}</th>
                                       ))}
                                     </tr>
                                   </thead>
@@ -190,7 +190,7 @@ export function BulkUploadReport() {
                                     {selectedDetails.createdData.map((row: any, idx: number) => (
                                       <tr key={idx} className="border-t hover:bg-muted/50">
                                         {Object.values(row).map((val: any, i: number) => (
-                                          <td key={i} className="px-2 py-1 break-words max-w-xs">{String(val)}</td>
+                                          <td key={i} className="px-2 py-2" style={{ minWidth: '100px', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>{String(val)}</td>
                                         ))}
                                       </tr>
                                     ))}
@@ -203,12 +203,12 @@ export function BulkUploadReport() {
                           {selectedDetails.failedData?.length > 0 && (
                             <div>
                               <h3 className="font-semibold mb-2">Failed ({selectedDetails.failedData.length})</h3>
-                              <div className="overflow-x-auto border rounded bg-red-50 dark:bg-red-900/20">
-                                <table className="w-full text-sm">
+                              <div className="border rounded bg-red-50 dark:bg-red-900/20 w-full overflow-x-auto">
+                                <table className="w-full text-sm" style={{ tableLayout: 'auto' }}>
                                   <thead className="bg-red-100 dark:bg-red-900/40">
                                     <tr>
                                       {Object.keys(selectedDetails.failedData[0] || {}).map(key => (
-                                        <th key={key} className="px-2 py-1 text-left">{key}</th>
+                                        <th key={key} className="px-2 py-2 text-left" style={{ minWidth: '100px', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>{key}</th>
                                       ))}
                                     </tr>
                                   </thead>
@@ -216,7 +216,7 @@ export function BulkUploadReport() {
                                     {selectedDetails.failedData.map((row: any, idx: number) => (
                                       <tr key={idx} className="border-t hover:bg-red-100/50 dark:hover:bg-red-900/30">
                                         {Object.values(row).map((val: any, i: number) => (
-                                          <td key={i} className="px-2 py-1 break-words max-w-xs">{String(val)}</td>
+                                          <td key={i} className="px-2 py-2" style={{ minWidth: '100px', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>{String(val)}</td>
                                         ))}
                                       </tr>
                                     ))}
