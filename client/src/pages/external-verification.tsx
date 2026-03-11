@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { api } from "@/lib/queryClient";
 import { 
   Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle 
 } from "@/components/ui/card";
@@ -54,7 +53,7 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
     },
     onSuccess: (verification: any) => {
       // Invalidate allocations cache to refresh the UI
-      queryClient.invalidateQueries({ queryKey: [api.allocations.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/allocations"] });
       toast({ title: "Verification submitted successfully" });
       setLocation(`/verification-success?id=${verification.id}`);
     },
