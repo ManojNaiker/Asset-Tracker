@@ -246,7 +246,7 @@ export default function AuditTrailPage() {
                 if (log.action === "Update Asset Type") {
                   return `Updated asset type: ${d.name || 'Type'}`;
                 }
-                if (log.action?.includes("External Asset")) {
+                if (log.action?.includes("Asset Approved") || log.action?.includes("Asset Rejected")) {
                   return formatDetailsToString(d);
                 }
                 if (log.action === "Create Allocation") {

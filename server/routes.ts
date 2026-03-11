@@ -819,7 +819,7 @@ export async function registerRoutes(
       // await storage.updateAllocation(allocation.id, { verificationToken: null });
 
       await storage.createAuditLog({
-        action: "External Asset " + status,
+        action: "Asset " + status,
         entityType: "Verification",
         entityId: verification.id,
         details: { assetSerial: allocation.asset.serialNumber, status, remarks, employee: allocation.employee.name }
