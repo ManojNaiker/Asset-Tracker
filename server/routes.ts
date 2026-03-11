@@ -1312,7 +1312,8 @@ export async function registerRoutes(
                   .set({
                     status: "Returned",
                     returnDate: new Date(),
-                    verificationStatus: (existingAlloc.verificationStatus === "Pending" || existingAlloc.verificationStatus === "Rejected") ? "Revoked" : existingAlloc.verificationStatus
+                    verificationStatus: (existingAlloc.verificationStatus === "Pending" || existingAlloc.verificationStatus === "Rejected") ? "Revoked" : existingAlloc.verificationStatus,
+                    verificationToken: (existingAlloc.verificationStatus === "Pending" || existingAlloc.verificationStatus === "Rejected") ? null : existingAlloc.verificationToken
                   })
                   .where(eq(allocations.id, existingAlloc.id));
                 console.log(`Bulk: Marked allocation ${existingAlloc.id} as Returned for asset ${finalAssetId}`);
@@ -1435,10 +1436,11 @@ export async function registerRoutes(
         returnReason 
       };
       
-      // If verification link not approved and asset returned, mark as Revoked
+      // If verification link not approved and asset returned, mark as Revoked and expire the token
       const currentAllocation = await storage.getAllocation(id);
       if (currentAllocation?.verificationStatus === "Pending" || currentAllocation?.verificationStatus === "Rejected") {
         updateData.verificationStatus = "Revoked";
+        updateData.verificationToken = null; // Expire the verification link
       }
       
       const allocation = await storage.updateAllocation(id, updateData);
