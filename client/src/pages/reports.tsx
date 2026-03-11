@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as XLSX from "xlsx";
+import { BulkUploadReport } from "@/components/bulk-upload-report";
 
 type AllocationWithDetails = Allocation & { asset: Asset, employee: Employee };
 
@@ -177,7 +178,7 @@ export default function ReportsPage() {
       </div>
 
       <Tabs defaultValue="allocation" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7 gap-2 bg-transparent mb-6 p-0 h-auto border-b border-red-200 pb-0"  data-testid="reports-tabs">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8 gap-2 bg-transparent mb-6 p-0 h-auto border-b border-red-200 pb-0"  data-testid="reports-tabs">
           <TabsTrigger value="allocation" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-allocations">Allocations</TabsTrigger>
           <TabsTrigger value="inventory" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-inventory">Inventory</TabsTrigger>
           <TabsTrigger value="employees" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-employees">Employees</TabsTrigger>
@@ -185,6 +186,7 @@ export default function ReportsPage() {
           <TabsTrigger value="status" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-status">Asset Status</TabsTrigger>
           <TabsTrigger value="returns" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-returns">Returns</TabsTrigger>
           <TabsTrigger value="verification" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-verification">Verification</TabsTrigger>
+          <TabsTrigger value="bulk-uploads" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent rounded-none pb-3 pt-2 px-1 text-sm font-medium hover:text-foreground data-[state=active]:text-red-600" data-testid="tab-bulk-uploads">Bulk Uploads</TabsTrigger>
         </TabsList>
 
         {/* Allocations Report */}
@@ -562,6 +564,15 @@ export default function ReportsPage() {
               </TableBody>
             </Table>
           </div>
+        </TabsContent>
+
+        {/* Bulk Upload Report */}
+        <TabsContent value="bulk-uploads">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-foreground mb-2">Bulk Upload History</h2>
+            <p className="text-muted-foreground">Track all bulk uploads with detailed batch status and results.</p>
+          </div>
+          <BulkUploadReport />
         </TabsContent>
       </Tabs>
     </LayoutShell>

@@ -1115,45 +1115,67 @@ export async function registerRoutes(
           else if (row["Asset Serial Number"] || row["Asset Type"] || row["Employee Name"]) {
             // Find or create asset by serial number
             if (row["Asset Serial Number"]) {
-              const assets = await storage.getAssets();
-              let asset = assets.find(a => a.serialNumber === row["Asset Serial Number"]);
-              
-              if (!asset && row["Asset Type"]) {
-                const types = await storage.getAssetTypes();
-                let type = types.find(t => t.name === row["Asset Type"]);
-                if (!type) {
-                  type = await storage.createAssetType({ name: row["Asset Type"], schema: [] });
+              try {
+                const assets = await storage.getAssets();
+                let asset = assets.find(a => a.serialNumber === row["Asset Serial Number"]);
+                
+                if (!asset && row["Asset Type"]) {
+                  const types = await storage.getAssetTypes();
+                  let type = types.find(t => t.name === row["Asset Type"]);
+                  if (!type) {
+                    type = await storage.createAssetType({ name: row["Asset Type"], schema: [] });
+                  }
+                  try {
+                    asset = await storage.createAsset({
+                      serialNumber: row["Asset Serial Number"],
+                      assetTypeId: type.id,
+                      status: "Available"
+                    });
+                  } catch (assetErr: any) {
+                    if (assetErr.message?.includes("duplicate key")) {
+                      const existingAsset = assets.find(a => a.serialNumber === row["Asset Serial Number"]);
+                      if (existingAsset) asset = existingAsset;
+                      else throw assetErr;
+                    } else {
+                      throw assetErr;
+                    }
+                  }
                 }
-                asset = await storage.createAsset({
-                  serialNumber: row["Asset Serial Number"],
-                  assetTypeId: type.id,
-                  status: "Available"
-                });
+                if (asset) finalAssetId = asset.id;
+              } catch (assetError: any) {
+                error = `Asset error: ${assetError.message}`;
+                failed.push({ ...row, error });
+                continue;
               }
-              if (asset) finalAssetId = asset.id;
             }
 
             // Find or create employee
             if (row["Employee Name"] || row["Employee Email"]) {
-              const employees = await storage.getEmployees();
-              let employee = employees.find(e => 
-                e.name === row["Employee Name"] || 
-                (row["Employee Email"] && e.email === row["Employee Email"])
-              );
+              try {
+                const employees = await storage.getEmployees();
+                let employee = employees.find(e => 
+                  e.name === row["Employee Name"] || 
+                  (row["Employee Email"] && e.email === row["Employee Email"])
+                );
 
-              if (!employee) {
-                employee = await storage.createEmployee({
-                  name: row["Employee Name"] || "Unnamed",
-                  email: row["Employee Email"] || "",
-                  empId: row["Employee ID"] || `EMP-${Date.now()}`,
-                  department: row["Department"] || undefined,
-                  designation: row["Designation"] || undefined,
-                  branch: row["Branch"] || undefined,
-                  mobile: row["Mobile"] || undefined,
-                  status: "Active"
-                });
+                if (!employee) {
+                  employee = await storage.createEmployee({
+                    name: row["Employee Name"] || "Unnamed",
+                    email: row["Employee Email"] || "",
+                    empId: row["Employee ID"] || `EMP-${Date.now()}`,
+                    department: row["Department"] || undefined,
+                    designation: row["Designation"] || undefined,
+                    branch: row["Branch"] || undefined,
+                    mobile: row["Mobile"] || undefined,
+                    status: "Active"
+                  });
+                }
+                if (employee) finalEmployeeId = employee.id;
+              } catch (empError: any) {
+                error = `Employee error: ${empError.message}`;
+                failed.push({ ...row, error });
+                continue;
               }
-              if (employee) finalEmployeeId = employee.id;
             }
           }
 
@@ -1163,50 +1185,72 @@ export async function registerRoutes(
             continue;
           }
 
-          const token = crypto.randomBytes(32).toString('hex');
-          const allocation = await storage.createAllocation({
-            assetId: finalAssetId,
-            employeeId: finalEmployeeId,
-            status: row["Status"] || "Active",
-            remarks: row["Remarks"] || null,
-            verificationToken: token
-          });
+          try {
+            const token = crypto.randomBytes(32).toString('hex');
+            const allocation = await storage.createAllocation({
+              assetId: finalAssetId,
+              employeeId: finalEmployeeId,
+              status: row["Status"] || "Active",
+              remarks: row["Remarks"] || null,
+              verificationToken: token
+            });
 
-          await storage.updateAsset(finalAssetId, { status: "Allocated" });
-          created.push({ ...row, status: "success", allocationId: allocation.id });
+            const allAssets = await storage.getAssets();
+            const assetToUpdate = allAssets.find(a => a.id === finalAssetId);
+            if (assetToUpdate && assetToUpdate.status !== "Allocated") {
+              await storage.updateAsset(finalAssetId, { status: "Allocated" });
+            }
+            
+            created.push({ ...row, status: "success", allocationId: allocation.id });
+          } catch (allocErr: any) {
+            error = `Allocation error: ${allocErr.message}`;
+            failed.push({ ...row, error });
+          }
         } catch (e: any) {
           failed.push({ ...row, error: e.message || "Unknown error" });
         }
       }
 
       // Save upload log
-      const uploadLog = await db.insert(bulkUploadLogs).values({
-        userId: (req.user as User).id,
-        uploadType: "allocations",
-        totalRows: allocationsData.length,
-        createdCount: created.length,
-        failedCount: failed.length,
-        pendingCount: pending.length,
-        createdData: created,
-        failedData: failed,
-        pendingData: pending,
-      }).returning();
+      try {
+        const uploadLog = await db.insert(bulkUploadLogs).values({
+          userId: (req.user as User).id,
+          uploadType: "allocations",
+          totalRows: allocationsData.length,
+          createdCount: created.length,
+          failedCount: failed.length,
+          pendingCount: pending.length,
+          createdData: created,
+          failedData: failed,
+          pendingData: pending,
+        }).returning();
 
-      await storage.createAuditLog({ 
-        userId: (req.user as User).id, 
-        action: "Bulk Import Allocations", 
-        details: { created: created.length, failed: failed.length, total: allocationsData.length } 
-      });
-      
-      res.status(201).json({ 
-        uploadLogId: uploadLog[0]?.id,
-        total: allocationsData.length,
-        created: created.length, 
-        failed: failed.length, 
-        pending: pending.length,
-        createdData: created,
-        failedData: failed
-      });
+        await storage.createAuditLog({ 
+          userId: (req.user as User).id, 
+          action: "Bulk Import Allocations", 
+          details: { created: created.length, failed: failed.length, total: allocationsData.length } 
+        });
+        
+        res.status(201).json({ 
+          uploadLogId: uploadLog[0]?.id,
+          total: allocationsData.length,
+          created: created.length, 
+          failed: failed.length, 
+          pending: pending.length,
+          createdData: created,
+          failedData: failed
+        });
+      } catch (logErr: any) {
+        res.status(201).json({ 
+          total: allocationsData.length,
+          created: created.length, 
+          failed: failed.length, 
+          pending: pending.length,
+          createdData: created,
+          failedData: failed,
+          warning: "Partial success: allocations created but log save failed"
+        });
+      }
     } catch (err) {
       console.error("Bulk allocation import error:", err);
       res.status(500).json({ message: "Failed to import allocations" });
