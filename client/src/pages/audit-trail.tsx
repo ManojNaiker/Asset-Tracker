@@ -150,6 +150,12 @@ export default function AuditTrailPage() {
                 if (log.action === "Bulk Import Allocations") {
                   return `Bulk imported allocations - ${d.count || '?'} records`;
                 }
+                if (log.action === "Bulk Import Users") {
+                  const created = d.createdCount || d.created || 0;
+                  const updated = d.existingCount || d.existing || 0;
+                  const failed = d.failedCount || d.failed || 0;
+                  return `${created} users created, ${updated} updated, ${failed} failed`;
+                }
                 
                 return JSON.stringify(d);
               };
@@ -291,6 +297,80 @@ export default function AuditTrailPage() {
                                                     ))}
                                                   </tbody>
                                                 </table>
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    }
+                                    
+                                    // Bulk Import Users
+                                    if (selectedDetails.action === "Bulk Import Users") {
+                                      return (
+                                        <div className="space-y-4">
+                                          <div className="grid grid-cols-3 gap-2 pb-3 border-b border-border">
+                                            <div className="text-center"><span className="text-xs font-semibold text-green-600">Created</span> <p className="text-2xl font-bold text-green-600">{d.createdCount || d.created || 0}</p></div>
+                                            <div className="text-center"><span className="text-xs font-semibold text-blue-600">Updated</span> <p className="text-2xl font-bold text-blue-600">{d.existingCount || d.existing || 0}</p></div>
+                                            <div className="text-center"><span className="text-xs font-semibold text-red-600">Failed</span> <p className="text-2xl font-bold text-red-600">{d.failedCount || d.failed || 0}</p></div>
+                                          </div>
+                                          
+                                          {d.createdData && d.createdData.length > 0 && (
+                                            <div>
+                                              <h4 className="text-sm font-semibold text-green-600 mb-3 uppercase flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-green-600"></div>
+                                                NAI USERS BANAI GAYI ({d.createdData.length})
+                                              </h4>
+                                              <div className="space-y-2">
+                                                {d.createdData.map((user: any, idx: number) => (
+                                                  <div key={idx} className="p-3 bg-green-50/50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded">
+                                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                                      <div><span className="text-muted-foreground">Username:</span> <span className="font-semibold">{user.username}</span></div>
+                                                      <div><span className="text-muted-foreground">Full Name:</span> <span className="font-semibold">{user.fullName}</span></div>
+                                                      <div><span className="text-muted-foreground">Employee Code:</span> <span className="font-mono text-xs">{user.employeeCode}</span></div>
+                                                      <div><span className="text-muted-foreground">Role:</span> <span className="font-semibold">{user.role}</span></div>
+                                                      <div><span className="text-muted-foreground">Department:</span> <span className="font-semibold">{user.department}</span></div>
+                                                      <div><span className="text-muted-foreground">Designation:</span> <span className="font-semibold">{user.designation}</span></div>
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
+                                          
+                                          {d.existingData && d.existingData.length > 0 && (
+                                            <div>
+                                              <h4 className="text-sm font-semibold text-blue-600 mb-3 uppercase flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                                                USERS UPDATE KIYE GAYE ({d.existingData.length})
+                                              </h4>
+                                              <div className="space-y-2">
+                                                {d.existingData.map((user: any, idx: number) => (
+                                                  <div key={idx} className="p-3 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded">
+                                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                                      <div><span className="text-muted-foreground">Username:</span> <span className="font-semibold">{user.username}</span></div>
+                                                      <div><span className="text-muted-foreground">Full Name:</span> <span className="font-semibold">{user.fullName}</span></div>
+                                                      <div><span className="text-muted-foreground">Department:</span> <span className="font-semibold">{user.department}</span></div>
+                                                      <div><span className="text-muted-foreground">Designation:</span> <span className="font-semibold">{user.designation}</span></div>
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
+                                          
+                                          {d.failedData && d.failedData.length > 0 && (
+                                            <div>
+                                              <h4 className="text-sm font-semibold text-red-600 mb-3 uppercase flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-red-600"></div>
+                                                FAILED RECORDS ({d.failedData.length})
+                                              </h4>
+                                              <div className="space-y-2">
+                                                {d.failedData.map((item: any, idx: number) => (
+                                                  <div key={idx} className="p-3 bg-red-50/50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded">
+                                                    <div className="text-sm"><span className="text-muted-foreground">Error:</span> <span className="font-semibold text-red-600">{item.error || 'Unknown error'}</span></div>
+                                                    {item.username && <div className="text-sm"><span className="text-muted-foreground">Username:</span> <span className="font-mono text-xs">{item.username}</span></div>}
+                                                  </div>
+                                                ))}
                                               </div>
                                             </div>
                                           )}
