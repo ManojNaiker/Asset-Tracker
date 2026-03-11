@@ -405,37 +405,46 @@ function CreateAllocationDialog() {
     });
 
     const [uploading, setUploading] = useState(false);
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [imageUrls, setImageUrls] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setUploading(true);
+    const uploadFile = async (file: File): Promise<string | null> => {
         const formData = new FormData();
         formData.append("image", file);
-
         try {
-            const res = await fetch("/api/upload", {
-                method: "POST",
-                body: formData
-            });
+            const res = await fetch("/api/upload", { method: "POST", body: formData });
             const data = await res.json();
-            setImageUrl(data.url);
-        } catch (err) {
-            toast({ title: "Upload failed", variant: "destructive" });
-        } finally {
-            setUploading(false);
+            return data.url as string;
+        } catch {
+            return null;
         }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        setUploading(true);
+        const uploaded: string[] = [];
+        for (const file of files) {
+            const url = await uploadFile(file);
+            if (url) uploaded.push(url);
+        }
+        if (uploaded.length < files.length) {
+            toast({ title: "Some uploads failed", variant: "destructive" });
+        }
+        setImageUrls(prev => [...prev, ...uploaded]);
+        e.target.value = "";
+        setUploading(false);
     };
 
     const onSubmit = (data: any) => {
         const payload: any = {
             status: data.status,
             remarks: data.remarks,
-            imageUrl: imageUrl || undefined
+            imageUrl: imageUrls[0] || undefined,
+            images: imageUrls.length > 0 ? imageUrls : undefined
         };
 
         if (data.mode === "select") {
@@ -464,7 +473,7 @@ function CreateAllocationDialog() {
             onSuccess: () => {
                 setOpen(false);
                 form.reset();
-                setImageUrl(null);
+                setImageUrls([]);
             }
         });
     };
@@ -665,39 +674,64 @@ function CreateAllocationDialog() {
                         )}
 
                         <div className="space-y-2 border-t border-border pt-4">
-                            <FormLabel>Asset Photo (Optional)</FormLabel>
-                            <div 
-                                onClick={() => fileInputRef.current?.click()}
-                                className="border-2 border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
-                            >
-                                <input 
-                                    type="file" 
-                                    ref={fileInputRef} 
-                                    className="hidden" 
-                                    accept="image/*"
-                                    onChange={handleFileUpload}
-                                />
-                                {imageUrl ? (
-                                    <div className="relative w-full aspect-video">
-                                        <img src={imageUrl} className="w-full h-full object-cover rounded" />
-                                        <Button 
-                                            size="icon" 
-                                            variant="destructive" 
-                                            className="absolute top-1 right-1 h-6 w-6"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setImageUrl(null);
-                                            }}
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center">
-                                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-6 h-6 text-muted-foreground" />}
-                                        <p className="text-xs text-muted-foreground mt-2">Click to upload asset image</p>
-                                    </div>
-                                )}
+                            <FormLabel>Asset Photos (Optional)</FormLabel>
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                className="hidden" 
+                                accept="image/*"
+                                multiple
+                                onChange={handleFileUpload}
+                            />
+                            <input 
+                                type="file" 
+                                ref={cameraInputRef} 
+                                className="hidden" 
+                                accept="image/*"
+                                capture="environment"
+                                onChange={handleFileUpload}
+                            />
+                            {imageUrls.length > 0 && (
+                                <div className="grid grid-cols-3 gap-2">
+                                    {imageUrls.map((url, idx) => (
+                                        <div key={idx} className="relative aspect-square">
+                                            <img src={url} className="w-full h-full object-cover rounded-md border border-border" />
+                                            <Button 
+                                                type="button"
+                                                size="icon" 
+                                                variant="destructive" 
+                                                className="absolute top-1 right-1 h-5 w-5"
+                                                onClick={() => setImageUrls(prev => prev.filter((_, i) => i !== idx))}
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1 border-dashed"
+                                    disabled={uploading}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    data-testid="button-upload-gallery"
+                                >
+                                    {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+                                    Gallery
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1 border-dashed"
+                                    disabled={uploading}
+                                    onClick={() => cameraInputRef.current?.click()}
+                                    data-testid="button-upload-camera"
+                                >
+                                    {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Camera className="w-4 h-4 mr-2" />}
+                                    Camera
+                                </Button>
                             </div>
                         </div>
 

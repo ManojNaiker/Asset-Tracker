@@ -1123,7 +1123,8 @@ export async function registerRoutes(
         employeeId: finalEmployeeId,
         status: status || "Active",
         remarks,
-        imageUrl: details?.imageUrl,
+        imageUrl: details?.imageUrl || (details?.images?.[0] ?? undefined),
+        images: details?.images || (details?.imageUrl ? [details.imageUrl] : undefined),
         verificationToken: token
       });
 
