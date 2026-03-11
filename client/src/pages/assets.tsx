@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { BulkAssetUploadDialog } from "@/components/bulk-upload-dialogs";
 import { QRBarcodeScanner } from "@/components/qr-barcode-scanner";
+import * as XLSX from "xlsx";
 
 export default function AssetsPage() {
   const [search, setSearch] = useState("");
@@ -233,7 +234,27 @@ function ViewAssetLifecycleDialog({ asset }: { asset: any }) {
         queryKey: ["/api/allocations"],
     });
 
-    const assetAllocations = allocations?.filter(a => a.assetId === asset.id);
+    const assetAllocations = allocations?.filter(a => a.assetId === asset.id).sort((a, b) => 
+        new Date(b.allocatedAt).getTime() - new Date(a.allocatedAt).getTime()
+    );
+
+    const exportLifecycle = () => {
+        if (!assetAllocations || assetAllocations.length === 0) return;
+
+        const exportData = assetAllocations.map(a => ({
+            "Employee Name": a.employee?.name || "Unknown",
+            "Employee ID": a.employee?.id || "N/A",
+            "Allocated Date": new Date(a.allocatedAt).toLocaleString(),
+            "Return Date": a.returnDate ? new Date(a.returnDate).toLocaleString() : "Active",
+            "Status": a.status,
+            "Verification Status": a.verificationStatus || "N/A"
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Lifecycle");
+        XLSX.writeFile(workbook, `${asset.serialNumber}_lifecycle_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
 
     return (
         <Dialog>
@@ -243,9 +264,22 @@ function ViewAssetLifecycleDialog({ asset }: { asset: any }) {
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                    <DialogTitle>Asset Lifecycle: {asset.serialNumber}</DialogTitle>
-                </DialogHeader>
+                <div className="flex justify-between items-center">
+                    <DialogHeader>
+                        <DialogTitle>Asset Lifecycle: {asset.serialNumber}</DialogTitle>
+                    </DialogHeader>
+                    {assetAllocations && assetAllocations.length > 0 && (
+                        <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={exportLifecycle}
+                            className="flex items-center gap-2"
+                            data-testid="button-export-lifecycle"
+                        >
+                            <Download className="w-4 h-4" /> Export
+                        </Button>
+                    )}
+                </div>
                 <div className="space-y-6 py-4">
                     <div className="grid grid-cols-3 gap-4 bg-muted/50 p-4 rounded-lg border border-border">
                         <div>

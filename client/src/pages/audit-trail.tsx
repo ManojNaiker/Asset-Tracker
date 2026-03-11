@@ -230,11 +230,64 @@ export default function AuditTrailPage() {
                                     // Bulk Import
                                     if (selectedDetails.action === "Bulk Import Allocations" || selectedDetails.action?.includes("Bulk")) {
                                       return (
-                                        <div className="space-y-2">
-                                          {d.total !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Total Records:</span> <span className="font-semibold">{d.total}</span></div>}
-                                          {d.created !== undefined && <div className="flex justify-between text-green-600"><span className="text-muted-foreground">Successfully Created:</span> <span className="font-semibold">{d.created}</span></div>}
-                                          {d.failed !== undefined && <div className="flex justify-between text-red-600"><span className="text-muted-foreground">Failed:</span> <span className="font-semibold">{d.failed}</span></div>}
-                                          {d.count !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Records Processed:</span> <span className="font-semibold">{d.count}</span></div>}
+                                        <div className="space-y-4">
+                                          <div className="grid grid-cols-3 gap-2 pb-3 border-b border-border">
+                                            <div><span className="text-xs font-semibold text-green-600">Created</span> <p className="text-lg font-bold text-green-600">{d.createdCount || d.created || 0}</p></div>
+                                            <div><span className="text-xs font-semibold text-red-600">Failed</span> <p className="text-lg font-bold text-red-600">{d.failedCount || d.failed || 0}</p></div>
+                                            <div><span className="text-xs font-semibold text-blue-600">Total</span> <p className="text-lg font-bold text-blue-600">{d.totalCount || d.total || d.count || 0}</p></div>
+                                          </div>
+                                          
+                                          {d.createdData && d.createdData.length > 0 && (
+                                            <div>
+                                              <h4 className="text-xs font-semibold text-green-600 mb-2 uppercase">Successfully Created ({d.createdData.length})</h4>
+                                              <div className="max-h-60 overflow-y-auto border rounded bg-green-50/30 dark:bg-green-900/10">
+                                                <table className="w-full text-xs">
+                                                  <thead className="bg-green-100/30 dark:bg-green-900/20 sticky top-0">
+                                                    <tr>
+                                                      {Object.keys(d.createdData[0] || {}).map(key => (
+                                                        <th key={key} className="px-2 py-1 text-left font-semibold">{key}</th>
+                                                      ))}
+                                                    </tr>
+                                                  </thead>
+                                                  <tbody>
+                                                    {d.createdData.map((row: any, idx: number) => (
+                                                      <tr key={idx} className="border-t hover:bg-green-100/20 dark:hover:bg-green-900/20">
+                                                        {Object.values(row).map((val: any, i: number) => (
+                                                          <td key={i} className="px-2 py-1 text-foreground">{String(val)}</td>
+                                                        ))}
+                                                      </tr>
+                                                    ))}
+                                                  </tbody>
+                                                </table>
+                                              </div>
+                                            </div>
+                                          )}
+                                          
+                                          {d.failedData && d.failedData.length > 0 && (
+                                            <div>
+                                              <h4 className="text-xs font-semibold text-red-600 mb-2 uppercase">Failed ({d.failedData.length})</h4>
+                                              <div className="max-h-60 overflow-y-auto border rounded bg-red-50/30 dark:bg-red-900/10">
+                                                <table className="w-full text-xs">
+                                                  <thead className="bg-red-100/30 dark:bg-red-900/20 sticky top-0">
+                                                    <tr>
+                                                      {Object.keys(d.failedData[0] || {}).map(key => (
+                                                        <th key={key} className="px-2 py-1 text-left font-semibold">{key}</th>
+                                                      ))}
+                                                    </tr>
+                                                  </thead>
+                                                  <tbody>
+                                                    {d.failedData.map((row: any, idx: number) => (
+                                                      <tr key={idx} className="border-t hover:bg-red-100/20 dark:hover:bg-red-900/20">
+                                                        {Object.values(row).map((val: any, i: number) => (
+                                                          <td key={i} className="px-2 py-1 text-foreground">{String(val)}</td>
+                                                        ))}
+                                                      </tr>
+                                                    ))}
+                                                  </tbody>
+                                                </table>
+                                              </div>
+                                            </div>
+                                          )}
                                         </div>
                                       );
                                     }

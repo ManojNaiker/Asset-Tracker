@@ -31,7 +31,10 @@ export function BulkUploadReport() {
       const res = await fetch("/api/allocations/bulk-uploads", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
-        setReports(Array.isArray(data) ? data : []);
+        const sorted = Array.isArray(data) ? data.sort((a: any, b: any) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ) : [];
+        setReports(sorted);
       }
     } catch (err) {
       console.error("Failed to fetch reports:", err);
