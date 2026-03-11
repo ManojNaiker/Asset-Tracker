@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select";
 import { useState } from "react";
 import { AuditLog, User } from "@shared/schema";
-import { Search, Filter, Loader2, User as UserIcon, Download, Eye } from "lucide-react";
+import { Search, Filter, Loader2, User as UserIcon, Download, Eye, Wifi } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -20,12 +20,16 @@ export default function AuditTrailPage() {
   const [selectedDetails, setSelectedDetails] = useState<AuditLog | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   
-  const { data: logs, isLoading } = useQuery<AuditLog[]>({ 
-    queryKey: ["/api/audit/logs"] 
+  const { data: logs, isLoading, isFetching } = useQuery<AuditLog[]>({ 
+    queryKey: ["/api/audit/logs"],
+    refetchInterval: 2000, // Refresh every 2 seconds for real-time updates
+    refetchOnWindowFocus: true,
+    staleTime: 0 // Always consider data stale to enable frequent refetching
   });
 
   const { data: users } = useQuery<User[]>({ 
-    queryKey: ["/api/users"] 
+    queryKey: ["/api/users"],
+    staleTime: 1000 * 60 * 5 // Cache users for 5 minutes since they change less frequently
   });
 
   const filteredLogs = logs?.filter(log => {
@@ -79,7 +83,13 @@ export default function AuditTrailPage() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Audit Trail</h1>
-          <p className="text-muted-foreground mt-1">Monitor system activities and user actions.</p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-muted-foreground">Monitor system activities and user actions.</p>
+            <div className={`flex items-center gap-1 text-xs font-medium ${isFetching ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
+              <div className={`w-2 h-2 rounded-full ${isFetching ? 'bg-blue-600 dark:bg-blue-400 animate-pulse' : 'bg-green-600 dark:bg-green-400'}`}></div>
+              {isFetching ? 'Syncing...' : 'Live'}
+            </div>
+          </div>
         </div>
         <Button onClick={exportToExcel} variant="outline" className="flex items-center gap-2" data-testid="button-export-audit">
           <Download className="w-4 h-4" /> Export Excel
