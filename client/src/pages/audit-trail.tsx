@@ -160,9 +160,35 @@ export default function AuditTrailPage() {
                   "designation": "Designation",
                   "mobile": "Mobile Number",
                   "status": "Status",
-                  "dateOfJoining": "Date of Joining"
+                  "dateOfJoining": "Date of Joining",
+                  "assetSerial": "Asset Serial Number",
+                  "serialNumber": "Serial Number",
+                  "assetType": "Asset Type",
+                  "employee": "Employee",
+                  "employeeCode": "Employee Code",
+                  "employeeName": "Employee Name",
+                  "remarks": "Remarks",
+                  "description": "Description",
+                  "username": "Username",
+                  "role": "Role",
+                  "fullName": "Full Name",
+                  "employeeCode": "Employee Code",
+                  "reason": "Reason"
                 };
-                return labels[fieldName] || fieldName;
+                return labels[fieldName] || fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+              };
+
+              const formatDetailsToString = (data: any): string => {
+                if (!data) return "No details";
+                
+                // Convert object to readable format
+                const parts: string[] = [];
+                for (const [key, value] of Object.entries(data)) {
+                  if (value === null || value === undefined || value === "") continue;
+                  const friendlyKey = getFieldLabel(key);
+                  parts.push(`${friendlyKey}: ${value}`);
+                }
+                return parts.length > 0 ? parts.join(" | ") : "No details";
               };
 
               const renderDetails = () => {
@@ -199,6 +225,36 @@ export default function AuditTrailPage() {
                   const friendlyNames = changes.map(field => getFieldLabel(field));
                   return `Updated employee: ${friendlyNames.join(", ")}`;
                 }
+                if (log.action === "Create Asset") {
+                  return `Created asset: ${d.serialNumber || 'Asset'}`;
+                }
+                if (log.action === "Update Asset") {
+                  return `Updated asset: ${d.serialNumber || 'Asset'} - ${formatDetailsToString(d)}`;
+                }
+                if (log.action === "Create Asset Type") {
+                  return `Created asset type: ${d.name || 'New Type'}`;
+                }
+                if (log.action === "Update Asset Type") {
+                  return `Updated asset type: ${d.name || 'Type'}`;
+                }
+                if (log.action?.includes("External Asset")) {
+                  return formatDetailsToString(d);
+                }
+                if (log.action === "Create Allocation") {
+                  return `Created allocation: ${d.assetSerial || 'Asset'} to ${d.employeeCode || 'Employee'}`;
+                }
+                if (log.action === "Create Department") {
+                  return `Created department: ${d.name || 'New Department'}`;
+                }
+                if (log.action === "Delete Department") {
+                  return `Deleted department: ${d.name || 'Department'}`;
+                }
+                if (log.action === "Create Designation") {
+                  return `Created designation: ${d.name || 'New Designation'}`;
+                }
+                if (log.action === "Delete Designation") {
+                  return `Deleted designation: ${d.name || 'Designation'}`;
+                }
                 if (log.action === "Bulk Import Allocations") {
                   return `Bulk imported allocations - ${d.count || '?'} records`;
                 }
@@ -209,7 +265,8 @@ export default function AuditTrailPage() {
                   return `${created} users created, ${updated} updated, ${failed} failed`;
                 }
                 
-                return JSON.stringify(d);
+                // Fallback: convert any remaining JSON to readable format
+                return formatDetailsToString(d);
               };
 
               return (
