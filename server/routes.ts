@@ -1159,7 +1159,7 @@ export async function registerRoutes(
                 <!-- Header -->
                 <div style="background-color: #22c55e; padding: 24px; text-align: center;">
                   <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">ALLOCATED ASSET VERIFICATION</h1>
-                  <p style="color: rgba(255,255,255,0.9); margin: 4px 0 0 0; font-size: 12px;">Lighthouse | Digital Lending</p>
+                  <p style="color: rgba(255,255,255,0.9); margin: 4px 0 0 0; font-size: 12px;">Light Microfinance Pvt. Ltd.</p>
                 </div>
 
                 <!-- Body -->
