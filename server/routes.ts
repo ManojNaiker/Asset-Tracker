@@ -1038,22 +1038,28 @@ export async function registerRoutes(
       let finalEmployeeId = employeeId;
 
       if (employeeData) {
-        // Automatically create department/designation if they don't exist
-        if (employeeData.department) {
-          const depts = await storage.getDepartments();
-          if (!depts.find(d => d.name === employeeData.department)) {
-            await storage.createDepartment({ name: employeeData.department });
+        // Check if employee with same empId already exists
+        const existingEmployee = await storage.getEmployeeByEmpId(employeeData.empId);
+        if (existingEmployee) {
+          finalEmployeeId = existingEmployee.id;
+        } else {
+          // Automatically create department/designation if they don't exist
+          if (employeeData.department) {
+            const depts = await storage.getDepartments();
+            if (!depts.find(d => d.name === employeeData.department)) {
+              await storage.createDepartment({ name: employeeData.department });
+            }
           }
-        }
-        if (employeeData.designation) {
-          const desigs = await storage.getDesignations();
-          if (!desigs.find(d => d.name === employeeData.designation)) {
-            await storage.createDesignation({ name: employeeData.designation });
+          if (employeeData.designation) {
+            const desigs = await storage.getDesignations();
+            if (!desigs.find(d => d.name === employeeData.designation)) {
+              await storage.createDesignation({ name: employeeData.designation });
+            }
           }
-        }
 
-        const employee = await storage.createEmployee(employeeData);
-        finalEmployeeId = employee.id;
+          const employee = await storage.createEmployee(employeeData);
+          finalEmployeeId = employee.id;
+        }
       }
 
       if (assetData) {
@@ -1065,6 +1071,10 @@ export async function registerRoutes(
           }
           assetData.assetTypeId = type.id;
           delete assetData.assetTypeName;
+        }
+        // Ensure assetTypeId is a number (convert from string if needed)
+        if (assetData.assetTypeId && typeof assetData.assetTypeId === 'string') {
+          assetData.assetTypeId = parseInt(assetData.assetTypeId, 10);
         }
         const asset = await storage.createAsset(assetData);
         finalAssetId = asset.id;
