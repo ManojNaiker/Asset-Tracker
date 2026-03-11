@@ -1843,6 +1843,27 @@ export async function registerRoutes(
     res.status(201).json(employee);
   });
 
+  app.put(api.employees.update.path, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const input = insertEmployeeSchema.partial().parse(req.body);
+      const employee = await storage.updateEmployee(id, input);
+      
+      await storage.createAuditLog({
+        userId: (req.user as User).id,
+        action: "Update Employee",
+        entityType: "Employee",
+        entityId: employee.id,
+        details: input
+      });
+
+      res.json(employee);
+    } catch (err: any) {
+      console.error("Error updating employee:", err);
+      res.status(400).json({ message: "Failed to update employee" });
+    }
+  });
+
   app.post("/api/employees/bulk", requireAdmin, async (req, res) => {
     try {
       const employees = req.body;
