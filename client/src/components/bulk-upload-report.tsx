@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Eye } from "lucide-react";
 import * as XLSX from "xlsx";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface BulkUploadReport {
   id: number;
@@ -18,6 +19,8 @@ interface BulkUploadReport {
 export function BulkUploadReport() {
   const [reports, setReports] = useState<BulkUploadReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDetails, setSelectedDetails] = useState<any>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     fetchReports();
@@ -35,6 +38,19 @@ export function BulkUploadReport() {
       setReports([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const viewDetails = async (reportId: number) => {
+    try {
+      const res = await fetch(`/api/allocations/bulk-uploads/${reportId}`, { credentials: "include" });
+      if (res.ok) {
+        const log = await res.json();
+        setSelectedDetails(log);
+        setDetailsOpen(true);
+      }
+    } catch (err) {
+      console.error("Failed to fetch details:", err);
     }
   };
 
@@ -124,12 +140,95 @@ export function BulkUploadReport() {
               <TableCell className="text-muted-foreground">
                 {new Date(report.createdAt).toLocaleDateString()}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right space-x-2">
+                <Dialog open={detailsOpen && selectedDetails?.id === report.id} onOpenChange={setDetailsOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => viewDetails(report.id)}
+                      className="text-primary hover:text-primary/80"
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </DialogTrigger>
+                  {selectedDetails && (
+                    <DialogContent className="max-w-4xl max-h-[80vh]">
+                      <DialogHeader>
+                        <DialogTitle>Bulk Upload Details - Batch {selectedDetails.id}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-6 p-4 overflow-y-auto max-h-[calc(80vh-100px)]">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div><span className="font-semibold">Upload Type:</span> {selectedDetails.uploadType}</div>
+                            <div><span className="font-semibold">Total Rows:</span> {selectedDetails.totalRows}</div>
+                            <div><span className="font-semibold">Created:</span> {selectedDetails.createdCount}</div>
+                            <div><span className="font-semibold">Failed:</span> {selectedDetails.failedCount}</div>
+                            <div><span className="font-semibold">Pending:</span> {selectedDetails.pendingCount}</div>
+                            <div><span className="font-semibold">Date:</span> {new Date(selectedDetails.createdAt).toLocaleString()}</div>
+                          </div>
+                          
+                          {selectedDetails.createdData?.length > 0 && (
+                            <div>
+                              <h3 className="font-semibold mb-2">Successfully Created ({selectedDetails.createdData.length})</h3>
+                              <div className="overflow-x-auto border rounded">
+                                <table className="w-full text-sm">
+                                  <thead className="bg-muted">
+                                    <tr>
+                                      {Object.keys(selectedDetails.createdData[0] || {}).map(key => (
+                                        <th key={key} className="px-2 py-1 text-left">{key}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {selectedDetails.createdData.map((row: any, idx: number) => (
+                                      <tr key={idx} className="border-t hover:bg-muted/50">
+                                        {Object.values(row).map((val: any, i: number) => (
+                                          <td key={i} className="px-2 py-1">{String(val)}</td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {selectedDetails.failedData?.length > 0 && (
+                            <div>
+                              <h3 className="font-semibold mb-2">Failed ({selectedDetails.failedData.length})</h3>
+                              <div className="overflow-x-auto border rounded bg-red-50 dark:bg-red-900/20">
+                                <table className="w-full text-sm">
+                                  <thead className="bg-red-100 dark:bg-red-900/40">
+                                    <tr>
+                                      {Object.keys(selectedDetails.failedData[0] || {}).map(key => (
+                                        <th key={key} className="px-2 py-1 text-left">{key}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {selectedDetails.failedData.map((row: any, idx: number) => (
+                                      <tr key={idx} className="border-t hover:bg-red-100/50 dark:hover:bg-red-900/30">
+                                        {Object.values(row).map((val: any, i: number) => (
+                                          <td key={i} className="px-2 py-1">{String(val)}</td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                    </DialogContent>
+                  )}
+                </Dialog>
                 <Button 
                   size="sm" 
                   variant="ghost"
                   onClick={() => downloadDetailedReport(report.id)}
                   className="text-primary hover:text-primary/80"
+                  title="Download Report"
                 >
                   <Download className="w-4 h-4" />
                 </Button>

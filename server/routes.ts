@@ -1323,11 +1323,19 @@ export async function registerRoutes(
     try {
       const id = parseInt(req.params.id);
       const { returnReason, status } = req.body;
-      const allocation = await storage.updateAllocation(id, { 
+      const updateData: any = { 
         status: "Returned", 
         returnDate: new Date(),
         returnReason 
-      });
+      };
+      
+      // If verification hasn't been done yet, mark as Revoked
+      const currentAllocation = await storage.getAllocation(id);
+      if (currentAllocation?.verificationStatus === "Pending") {
+        updateData.verificationStatus = "Revoked";
+      }
+      
+      const allocation = await storage.updateAllocation(id, updateData);
       await storage.updateAsset(allocation.assetId, { status: status as any });
 
       const asset = await storage.getAsset(allocation.assetId);
@@ -1341,12 +1349,14 @@ export async function registerRoutes(
         details: { 
           assetSerial: asset?.serialNumber,
           employeeName: employee?.name,
-          reason: returnReason
+          reason: returnReason,
+          verificationRevoked: currentAllocation?.verificationStatus === "Pending"
         }
       });
 
       res.json(allocation);
     } catch (err) {
+      console.error("Return asset error:", err);
       res.status(400).json({ message: "Failed to return asset" });
     }
   });
