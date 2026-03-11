@@ -480,6 +480,8 @@ export function BulkUserUploadDialog() {
 
                 await apiRequest("POST", "/api/users/bulk", formattedData);
                 queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/departments"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/designations"] });
                 toast({ title: "Users imported successfully" });
                 setOpen(false);
             } catch (err: any) {

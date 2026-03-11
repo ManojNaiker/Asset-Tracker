@@ -589,13 +589,31 @@ export async function registerRoutes(
 
           const existingUser = await storage.getUserByUsername(username);
           if (existingUser) {
-            // User exists - mark for potential update
-            existing.push({ 
-              ...userData, 
-              userId: existingUser.id, 
-              currentData: existingUser,
-              message: "User already exists - needs admin confirmation for update" 
-            });
+            // Update existing user with new department/designation
+            const updateData: any = {};
+            if (fullName) updateData.fullName = fullName;
+            if (employeeCode) updateData.employeeCode = employeeCode;
+            if (designation) updateData.designation = designation;
+            if (department) updateData.department = department;
+            if (role) updateData.role = role;
+            
+            if (Object.keys(updateData).length > 0) {
+              const updatedUser = await storage.updateUser(existingUser.id, updateData);
+              existing.push({ 
+                ...userData, 
+                userId: existingUser.id, 
+                previousData: existingUser,
+                updatedData: updatedUser,
+                message: "User updated with new details" 
+              });
+            } else {
+              existing.push({ 
+                ...userData, 
+                userId: existingUser.id, 
+                currentData: existingUser,
+                message: "User already exists - no changes needed" 
+              });
+            }
             continue;
           }
 
