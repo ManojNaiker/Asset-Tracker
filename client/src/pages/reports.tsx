@@ -551,6 +551,7 @@ export default function ReportsPage() {
                       <Badge variant="outline" className={
                         row.verification_status === 'Approved' ? 'bg-green-50 text-green-700' :
                         row.verification_status === 'Rejected' ? 'bg-red-50 text-red-700' :
+                        row.verification_status === 'Revoked' ? 'bg-gray-100 text-gray-600' :
                         'bg-yellow-50 text-yellow-700'
                       }>
                         {row.verification_status}
