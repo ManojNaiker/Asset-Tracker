@@ -95,7 +95,6 @@ const exportToExcel = (data: any[], fileName: string, sheetName: string) => {
 
 export default function ReportsPage() {
   const [search, setSearch] = useState("");
-  const [selectedCompany, setSelectedCompany] = useState("AssetAlloc");
   const [sortBy, setSortBy] = useState<string>("date");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
@@ -161,20 +160,6 @@ export default function ReportsPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">Reports & Analytics</h1>
         <p className="text-muted-foreground">View detailed reports on asset allocation, inventory, and verification status.</p>
-      </div>
-
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-foreground mb-3">Select Company</label>
-        <Select value={selectedCompany} onValueChange={setSelectedCompany}>
-          <SelectTrigger className="w-full sm:w-96 bg-background border-2 border-red-200 hover:border-red-300 focus:border-red-400" data-testid="dropdown-company-trigger">
-            <SelectValue placeholder="Select a company" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={pageSettings?.companyName || "AssetAlloc"} data-testid="dropdown-company">
-              {pageSettings?.companyName || "AssetAlloc"}
-            </SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <Tabs defaultValue="allocation" className="w-full">
