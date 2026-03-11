@@ -196,7 +196,7 @@ export default function AuditTrailPage() {
                         </Button>
                       </DialogTrigger>
                       {selectedDetails && (
-                        <DialogContent className="max-w-2xl">
+                        <DialogContent className="max-w-5xl max-h-[90vh]">
                           <DialogHeader>
                             <DialogTitle>What Happened - Action Details</DialogTitle>
                           </DialogHeader>

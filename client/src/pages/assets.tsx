@@ -45,9 +45,25 @@ export default function AssetsPage() {
           <h1 className="text-3xl font-display font-bold text-foreground">Asset Inventory</h1>
           <p className="text-muted-foreground mt-1">Manage and track company assets.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap md:flex-nowrap">
             <BulkAssetUploadDialog assetTypes={assetTypes || []} />
             <CreateAssetDialog assetTypes={assetTypes || []} />
+            <Button 
+              variant={activeTab === "inventory" ? "default" : "outline"}
+              onClick={() => setActiveTab("inventory")}
+              className="font-semibold"
+              data-testid="button-inventory-tab"
+            >
+              Inventory
+            </Button>
+            <Button 
+              variant={activeTab === "search" ? "default" : "outline"}
+              onClick={() => setActiveTab("search")}
+              className="font-semibold"
+              data-testid="button-asset-search-tab"
+            >
+              Asset Search
+            </Button>
         </div>
       </div>
 
@@ -209,22 +225,6 @@ export default function AssetsPage() {
       </div>
       )}
 
-      <div className="fixed bottom-8 right-8 flex gap-2 shadow-lg">
-        <Button 
-          variant={activeTab === "inventory" ? "default" : "outline"}
-          onClick={() => setActiveTab("inventory")}
-          className="font-semibold"
-        >
-          Inventory
-        </Button>
-        <Button 
-          variant={activeTab === "search" ? "default" : "outline"}
-          onClick={() => setActiveTab("search")}
-          className="font-semibold"
-        >
-          Asset Search
-        </Button>
-      </div>
     </LayoutShell>
   );
 }
