@@ -953,6 +953,25 @@ export async function registerRoutes(
         finalAssetId = asset.id;
       }
 
+      // Check if asset already has active allocation - if yes, mark it as Returned
+      const existingAllocations = await db.select().from(allocations).where(
+        db.and(
+          db.eq(allocations.assetId, finalAssetId),
+          db.eq(allocations.status, "Active")
+        )
+      );
+
+      if (existingAllocations.length > 0) {
+        for (const existingAlloc of existingAllocations) {
+          await db.update(allocations)
+            .set({
+              status: "Returned",
+              returnDate: new Date()
+            })
+            .where(db.eq(allocations.id, existingAlloc.id));
+        }
+      }
+
       // Generate a verification token for the new allocation
       const token = crypto.randomBytes(32).toString('hex');
 
@@ -1186,6 +1205,25 @@ export async function registerRoutes(
           }
 
           try {
+            // Check if asset already has active allocation - if yes, mark it as Returned
+            const existingAllocations = await db.select().from(allocations).where(
+              db.and(
+                db.eq(allocations.assetId, finalAssetId),
+                db.eq(allocations.status, "Active")
+              )
+            );
+
+            if (existingAllocations.length > 0) {
+              for (const existingAlloc of existingAllocations) {
+                await db.update(allocations)
+                  .set({
+                    status: "Returned",
+                    returnDate: new Date()
+                  })
+                  .where(db.eq(allocations.id, existingAlloc.id));
+              }
+            }
+
             const token = crypto.randomBytes(32).toString('hex');
             const allocation = await storage.createAllocation({
               assetId: finalAssetId,
