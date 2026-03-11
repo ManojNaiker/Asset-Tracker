@@ -1172,6 +1172,22 @@ export async function registerRoutes(
             // Find or create employee
             if (row["Employee Name"] || row["Employee Email"]) {
               try {
+                // Auto-create departments if they don't exist
+                if (row["Department"]) {
+                  const depts = await storage.getDepartments();
+                  if (!depts.find(d => d.name === row["Department"])) {
+                    await storage.createDepartment({ name: row["Department"] });
+                  }
+                }
+
+                // Auto-create designations if they don't exist
+                if (row["Designation"]) {
+                  const desigs = await storage.getDesignations();
+                  if (!desigs.find(d => d.name === row["Designation"])) {
+                    await storage.createDesignation({ name: row["Designation"] });
+                  }
+                }
+
                 const employees = await storage.getEmployees();
                 let employee = employees.find(e => 
                   e.name === row["Employee Name"] || 
@@ -1189,6 +1205,9 @@ export async function registerRoutes(
                     mobile: row["Mobile"] || undefined,
                     status: "Active"
                   });
+                } else {
+                  // Employee exists - mark for update
+                  created.push({ ...row, status: "existing", employeeId: employee.id, message: "Employee already exists - admin confirmation needed for update" });
                 }
                 if (employee) finalEmployeeId = employee.id;
               } catch (empError: any) {
@@ -1273,7 +1292,9 @@ export async function registerRoutes(
             failedCount: failed.length, 
             totalCount: allocationsData.length,
             createdData: created,
-            failedData: failed
+            failedData: failed,
+            departmentsCreated: true,
+            designationsCreated: true
           } 
         });
         
@@ -1598,16 +1619,57 @@ export async function registerRoutes(
       const employees = req.body;
       if (!Array.isArray(employees)) return res.status(400).json({ message: "Expected array" });
       
-      let count = 0;
+      const created = [];
+      const existing = [];
+      const failed = [];
+
       for (const e of employees) {
         try {
-          await storage.createEmployee(e);
-          count++;
-        } catch (err) {}
+          // Auto-create departments if they don't exist
+          if (e.department) {
+            const depts = await storage.getDepartments();
+            if (!depts.find(d => d.name === e.department)) {
+              await storage.createDepartment({ name: e.department });
+            }
+          }
+
+          // Auto-create designations if they don't exist
+          if (e.designation) {
+            const desigs = await storage.getDesignations();
+            if (!desigs.find(d => d.name === e.designation)) {
+              await storage.createDesignation({ name: e.designation });
+            }
+          }
+
+          // Check if employee already exists
+          const allEmployees = await storage.getEmployees();
+          const existingEmp = allEmployees.find(emp => emp.email === e.email || emp.empId === e.empId);
+
+          if (existingEmp) {
+            existing.push({ ...e, employeeId: existingEmp.id, currentData: existingEmp });
+          } else {
+            const newEmp = await storage.createEmployee(e);
+            created.push({ ...e, employeeId: newEmp.id });
+          }
+        } catch (err: any) {
+          failed.push({ ...e, error: err.message });
+        }
       }
+
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Bulk Import Employees", 
+        details: { 
+          createdCount: created.length, 
+          existingCount: existing.length,
+          failedCount: failed.length,
+          createdData: created,
+          existingData: existing,
+          failedData: failed
+        } 
+      });
       
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Employees", details: { count } });
-      res.status(201).json({ count });
+      res.status(201).json({ created, existing, failed, createdCount: created.length, existingCount: existing.length, failedCount: failed.length });
     } catch (err) {
       res.status(500).json({ message: "Bulk import failed" });
     }
