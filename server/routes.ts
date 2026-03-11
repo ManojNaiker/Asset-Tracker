@@ -1299,9 +1299,10 @@ export async function registerRoutes(
 
   app.get("/api/allocations/bulk-uploads", requireAdmin, async (req, res) => {
     try {
-      const logs = await db.select().from(bulkUploadLogs).orderBy(db.desc(bulkUploadLogs.createdAt));
+      const logs = await db.select().from(bulkUploadLogs).orderBy(desc(bulkUploadLogs.createdAt));
       res.json(logs);
     } catch (err) {
+      console.error("Bulk upload logs error:", err);
       res.status(500).json({ message: "Failed to fetch upload logs" });
     }
   });
@@ -1669,7 +1670,7 @@ export async function registerRoutes(
   // Report APIs
   app.get("/api/reports/asset-inventory", requireAuth, async (req, res) => {
     try {
-      const result = await db.execute(db.raw(`
+      const result = await pool.query(`
         SELECT 
           at.name as type,
           COUNT(*) as count,
@@ -1682,16 +1683,17 @@ export async function registerRoutes(
         JOIN asset_types at ON a.asset_type_id = at.id
         GROUP BY at.id, at.name
         ORDER BY at.name
-      `));
+      `);
       res.json(result.rows || []);
     } catch (err) {
+      console.error("Asset inventory report error:", err);
       res.status(500).json({ message: "Failed to fetch asset inventory report" });
     }
   });
 
   app.get("/api/reports/employee-assets", requireAuth, async (req, res) => {
     try {
-      const result = await db.execute(db.raw(`
+      const result = await pool.query(`
         SELECT 
           e.emp_id,
           e.name as employee_name,
@@ -1705,16 +1707,17 @@ export async function registerRoutes(
         LEFT JOIN assets a ON alloc.asset_id = a.id
         GROUP BY e.id, e.emp_id, e.name, e.department, e.designation
         ORDER BY e.name
-      `));
+      `);
       res.json(result.rows || []);
     } catch (err) {
+      console.error("Employee assets report error:", err);
       res.status(500).json({ message: "Failed to fetch employee assets report" });
     }
   });
 
   app.get("/api/reports/department-assets", requireAuth, async (req, res) => {
     try {
-      const result = await db.execute(db.raw(`
+      const result = await pool.query(`
         SELECT 
           COALESCE(e.department, 'Unassigned') as department,
           COUNT(DISTINCT a.id) as total_assets,
@@ -1727,16 +1730,17 @@ export async function registerRoutes(
         LEFT JOIN employees e ON alloc.employee_id = e.id
         GROUP BY COALESCE(e.department, 'Unassigned')
         ORDER BY COALESCE(e.department, 'Unassigned')
-      `));
+      `);
       res.json(result.rows || []);
     } catch (err) {
+      console.error("Department assets report error:", err);
       res.status(500).json({ message: "Failed to fetch department assets report" });
     }
   });
 
   app.get("/api/reports/asset-status", requireAuth, async (req, res) => {
     try {
-      const result = await db.execute(db.raw(`
+      const result = await pool.query(`
         SELECT 
           a.serial_number,
           at.name as asset_type,
@@ -1751,16 +1755,17 @@ export async function registerRoutes(
         LEFT JOIN allocations alloc ON a.id = alloc.asset_id AND alloc.status = 'Active'
         LEFT JOIN employees e ON alloc.employee_id = e.id
         ORDER BY a.serial_number
-      `));
+      `);
       res.json(result.rows || []);
     } catch (err) {
+      console.error("Asset status report error:", err);
       res.status(500).json({ message: "Failed to fetch asset status report" });
     }
   });
 
   app.get("/api/reports/asset-returns", requireAuth, async (req, res) => {
     try {
-      const result = await db.execute(db.raw(`
+      const result = await pool.query(`
         SELECT 
           a.serial_number,
           at.name as asset_type,
@@ -1780,16 +1785,17 @@ export async function registerRoutes(
         LEFT JOIN employees e ON alloc.employee_id = e.id
         WHERE alloc.return_date IS NOT NULL OR a.status IN ('Damaged', 'Lost', 'Scrapped')
         ORDER BY COALESCE(alloc.return_date, a.updated_at) DESC
-      `));
+      `);
       res.json(result.rows || []);
     } catch (err) {
+      console.error("Asset returns report error:", err);
       res.status(500).json({ message: "Failed to fetch asset returns report" });
     }
   });
 
   app.get("/api/reports/verification-status", requireAuth, async (req, res) => {
     try {
-      const result = await db.execute(db.raw(`
+      const result = await pool.query(`
         SELECT 
           a.serial_number,
           at.name as asset_type,
@@ -1807,9 +1813,10 @@ export async function registerRoutes(
         LEFT JOIN users u ON v.verifier_id = u.id
         WHERE alloc.id IS NOT NULL
         ORDER BY a.serial_number
-      `));
+      `);
       res.json(result.rows || []);
     } catch (err) {
+      console.error("Verification status report error:", err);
       res.status(500).json({ message: "Failed to fetch verification status report" });
     }
   });

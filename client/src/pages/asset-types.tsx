@@ -118,8 +118,8 @@ export default function AssetTypesPage() {
                 <TableCell className="text-muted-foreground">{type.description}</TableCell>
                 <TableCell className="text-muted-foreground">{(type.schema as any[])?.length || 0} fields</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><Settings2 className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => console.log("Settings for:", type.id)}><Settings2 className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => console.log("Edit:", type.id)}><Pencil className="w-4 h-4" /></Button>
                 </TableCell>
               </TableRow>
             ))}
