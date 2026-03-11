@@ -35,7 +35,7 @@ export function useCreateEmployee() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.employees.list.path] });
-      queryClient.invalidateQueries({ queryKey: ["/api/allocations"] });
+      queryClient.invalidateQueries({ queryKey: [api.allocations.list.path] });
     },
   });
 }
@@ -57,7 +57,7 @@ export function useUpdateEmployee() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.employees.list.path] });
-      queryClient.invalidateQueries({ queryKey: ["/api/allocations"] });
+      queryClient.invalidateQueries({ queryKey: [api.allocations.list.path] });
     },
   });
 }
@@ -78,7 +78,7 @@ export function useImportEmployees() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.employees.list.path] });
-      queryClient.invalidateQueries({ queryKey: ["/api/allocations"] });
+      queryClient.invalidateQueries({ queryKey: [api.allocations.list.path] });
     },
   });
 }
