@@ -1311,7 +1311,8 @@ export async function registerRoutes(
                 await db.update(allocations)
                   .set({
                     status: "Returned",
-                    returnDate: new Date()
+                    returnDate: new Date(),
+                    verificationStatus: (existingAlloc.verificationStatus === "Pending" || existingAlloc.verificationStatus === "Rejected") ? "Revoked" : existingAlloc.verificationStatus
                   })
                   .where(eq(allocations.id, existingAlloc.id));
                 console.log(`Bulk: Marked allocation ${existingAlloc.id} as Returned for asset ${finalAssetId}`);
