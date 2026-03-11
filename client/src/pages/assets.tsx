@@ -10,7 +10,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertAssetSchema, type InsertAsset } from "@shared/schema";
-import { Plus, Search, Filter, Loader2, FileText, Eye, History, Upload, Download } from "lucide-react";
+import { Plus, Search, Filter, Loader2, FileText, Eye, History, Upload, Download, ImageIcon } from "lucide-react";
+import { ImagePreview } from "@/components/image-preview";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
@@ -295,6 +296,29 @@ function ViewAssetLifecycleDialog({ asset }: { asset: any }) {
                             <p className="text-sm font-medium text-foreground">{new Date(asset.createdAt).toLocaleDateString()}</p>
                         </div>
                     </div>
+
+                    {(() => {
+                        const allImgs: string[] = [];
+                        // Collect from asset-level images
+                        if (asset.images?.length) allImgs.push(...asset.images);
+                        // Collect from allocation images (most recent first)
+                        assetAllocations?.forEach((a: any) => {
+                            if (a.images?.length) allImgs.push(...a.images);
+                            else if (a.imageUrl) allImgs.push(a.imageUrl);
+                        });
+                        return allImgs.length > 0 ? (
+                            <div className="space-y-2">
+                                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                    <ImageIcon className="w-4 h-4" /> Asset Photos
+                                </h3>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {allImgs.map((url: string, idx: number) => (
+                                        <ImagePreview key={idx} src={url} alt={`Asset photo ${idx + 1}`} className="aspect-square" />
+                                    ))}
+                                </div>
+                            </div>
+                        ) : null;
+                    })()}
 
                     <div className="space-y-4">
                         <h3 className="text-sm font-bold text-foreground flex items-center gap-2">

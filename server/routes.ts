@@ -1048,7 +1048,7 @@ export async function registerRoutes(
 
   app.post(api.allocations.create.path, requireAdmin, async (req, res) => {
     try {
-      const { assetId, employeeId, employeeData, assetData, status, remarks, details } = req.body;
+      const { assetId, employeeId, employeeData, assetData, status, remarks, details, imageUrl: bodyImageUrl, images: bodyImages } = req.body;
       
       let finalAssetId = assetId;
       let finalEmployeeId = employeeId;
@@ -1124,8 +1124,8 @@ export async function registerRoutes(
         employeeId: finalEmployeeId,
         status: status || "Active",
         remarks,
-        imageUrl: details?.imageUrl || (details?.images?.[0] ?? undefined),
-        images: details?.images || (details?.imageUrl ? [details.imageUrl] : undefined),
+        imageUrl: bodyImageUrl || details?.imageUrl || (bodyImages?.[0] ?? details?.images?.[0] ?? undefined),
+        images: (bodyImages?.length ? bodyImages : null) || (details?.images?.length ? details.images : null) || (bodyImageUrl ? [bodyImageUrl] : null) || undefined,
         verificationToken: token
       });
 

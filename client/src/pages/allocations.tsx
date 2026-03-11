@@ -259,6 +259,19 @@ function ViewAllocationDetailsDialog({ allocation }: { allocation: any }) {
                             <p className="text-foreground">{allocation.returnReason}</p>
                         </div>
                     )}
+                    {(() => {
+                        const imgs: string[] = allocation.images?.length ? allocation.images : allocation.imageUrl ? [allocation.imageUrl] : [];
+                        return imgs.length > 0 ? (
+                            <div className="border-t border-border pt-4">
+                                <p className="text-xs text-muted-foreground font-medium uppercase mb-2">Asset Photos</p>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {imgs.map((url: string, idx: number) => (
+                                        <ImagePreview key={idx} src={url} alt={`Asset photo ${idx + 1}`} className="aspect-square" />
+                                    ))}
+                                </div>
+                            </div>
+                        ) : null;
+                    })()}
                     <div className="border-t border-border pt-4">
                         <p className="text-xs text-muted-foreground font-medium uppercase mb-2">Audit Trail</p>
                         <div className="space-y-2">
