@@ -259,7 +259,7 @@ export default function ReportsPage() {
                       {alloc.returnDate ? new Date(alloc.returnDate).toLocaleDateString() : <span className="opacity-50">-</span>}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={alloc.status === 'Active' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border'}>
+                      <Badge variant="outline" className={alloc.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-muted text-muted-foreground border-border'}>
                         {alloc.status}
                       </Badge>
                     </TableCell>
