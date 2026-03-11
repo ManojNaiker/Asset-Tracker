@@ -1388,6 +1388,105 @@ export async function registerRoutes(
             if (assetToUpdate && assetToUpdate.status !== "Allocated") {
               await storage.updateAsset(finalAssetId, { status: "Allocated" });
             }
+
+            // Send email notification for bulk allocation
+            try {
+              const emailSettings = await storage.getEmailSettings();
+              const employee = await storage.getEmployee(finalEmployeeId);
+              const asset = await storage.getAsset(finalAssetId);
+
+              if (emailSettings && emailSettings.host && employee && employee.email) {
+                const transporter = nodemailer.createTransport({
+                  host: emailSettings.host,
+                  port: emailSettings.port,
+                  secure: emailSettings.secure,
+                  auth: {
+                    user: emailSettings.user,
+                    pass: emailSettings.password,
+                  },
+                });
+
+                const appUrl = getSsoBaseUrl();
+                const verificationUrl = `${appUrl}/verify/${token}`;
+
+                // Get asset details for the email
+                const assetDetails = asset as any;
+                const assetType = assetDetails.type?.name || "Asset";
+                const assetSerial = assetDetails.serialNumber;
+                
+                // Extract dynamic fields if any
+                const dynamicFields = assetDetails.specifications as Record<string, any> || {};
+                const fieldsHtml = Object.entries(dynamicFields)
+                  .map(([key, value]) => `
+                    <tr>
+                      <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7; color: #718096; font-size: 14px; width: 40%;">${key}</td>
+                      <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7; color: #2d3748; font-size: 14px; font-weight: 500;">${value}</td>
+                    </tr>`)
+                  .join('');
+
+                await transporter.sendMail({
+                  from: emailSettings.fromEmail,
+                  to: employee.email,
+                  subject: `Asset Allocation Confirmation - ${assetType}`,
+                  html: `
+                    <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                      <!-- Header -->
+                      <div style="background-color: #22c55e; padding: 24px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">ALLOCATED ASSET VERIFICATION</h1>
+                        <p style="color: rgba(255,255,255,0.9); margin: 4px 0 0 0; font-size: 12px;">Light Microfinance Pvt. Ltd.</p>
+                      </div>
+
+                      <!-- Body -->
+                      <div style="padding: 32px 24px;">
+                        <h2 style="color: #1a202c; margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">Asset Allocation Summary</h2>
+                        
+                        <p style="color: #4a5568; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+                          Dear <strong>${employee.name}</strong>,<br><br>
+                          The following asset has been allocated to you. Please review the details below and confirm receipt by clicking the verification button.
+                        </p>
+
+                        <!-- Asset Table -->
+                        <div style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 32px;">
+                          <table style="width: 100%; border-collapse: collapse; background-color: #f8fafc;">
+                            <thead>
+                              <tr style="background-color: #edf2f7;">
+                                <th style="text-align: left; padding: 12px 16px; color: #4a5568; font-size: 13px; font-weight: 600; border-bottom: 2px solid #e2e8f0;">Field</th>
+                                <th style="text-align: left; padding: 12px 16px; color: #4a5568; font-size: 13px; font-weight: 600; border-bottom: 2px solid #e2e8f0;">Details</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #718096; font-size: 14px;">Asset Type</td>
+                                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #2d3748; font-size: 14px; font-weight: 600;">${assetType}</td>
+                              </tr>
+                              <tr>
+                                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #718096; font-size: 14px;">Serial Number</td>
+                                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #2d3748; font-size: 14px; font-weight: 600;">${assetSerial}</td>
+                              </tr>
+                              ${fieldsHtml}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <!-- Action -->
+                        <div style="text-align: center; margin-bottom: 32px;">
+                          <a href="${verificationUrl}" style="background-color: #22c55e; color: #ffffff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block; font-size: 15px; box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.2);">
+                            Verify Asset Receipt
+                          </a>
+                        </div>
+
+                        <p style="color: #718096; font-size: 13px; line-height: 1.5; margin: 0; border-top: 1px solid #edf2f7; padding-top: 24px;">
+                          This is an automated notification from the Asset Management System.<br>
+                          Portal Access: <a href="${appUrl}" style="color: #22c55e; text-decoration: none;">${appUrl}</a>
+                        </p>
+                      </div>
+                    </div>`
+                });
+                console.log("Bulk allocation email sent to " + employee.email);
+              }
+            } catch (emailErr) {
+              console.error("Failed to send bulk allocation email:", emailErr);
+            }
             
             created.push({ ...row, status: "success", allocationId: allocation.id });
           } catch (allocErr: any) {
