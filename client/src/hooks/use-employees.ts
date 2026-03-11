@@ -33,7 +33,10 @@ export function useCreateEmployee() {
       if (!res.ok) throw new Error("Failed to create employee");
       return api.employees.create.responses[201].parse(await res.json());
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.employees.list.path] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.employees.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/allocations"] });
+    },
   });
 }
 
@@ -52,7 +55,10 @@ export function useUpdateEmployee() {
       if (!res.ok) throw new Error("Failed to update employee");
       return api.employees.update.responses[200].parse(await res.json());
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.employees.list.path] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.employees.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/allocations"] });
+    },
   });
 }
 
@@ -70,6 +76,9 @@ export function useImportEmployees() {
       if (!res.ok) throw new Error("Failed to import employees");
       return await res.json();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.employees.list.path] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.employees.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/allocations"] });
+    },
   });
 }
