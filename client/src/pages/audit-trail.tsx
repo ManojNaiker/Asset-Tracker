@@ -196,11 +196,11 @@ export default function AuditTrailPage() {
                         </Button>
                       </DialogTrigger>
                       {selectedDetails && (
-                        <DialogContent className="max-w-5xl max-h-[90vh]">
+                        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
                           <DialogHeader>
                             <DialogTitle>What Happened - Action Details</DialogTitle>
                           </DialogHeader>
-                          <div className="space-y-4 p-4">
+                          <div className="space-y-4 p-4 overflow-y-auto flex-1">
                             <div className="grid grid-cols-2 gap-4 pb-4 border-b border-border">
                               <div>
                                 <span className="text-xs font-semibold text-muted-foreground uppercase">When</span>
