@@ -557,14 +557,47 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Expected an array of users" });
       }
 
-      const results = [];
+      const created = [];
+      const existing = [];
+      const failed = [];
+
       for (const userData of usersData) {
         try {
           const { username, password, role, fullName, employeeCode, designation, department } = userData;
-          if (!username || !password) continue;
+          if (!username || !password) {
+            failed.push({ ...userData, error: "Missing username or password" });
+            continue;
+          }
+
+          // Auto-create departments if they don't exist
+          if (department) {
+            const depts = await storage.getDepartments();
+            if (!depts.find(d => d.name === department)) {
+              await storage.createDepartment({ name: department });
+              console.log(`Created department: ${department}`);
+            }
+          }
+
+          // Auto-create designations if they don't exist
+          if (designation) {
+            const desigs = await storage.getDesignations();
+            if (!desigs.find(d => d.name === designation)) {
+              await storage.createDesignation({ name: designation });
+              console.log(`Created designation: ${designation}`);
+            }
+          }
 
           const existingUser = await storage.getUserByUsername(username);
-          if (existingUser) continue;
+          if (existingUser) {
+            // User exists - mark for potential update
+            existing.push({ 
+              ...userData, 
+              userId: existingUser.id, 
+              currentData: existingUser,
+              message: "User already exists - needs admin confirmation for update" 
+            });
+            continue;
+          }
 
           const hashedPassword = await bcrypt.hash(password, 10);
           const user = await storage.createUser({
@@ -577,14 +610,36 @@ export async function registerRoutes(
             department,
             mustChangePassword: true
           });
-          results.push(user);
-        } catch (e) {
+          created.push(user);
+        } catch (e: any) {
           console.error("Failed to import user", userData, e);
+          failed.push({ ...userData, error: e.message });
         }
       }
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Create Users", details: { count: results.length } });
-      res.status(201).json({ count: results.length });
+
+      await storage.createAuditLog({ 
+        userId: (req.user as User).id, 
+        action: "Bulk Import Users", 
+        details: { 
+          createdCount: created.length,
+          existingCount: existing.length,
+          failedCount: failed.length,
+          createdData: created,
+          existingData: existing,
+          failedData: failed
+        } 
+      });
+
+      res.status(201).json({ 
+        created, 
+        existing, 
+        failed, 
+        createdCount: created.length,
+        existingCount: existing.length,
+        failedCount: failed.length
+      });
     } catch (err) {
+      console.error("Bulk create users error:", err);
       res.status(500).json({ message: "Failed to bulk create users" });
     }
   });
