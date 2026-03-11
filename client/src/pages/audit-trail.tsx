@@ -16,6 +16,7 @@ import * as XLSX from "xlsx";
 export default function AuditTrailPage() {
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
+  const [bulkUploadFilter, setBulkUploadFilter] = useState<string>("all");
   const [selectedDetails, setSelectedDetails] = useState<AuditLog | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   
@@ -31,7 +32,23 @@ export default function AuditTrailPage() {
     const matchesSearch = log.action.toLowerCase().includes(search.toLowerCase()) || 
                          (log.entityType && log.entityType.toLowerCase().includes(search.toLowerCase()));
     const matchesAction = actionFilter === "all" || log.action.includes(actionFilter);
-    return matchesSearch && matchesAction;
+    
+    // Filter by bulk upload type
+    let matchesBulkUpload = true;
+    if (bulkUploadFilter !== "all") {
+      if (bulkUploadFilter === "bulk-all") {
+        // Show all bulk operations
+        matchesBulkUpload = log.action.includes("Bulk");
+      } else if (bulkUploadFilter === "bulk-allocations") {
+        // Show only bulk allocations
+        matchesBulkUpload = log.action.includes("Bulk Import Allocations");
+      } else if (bulkUploadFilter === "bulk-users") {
+        // Show only bulk users (creation and updates)
+        matchesBulkUpload = log.action.includes("Bulk") && (log.action.includes("Users") || log.action.includes("User"));
+      }
+    }
+    
+    return matchesSearch && matchesAction && matchesBulkUpload;
   });
 
   const exportToExcel = () => {
@@ -96,6 +113,21 @@ export default function AuditTrailPage() {
                     <SelectItem value="Delete">Delete</SelectItem>
                     <SelectItem value="Allocate">Allocate</SelectItem>
                     <SelectItem value="Return">Return</SelectItem>
+                </SelectContent>
+            </Select>
+            
+            <Select value={bulkUploadFilter} onValueChange={setBulkUploadFilter}>
+                <SelectTrigger className="w-full md:w-[220px]">
+                    <div className="flex items-center gap-2">
+                        <Filter className="w-4 h-4 text-slate-500" />
+                        <SelectValue placeholder="Bulk Upload History" />
+                    </div>
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All History</SelectItem>
+                    <SelectItem value="bulk-all">All Bulk Uploads</SelectItem>
+                    <SelectItem value="bulk-allocations">Bulk Allocations</SelectItem>
+                    <SelectItem value="bulk-users">Bulk User Creation</SelectItem>
                 </SelectContent>
             </Select>
         </CardContent>
