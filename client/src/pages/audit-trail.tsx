@@ -343,14 +343,86 @@ export default function AuditTrailPage() {
                                                 <div className="w-2 h-2 rounded-full bg-blue-600"></div>
                                                 USERS UPDATE KIYE GAYE ({d.existingData.length})
                                               </h4>
-                                              <div className="space-y-2">
+                                              <div className="space-y-3">
                                                 {d.existingData.map((user: any, idx: number) => (
-                                                  <div key={idx} className="p-3 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded">
-                                                    <div className="grid grid-cols-2 gap-2 text-sm">
-                                                      <div><span className="text-muted-foreground">Username:</span> <span className="font-semibold">{user.username}</span></div>
-                                                      <div><span className="text-muted-foreground">Full Name:</span> <span className="font-semibold">{user.fullName}</span></div>
-                                                      <div><span className="text-muted-foreground">Department:</span> <span className="font-semibold">{user.department}</span></div>
-                                                      <div><span className="text-muted-foreground">Designation:</span> <span className="font-semibold">{user.designation}</span></div>
+                                                  <div key={idx} className="p-4 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded">
+                                                    <div className="mb-3 pb-3 border-b border-blue-200 dark:border-blue-800">
+                                                      <div className="text-sm font-semibold text-foreground">{user.username}</div>
+                                                      <div className="text-xs text-muted-foreground">{user.fullName}</div>
+                                                    </div>
+                                                    
+                                                    <div className="space-y-2">
+                                                      {user.previousData && user.updatedData && (
+                                                        <>
+                                                          {/* Show Full Name change */}
+                                                          {user.previousData.fullName !== user.updatedData.fullName && (
+                                                            <div className="flex items-center gap-2">
+                                                              <span className="text-muted-foreground text-xs font-semibold min-w-28">Full Name:</span>
+                                                              <span className="text-xs text-muted-foreground">{user.previousData.fullName || 'N/A'}</span>
+                                                              <span className="text-blue-600 font-semibold text-xs">→</span>
+                                                              <span className="text-xs font-semibold text-blue-600">{user.updatedData.fullName || 'N/A'}</span>
+                                                            </div>
+                                                          )}
+                                                          
+                                                          {/* Show Department change */}
+                                                          {user.previousData.department !== user.updatedData.department && (
+                                                            <div className="flex items-center gap-2">
+                                                              <span className="text-muted-foreground text-xs font-semibold min-w-28">Department:</span>
+                                                              <span className="text-xs text-muted-foreground">{user.previousData.department || 'N/A'}</span>
+                                                              <span className="text-blue-600 font-semibold text-xs">→</span>
+                                                              <span className="text-xs font-semibold text-blue-600">{user.updatedData.department || 'N/A'}</span>
+                                                            </div>
+                                                          )}
+                                                          
+                                                          {/* Show Designation change */}
+                                                          {user.previousData.designation !== user.updatedData.designation && (
+                                                            <div className="flex items-center gap-2">
+                                                              <span className="text-muted-foreground text-xs font-semibold min-w-28">Designation:</span>
+                                                              <span className="text-xs text-muted-foreground">{user.previousData.designation || 'N/A'}</span>
+                                                              <span className="text-blue-600 font-semibold text-xs">→</span>
+                                                              <span className="text-xs font-semibold text-blue-600">{user.updatedData.designation || 'N/A'}</span>
+                                                            </div>
+                                                          )}
+                                                          
+                                                          {/* Show Employee Code change */}
+                                                          {user.previousData.employeeCode !== user.updatedData.employeeCode && (
+                                                            <div className="flex items-center gap-2">
+                                                              <span className="text-muted-foreground text-xs font-semibold min-w-28">Employee Code:</span>
+                                                              <span className="text-xs text-muted-foreground">{user.previousData.employeeCode || 'N/A'}</span>
+                                                              <span className="text-blue-600 font-semibold text-xs">→</span>
+                                                              <span className="text-xs font-semibold text-blue-600">{user.updatedData.employeeCode || 'N/A'}</span>
+                                                            </div>
+                                                          )}
+                                                          
+                                                          {/* Show Role change */}
+                                                          {user.previousData.role !== user.updatedData.role && (
+                                                            <div className="flex items-center gap-2">
+                                                              <span className="text-muted-foreground text-xs font-semibold min-w-28">Role:</span>
+                                                              <span className="text-xs text-muted-foreground">{user.previousData.role || 'N/A'}</span>
+                                                              <span className="text-blue-600 font-semibold text-xs">→</span>
+                                                              <span className="text-xs font-semibold text-blue-600">{user.updatedData.role || 'N/A'}</span>
+                                                            </div>
+                                                          )}
+                                                          
+                                                          {/* If no changes detected, show message */}
+                                                          {user.previousData.fullName === user.updatedData.fullName &&
+                                                            user.previousData.department === user.updatedData.department &&
+                                                            user.previousData.designation === user.updatedData.designation &&
+                                                            user.previousData.employeeCode === user.updatedData.employeeCode &&
+                                                            user.previousData.role === user.updatedData.role && (
+                                                              <div className="text-xs text-muted-foreground italic">No changes detected</div>
+                                                            )}
+                                                        </>
+                                                      )}
+                                                      
+                                                      {/* Fallback if raw data doesn't have comparison */}
+                                                      {!user.previousData && (
+                                                        <>
+                                                          <div><span className="text-muted-foreground text-xs">Full Name:</span> <span className="font-semibold text-xs">{user.fullName}</span></div>
+                                                          <div><span className="text-muted-foreground text-xs">Department:</span> <span className="font-semibold text-xs">{user.department}</span></div>
+                                                          <div><span className="text-muted-foreground text-xs">Designation:</span> <span className="font-semibold text-xs">{user.designation}</span></div>
+                                                        </>
+                                                      )}
                                                     </div>
                                                   </div>
                                                 ))}
