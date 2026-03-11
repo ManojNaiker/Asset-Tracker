@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { 
@@ -7,12 +7,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle2, XCircle, Info } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Info, Camera, Upload, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ExternalVerificationPage({ params }: { params: { token: string } }) {
   const [remarks, setRemarks] = useState("");
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -34,6 +38,35 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
     }
   });
 
+  const uploadFile = async (file: File): Promise<string | null> => {
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      return data.url as string;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploading(true);
+    const uploaded: string[] = [];
+    for (const file of files) {
+      const url = await uploadFile(file);
+      if (url) uploaded.push(url);
+    }
+    if (uploaded.length < files.length) {
+      toast({ title: "Some uploads failed", variant: "destructive" });
+    }
+    setImageUrls(prev => [...prev, ...uploaded]);
+    e.target.value = "";
+    setUploading(false);
+  };
+
   const mutation = useMutation({
     mutationFn: async (status: "Approved" | "Rejected") => {
       if (selectedAssets.length === 0) {
@@ -45,14 +78,14 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
         body: JSON.stringify({
           token: params.token,
           status,
-          remarks
+          remarks,
+          images: imageUrls.length > 0 ? imageUrls : undefined
         }),
       });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
     onSuccess: (verification: any) => {
-      // Invalidate allocations cache to refresh the UI
       queryClient.invalidateQueries({ queryKey: ["/api/allocations"] });
       toast({ title: "Verification submitted successfully" });
       setLocation(`/verification-success?id=${verification.id}`);
@@ -127,24 +160,88 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
               className="min-h-[100px] bg-background text-foreground border-border"
             />
           </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Asset Photos (Optional)</label>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              multiple
+              onChange={handleFileChange}
+            />
+            <input
+              type="file"
+              ref={cameraInputRef}
+              className="hidden"
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileChange}
+            />
+            {imageUrls.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {imageUrls.map((url, idx) => (
+                  <div key={idx} className="relative aspect-square">
+                    <img src={url} className="w-full h-full object-cover rounded-md border border-border" />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="destructive"
+                      className="absolute top-1 right-1 h-5 w-5"
+                      onClick={() => setImageUrls(prev => prev.filter((_, i) => i !== idx))}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 border-dashed"
+                disabled={uploading || mutation.isPending}
+                onClick={() => fileInputRef.current?.click()}
+                data-testid="button-upload-gallery"
+              >
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+                Gallery
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 border-dashed"
+                disabled={uploading || mutation.isPending}
+                onClick={() => cameraInputRef.current?.click()}
+                data-testid="button-upload-camera"
+              >
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Camera className="w-4 h-4 mr-2" />}
+                Camera
+              </Button>
+            </div>
+          </div>
         </CardContent>
         <CardFooter className="flex gap-4">
           <Button 
             variant="outline"
             className="flex-1 border-destructive/20 text-destructive hover:bg-destructive/10"
             onClick={() => mutation.mutate("Rejected")}
-            disabled={mutation.isPending || selectedAssets.length === 0}
+            disabled={mutation.isPending || uploading || selectedAssets.length === 0}
             data-testid="button-reject"
           >
-            <XCircle className="w-4 h-4 mr-2" /> Reject
+            {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <XCircle className="w-4 h-4 mr-2" />}
+            Reject
           </Button>
           <Button 
             className="flex-1 bg-green-600 hover:bg-green-700 text-white"
             onClick={() => mutation.mutate("Approved")}
-            disabled={mutation.isPending || selectedAssets.length === 0}
+            disabled={mutation.isPending || uploading || selectedAssets.length === 0}
             data-testid="button-approve"
           >
-            <CheckCircle2 className="w-4 h-4 mr-2" /> Approve
+            {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+            Approve
           </Button>
         </CardFooter>
       </Card>

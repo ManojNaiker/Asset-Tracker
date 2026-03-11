@@ -789,7 +789,7 @@ export async function registerRoutes(
 
   app.post("/api/verifications/external", async (req, res) => {
     try {
-      const { token, status, remarks } = req.body;
+      const { token, status, remarks, images } = req.body;
       const allocation = await storage.getAllocationByToken(token);
       if (!allocation) return res.status(404).json({ message: "Invalid or expired verification link" });
 
@@ -807,6 +807,7 @@ export async function registerRoutes(
         assetId: allocation.assetId,
         status,
         remarks,
+        images: images && images.length > 0 ? images : undefined,
         verifierId: 0 // System/External verifier
       });
 
