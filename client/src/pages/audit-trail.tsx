@@ -150,8 +150,23 @@ export default function AuditTrailPage() {
               const user = users?.find(u => u.id === log.userId);
               
               // Helper to render details clearly
+              const getFieldLabel = (fieldName: string): string => {
+                const labels: Record<string, string> = {
+                  "name": "Name",
+                  "email": "Email Address",
+                  "empId": "Employee ID",
+                  "branch": "Branch",
+                  "department": "Department",
+                  "designation": "Designation",
+                  "mobile": "Mobile Number",
+                  "status": "Status",
+                  "dateOfJoining": "Date of Joining"
+                };
+                return labels[fieldName] || fieldName;
+              };
+
               const renderDetails = () => {
-                if (!log.details) return <span className="text-muted-foreground italic">No extra details</span>;
+                if (!log.details) return <span className="text-muted-foreground italic">No changes recorded</span>;
                 
                 const d = log.details as any;
                 
@@ -181,7 +196,8 @@ export default function AuditTrailPage() {
                 }
                 if (log.action === "Update Employee") {
                   const changes = Object.keys(d || {});
-                  return `Updated ${changes.length} field${changes.length !== 1 ? 's' : ''}: ${changes.join(', ')}`;
+                  const friendlyNames = changes.map(field => getFieldLabel(field));
+                  return `Updated employee: ${friendlyNames.join(", ")}`;
                 }
                 if (log.action === "Bulk Import Allocations") {
                   return `Bulk imported allocations - ${d.count || '?'} records`;
@@ -346,18 +362,18 @@ export default function AuditTrailPage() {
                                         <div className="space-y-4">
                                           {Object.entries(d).map(([field, change]: [string, any], idx: number) => (
                                             <div key={idx} className="p-4 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded">
-                                              <div className="text-sm font-semibold text-foreground mb-2 capitalize">{field}</div>
+                                              <div className="text-sm font-semibold text-foreground mb-3">{getFieldLabel(field)}</div>
                                               <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                  <div className="text-xs text-muted-foreground mb-1">Previous Value:</div>
-                                                  <div className="text-sm font-mono bg-red-100/30 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-2 py-1 rounded">
-                                                    {change.old === null || change.old === undefined ? '(empty)' : String(change.old)}
+                                                <div className="space-y-2">
+                                                  <div className="text-xs text-muted-foreground font-medium">Pehle Value (Previous)</div>
+                                                  <div className="text-sm bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-900 dark:text-red-100 px-3 py-2 rounded">
+                                                    {change.old === null || change.old === undefined || change.old === "" ? '(khali tha)' : String(change.old)}
                                                   </div>
                                                 </div>
-                                                <div>
-                                                  <div className="text-xs text-muted-foreground mb-1">New Value:</div>
-                                                  <div className="text-sm font-mono bg-green-100/30 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-2 py-1 rounded">
-                                                    {change.new === null || change.new === undefined ? '(empty)' : String(change.new)}
+                                                <div className="space-y-2">
+                                                  <div className="text-xs text-muted-foreground font-medium">Ab Value (Now)</div>
+                                                  <div className="text-sm bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-green-900 dark:text-green-100 px-3 py-2 rounded">
+                                                    {change.new === null || change.new === undefined || change.new === "" ? '(khali hai)' : String(change.new)}
                                                   </div>
                                                 </div>
                                               </div>
