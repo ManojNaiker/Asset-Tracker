@@ -1434,9 +1434,9 @@ export async function registerRoutes(
         returnReason 
       };
       
-      // If verification hasn't been done yet, mark as Revoked
+      // If verification link not approved and asset returned, mark as Revoked
       const currentAllocation = await storage.getAllocation(id);
-      if (currentAllocation?.verificationStatus === "Pending") {
+      if (currentAllocation?.verificationStatus === "Pending" || currentAllocation?.verificationStatus === "Rejected") {
         updateData.verificationStatus = "Revoked";
       }
       

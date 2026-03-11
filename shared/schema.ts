@@ -7,7 +7,7 @@ import { z } from "zod";
 export const userRoles = ["admin", "verifier", "employee"] as const;
 export const assetStatuses = ["Available", "Allocated", "Returned", "Damaged", "Lost", "Scrapped"] as const;
 export const allocationStatuses = ["Active", "Returned"] as const;
-export const verificationStatuses = ["Pending", "Approved", "Rejected"] as const;
+export const verificationStatuses = ["Pending", "Approved", "Rejected", "Revoked"] as const;
 
 // === Tables ===
 
