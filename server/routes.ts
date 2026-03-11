@@ -1847,14 +1847,30 @@ export async function registerRoutes(
     try {
       const id = parseInt(req.params.id);
       const input = insertEmployeeSchema.partial().parse(req.body);
+      
+      // Get the old employee data before updating
+      const oldEmployee = await storage.getEmployee(id);
+      if (!oldEmployee) {
+        return res.status(404).json({ message: "Employee not found" });
+      }
+      
       const employee = await storage.updateEmployee(id, input);
+      
+      // Track only the fields that were actually changed
+      const changes: Record<string, { old: any; new: any }> = {};
+      for (const [key, newValue] of Object.entries(input)) {
+        const oldValue = oldEmployee[key as keyof typeof oldEmployee];
+        if (oldValue !== newValue) {
+          changes[key] = { old: oldValue, new: newValue };
+        }
+      }
       
       await storage.createAuditLog({
         userId: (req.user as User).id,
         action: "Update Employee",
         entityType: "Employee",
         entityId: employee.id,
-        details: input
+        details: changes
       });
 
       res.json(employee);
