@@ -793,6 +793,16 @@ export async function registerRoutes(
       const allocation = await storage.getAllocationByToken(token);
       if (!allocation) return res.status(404).json({ message: "Invalid or expired verification link" });
 
+      // Prevent approving/rejecting if the allocation has been revoked
+      if (allocation.verificationStatus === "Revoked") {
+        return res.status(400).json({ message: "This allocation has been revoked and cannot be verified" });
+      }
+
+      // Only allow approving if status is still Pending
+      if (allocation.verificationStatus !== "Pending") {
+        return res.status(400).json({ message: "This asset has already been verified or is no longer pending verification" });
+      }
+
       const verification = await storage.createVerification({
         assetId: allocation.assetId,
         status,
