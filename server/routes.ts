@@ -12,7 +12,7 @@ import bcrypt from "bcryptjs";
 import { User, auditLogs, users, emailSettings, insertAssetSchema, insertAssetTypeSchema, insertAllocationSchema, insertDepartmentSchema, insertDesignationSchema, insertEmployeeSchema, insertCustomFieldSchema, allocations, ssoSettings as ssoSettingsTable, pageSettings, insertPageSettingsSchema, bulkUploadLogs, insertBulkUploadLogSchema } from "@shared/schema";
 import crypto from "node:crypto";
 import { db } from "./db";
-import { desc } from "drizzle-orm";
+import { desc, eq, and } from "drizzle-orm";
 import nodemailer from "nodemailer";
 import multer from "multer";
 import path from "path";
@@ -955,9 +955,9 @@ export async function registerRoutes(
 
       // Check if asset already has active allocation - if yes, mark it as Returned
       const existingAllocations = await db.select().from(allocations).where(
-        db.and(
-          db.eq(allocations.assetId, finalAssetId),
-          db.eq(allocations.status, "Active")
+        and(
+          eq(allocations.assetId, finalAssetId),
+          eq(allocations.status, "Active")
         )
       );
 
@@ -968,7 +968,8 @@ export async function registerRoutes(
               status: "Returned",
               returnDate: new Date()
             })
-            .where(db.eq(allocations.id, existingAlloc.id));
+            .where(eq(allocations.id, existingAlloc.id));
+          console.log(`Marked allocation ${existingAlloc.id} as Returned for asset ${finalAssetId}`);
         }
       }
 
@@ -1207,9 +1208,9 @@ export async function registerRoutes(
           try {
             // Check if asset already has active allocation - if yes, mark it as Returned
             const existingAllocations = await db.select().from(allocations).where(
-              db.and(
-                db.eq(allocations.assetId, finalAssetId),
-                db.eq(allocations.status, "Active")
+              and(
+                eq(allocations.assetId, finalAssetId),
+                eq(allocations.status, "Active")
               )
             );
 
@@ -1220,7 +1221,8 @@ export async function registerRoutes(
                     status: "Returned",
                     returnDate: new Date()
                   })
-                  .where(db.eq(allocations.id, existingAlloc.id));
+                  .where(eq(allocations.id, existingAlloc.id));
+                console.log(`Bulk: Marked allocation ${existingAlloc.id} as Returned for asset ${finalAssetId}`);
               }
             }
 
