@@ -1268,7 +1268,13 @@ export async function registerRoutes(
         await storage.createAuditLog({ 
           userId: (req.user as User).id, 
           action: "Bulk Import Allocations", 
-          details: { created: created.length, failed: failed.length, total: allocationsData.length } 
+          details: { 
+            createdCount: created.length, 
+            failedCount: failed.length, 
+            totalCount: allocationsData.length,
+            createdData: created,
+            failedData: failed
+          } 
         });
         
         res.status(201).json({ 
@@ -1309,12 +1315,17 @@ export async function registerRoutes(
 
   app.get("/api/allocations/bulk-uploads/:id", requireAdmin, async (req, res) => {
     try {
-      const log = await db.select().from(bulkUploadLogs).where(db.eq(bulkUploadLogs.id, parseInt(req.params.id)));
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid upload ID" });
+      }
+      const log = await db.select().from(bulkUploadLogs).where(eq(bulkUploadLogs.id, id));
       if (!log.length) {
         return res.status(404).json({ message: "Upload log not found" });
       }
       res.json(log[0]);
     } catch (err) {
+      console.error("Bulk upload detail error:", err);
       res.status(500).json({ message: "Failed to fetch upload log" });
     }
   });
