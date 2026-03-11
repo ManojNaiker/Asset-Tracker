@@ -198,40 +198,117 @@ export default function AuditTrailPage() {
                       {selectedDetails && (
                         <DialogContent className="max-w-2xl">
                           <DialogHeader>
-                            <DialogTitle>Audit Log Details</DialogTitle>
+                            <DialogTitle>What Happened - Action Details</DialogTitle>
                           </DialogHeader>
                           <div className="space-y-4 p-4">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-border">
                               <div>
-                                <span className="text-xs font-semibold text-muted-foreground">Timestamp</span>
-                                <p className="text-sm font-mono">{new Date(selectedDetails.timestamp!).toLocaleString()}</p>
+                                <span className="text-xs font-semibold text-muted-foreground uppercase">When</span>
+                                <p className="text-sm font-medium">{new Date(selectedDetails.timestamp!).toLocaleString()}</p>
                               </div>
                               <div>
-                                <span className="text-xs font-semibold text-muted-foreground">User</span>
-                                <p className="text-sm">{user?.username || 'System'}</p>
+                                <span className="text-xs font-semibold text-muted-foreground uppercase">Who</span>
+                                <p className="text-sm font-medium">{user?.username || 'System'}</p>
                               </div>
                               <div>
-                                <span className="text-xs font-semibold text-muted-foreground">Action</span>
-                                <p className="text-sm font-semibold">{selectedDetails.action}</p>
+                                <span className="text-xs font-semibold text-muted-foreground uppercase">Action</span>
+                                <p className="text-sm font-semibold text-primary">{selectedDetails.action}</p>
                               </div>
                               <div>
-                                <span className="text-xs font-semibold text-muted-foreground">Entity Type</span>
-                                <p className="text-sm">{selectedDetails.entityType}</p>
+                                <span className="text-xs font-semibold text-muted-foreground uppercase">Type</span>
+                                <p className="text-sm font-medium">{selectedDetails.entityType}</p>
                               </div>
-                            </div>
-                            
-                            <div>
-                              <span className="text-xs font-semibold text-muted-foreground">Entity ID</span>
-                              <p className="text-sm font-mono">{selectedDetails.entityId}</p>
                             </div>
                             
                             {selectedDetails.details && (
-                              <div>
-                                <span className="text-xs font-semibold text-muted-foreground">Full Details (JSON)</span>
-                                <div className="bg-muted p-3 rounded border border-border overflow-x-auto mt-2">
-                                  <pre className="text-xs whitespace-pre-wrap break-words">
-                                    {JSON.stringify(selectedDetails.details, null, 2)}
-                                  </pre>
+                              <div className="space-y-3">
+                                <span className="text-sm font-semibold text-foreground">Details</span>
+                                <div className="space-y-2">
+                                  {(() => {
+                                    const d = selectedDetails.details as any;
+                                    
+                                    // Bulk Import
+                                    if (selectedDetails.action === "Bulk Import Allocations" || selectedDetails.action?.includes("Bulk")) {
+                                      return (
+                                        <div className="space-y-2">
+                                          {d.total !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Total Records:</span> <span className="font-semibold">{d.total}</span></div>}
+                                          {d.created !== undefined && <div className="flex justify-between text-green-600"><span className="text-muted-foreground">Successfully Created:</span> <span className="font-semibold">{d.created}</span></div>}
+                                          {d.failed !== undefined && <div className="flex justify-between text-red-600"><span className="text-muted-foreground">Failed:</span> <span className="font-semibold">{d.failed}</span></div>}
+                                          {d.count !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Records Processed:</span> <span className="font-semibold">{d.count}</span></div>}
+                                        </div>
+                                      );
+                                    }
+                                    
+                                    // Login
+                                    if (selectedDetails.action === "Login") {
+                                      return <div className="flex justify-between"><span className="text-muted-foreground">IP Address:</span> <span className="font-semibold">{d?.ip || 'Not recorded'}</span></div>;
+                                    }
+                                    
+                                    // Asset Allocation
+                                    if (selectedDetails.action === "Allocate Asset") {
+                                      return (
+                                        <div className="space-y-2">
+                                          <div className="flex justify-between"><span className="text-muted-foreground">Asset Type:</span> <span className="font-semibold">{d.assetType}</span></div>
+                                          <div className="flex justify-between"><span className="text-muted-foreground">Asset Serial:</span> <span className="font-mono text-sm">{d.assetSerial}</span></div>
+                                          <div className="flex justify-between"><span className="text-muted-foreground">Employee:</span> <span className="font-semibold">{d.employeeName}</span></div>
+                                          <div className="flex justify-between"><span className="text-muted-foreground">Employee ID:</span> <span className="font-mono text-sm">{d.employeeCode}</span></div>
+                                        </div>
+                                      );
+                                    }
+                                    
+                                    // Asset Return
+                                    if (selectedDetails.action === "Return Asset") {
+                                      return (
+                                        <div className="space-y-2">
+                                          <div className="flex justify-between"><span className="text-muted-foreground">Asset:</span> <span className="font-mono text-sm">{d.assetSerial}</span></div>
+                                          <div className="flex justify-between"><span className="text-muted-foreground">Returned From:</span> <span className="font-semibold">{d.employeeName}</span></div>
+                                          <div className="flex justify-between"><span className="text-muted-foreground">Return Reason:</span> <span className="font-semibold">{d.reason || 'Not specified'}</span></div>
+                                        </div>
+                                      );
+                                    }
+                                    
+                                    // User Management
+                                    if (selectedDetails.action === "Create User") {
+                                      return (
+                                        <div className="space-y-2">
+                                          <div className="flex justify-between"><span className="text-muted-foreground">Username:</span> <span className="font-semibold">{d.username}</span></div>
+                                          <div className="flex justify-between"><span className="text-muted-foreground">Role:</span> <span className="font-semibold text-blue-600">{d.role}</span></div>
+                                        </div>
+                                      );
+                                    }
+                                    
+                                    if (selectedDetails.action === "Delete User") {
+                                      return (
+                                        <div className="space-y-2">
+                                          <div className="flex justify-between"><span className="text-muted-foreground">Username:</span> <span className="font-semibold text-red-600">{d.deletedUsername}</span></div>
+                                          <div className="flex justify-between"><span className="text-muted-foreground">Role:</span> <span className="font-semibold">{d.deletedRole}</span></div>
+                                        </div>
+                                      );
+                                    }
+                                    
+                                    if (selectedDetails.action === "Update User") {
+                                      return (
+                                        <div className="space-y-2">
+                                          <div className="text-muted-foreground">Updated Fields:</div>
+                                          <div className="flex flex-wrap gap-2">
+                                            {Object.keys(d).map(key => (
+                                              <div key={key} className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded text-xs font-medium">
+                                                {key}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                    
+                                    // Default: show all fields
+                                    return Object.entries(d).map(([key, value]) => (
+                                      <div key={key} className="flex justify-between border-t border-border pt-2">
+                                        <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
+                                        <span className="font-medium text-right max-w-xs">{String(value)}</span>
+                                      </div>
+                                    ));
+                                  })()}
                                 </div>
                               </div>
                             )}
