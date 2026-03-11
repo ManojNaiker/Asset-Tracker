@@ -179,6 +179,10 @@ export default function AuditTrailPage() {
                 if (log.action === "Update User") {
                   return `Updated fields: ${Object.keys(d).join(', ')}`;
                 }
+                if (log.action === "Update Employee") {
+                  const changes = Object.keys(d || {});
+                  return `Updated ${changes.length} field${changes.length !== 1 ? 's' : ''}: ${changes.join(', ')}`;
+                }
                 if (log.action === "Bulk Import Allocations") {
                   return `Bulk imported allocations - ${d.count || '?'} records`;
                 }
@@ -332,6 +336,33 @@ export default function AuditTrailPage() {
                                               </div>
                                             </div>
                                           )}
+                                        </div>
+                                      );
+                                    }
+                                    
+                                    // Update Employee
+                                    if (selectedDetails.action === "Update Employee") {
+                                      return (
+                                        <div className="space-y-4">
+                                          {Object.entries(d).map(([field, change]: [string, any], idx: number) => (
+                                            <div key={idx} className="p-4 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded">
+                                              <div className="text-sm font-semibold text-foreground mb-2 capitalize">{field}</div>
+                                              <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                  <div className="text-xs text-muted-foreground mb-1">Previous Value:</div>
+                                                  <div className="text-sm font-mono bg-red-100/30 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-2 py-1 rounded">
+                                                    {change.old === null || change.old === undefined ? '(empty)' : String(change.old)}
+                                                  </div>
+                                                </div>
+                                                <div>
+                                                  <div className="text-xs text-muted-foreground mb-1">New Value:</div>
+                                                  <div className="text-sm font-mono bg-green-100/30 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-2 py-1 rounded">
+                                                    {change.new === null || change.new === undefined ? '(empty)' : String(change.new)}
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))}
                                         </div>
                                       );
                                     }
