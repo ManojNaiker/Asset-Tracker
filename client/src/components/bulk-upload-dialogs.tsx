@@ -186,7 +186,8 @@ export function BulkAllocationUploadDialog() {
                 const ws = wb.Sheets[wsname];
                 const data = XLSX.utils.sheet_to_json(ws);
 
-                const result = await apiRequest("POST", "/api/allocations/bulk-import", data);
+                const response = await apiRequest("POST", "/api/allocations/bulk-import", data);
+                const result = await response.json();
                 setReport(result);
                 queryClient.invalidateQueries({ queryKey: ["/api/allocations"] });
                 queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
