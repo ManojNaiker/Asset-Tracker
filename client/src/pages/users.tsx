@@ -154,7 +154,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
         defaultValues: {
             username: "",
             password: "",
-            role: "employee",
+            role: "user",
             fullName: "",
             employeeCode: "",
             designation: "",
@@ -166,7 +166,7 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
     const editForm = useForm({
         defaultValues: {
             username: "",
-            role: "employee",
+            role: "user",
             password: "",
             fullName: "",
             employeeCode: "",

@@ -31,6 +31,7 @@ interface ProfileData {
 export default function ProfilePage() {
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
+  const [successOpen, setSuccessOpen] = useState(false);
   const [form, setForm] = useState({ fullName: "", designation: "", department: "" });
 
   const { data: profile, isLoading } = useQuery<ProfileData>({
@@ -45,7 +46,7 @@ export default function ProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       setEditOpen(false);
-      toast({ title: "Request Submitted", description: "Your profile update request has been sent to the admin for approval." });
+      setSuccessOpen(true);
     },
     onError: async (err: any) => {
       const body = await err.response?.json?.().catch(() => null);
@@ -106,7 +107,7 @@ export default function ProfilePage() {
               </div>
               {!profile?.pendingRequest && (
                 <Button onClick={openEdit} variant="outline" size="sm" data-testid="button-edit-profile">
-                  <Edit className="w-4 h-4 mr-2" /> Request Changes
+                  <Edit className="w-4 h-4 mr-2" /> Submit Request
                 </Button>
               )}
             </div>
@@ -154,6 +155,27 @@ export default function ProfilePage() {
           </Card>
         )}
       </div>
+
+      <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
+        <DialogContent className="sm:max-w-sm text-center">
+          <DialogHeader>
+            <div className="flex justify-center mb-2">
+              <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </div>
+            <DialogTitle className="text-center">Request Submitted!</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground py-2">
+            Your profile update request has been sent to the admin for approval. You will be notified once it is reviewed.
+          </p>
+          <DialogFooter className="justify-center">
+            <Button onClick={() => setSuccessOpen(false)} className="w-full" data-testid="button-close-success">
+              Got it
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-md">

@@ -442,7 +442,7 @@ export function BulkUserUploadDialog() {
             { 
                 "Username/Email": "user@example.com", 
                 "Password": "DefaultPassword123", 
-                "Role": "employee", 
+                "Role": "user", 
                 "Full Name": "John Doe", 
                 "Employee Code": "LC001", 
                 "Department": "IT", 
@@ -472,7 +472,7 @@ export function BulkUserUploadDialog() {
                 const formattedData = data.map((item: any) => ({
                     username: String(item["Username/Email"] || "").trim(),
                     password: String(item["Password"] || "User@123"),
-                    role: String(item["Role"] || "employee").toLowerCase(),
+                    role: String(item["Role"] || "user").toLowerCase(),
                     fullName: String(item["Full Name"] || "").trim(),
                     employeeCode: String(item["Employee Code"] || "").trim(),
                     department: String(item["Department"] || "").trim(),

@@ -31,11 +31,11 @@ import { ThemeToggle } from "./theme-toggle";
 
 const getNavItems = (role: string) => {
   const items = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "verifier", "employee"] },
+    { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "viewer", "user"] },
     {
       name: "Assets",
       icon: Box,
-      roles: ["admin", "verifier"],
+      roles: ["admin", "viewer"],
       children: [
         { name: "Asset List", href: "/assets", icon: Box },
         { name: "Asset Type", href: "/asset-types", icon: Building2 },
@@ -54,7 +54,7 @@ const getNavItems = (role: string) => {
       ]
     },
     { name: "Reports", href: "/reports", icon: PieChart, roles: ["admin"] },
-    { name: "My Assets", href: "/my-assets", icon: Box, roles: ["employee"] },
+    { name: "My Assets", href: "/my-assets", icon: Box, roles: ["user"] },
     {
       name: "Settings",
       icon: Settings,

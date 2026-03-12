@@ -4,7 +4,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // === Enums ===
-export const userRoles = ["admin", "verifier", "employee"] as const;
+export const userRoles = ["admin", "user", "viewer"] as const;
 export const assetStatuses = ["Available", "Allocated", "Returned", "Damaged", "Lost", "Scrapped"] as const;
 export const allocationStatuses = ["Active", "Returned"] as const;
 export const verificationStatuses = ["Pending", "Approved", "Rejected", "Revoked"] as const;
@@ -15,7 +15,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  role: text("role", { enum: userRoles }).notNull().default("employee"),
+  role: text("role", { enum: userRoles }).notNull().default("user"),
   fullName: text("full_name"),
   employeeCode: text("employee_code"),
   designation: text("designation"),

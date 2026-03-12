@@ -25,6 +25,7 @@ function useLoginMutation() {
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       toast({ title: "Welcome back!", description: `Logged in as ${user.username}` });
     },
     onError: (error: Error) => {
@@ -44,7 +45,7 @@ function useLogoutMutation() {
       await apiRequest("POST", "/api/auth/logout");
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
+      queryClient.clear();
       toast({ title: "Logged out", description: "See you next time!" });
     },
   });

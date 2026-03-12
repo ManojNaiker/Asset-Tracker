@@ -429,7 +429,7 @@ export async function registerRoutes(
       const user = await storage.createUser({
         username,
         password: hashedPassword,
-        role: role || "employee",
+        role: role || "user",
         fullName,
         employeeCode,
         designation,
@@ -621,7 +621,7 @@ export async function registerRoutes(
           const user = await storage.createUser({
             username,
             password: hashedPassword,
-            role: role || "employee",
+            role: role || "user",
             fullName,
             employeeCode,
             designation,
