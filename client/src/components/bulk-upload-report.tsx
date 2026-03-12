@@ -26,9 +26,17 @@ export function BulkUploadReport() {
     fetchReports();
   }, []);
 
+  const typeLabel: Record<string, string> = {
+    allocations: "Allocations",
+    assets: "Assets",
+    employees: "Employees",
+    users: "Users",
+    "asset-types": "Asset Types",
+  };
+
   const fetchReports = async () => {
     try {
-      const res = await fetch("/api/allocations/bulk-uploads", { credentials: "include" });
+      const res = await fetch("/api/bulk-uploads", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         const sorted = Array.isArray(data) ? data.sort((a: any, b: any) => 
@@ -46,7 +54,7 @@ export function BulkUploadReport() {
 
   const viewDetails = async (reportId: number) => {
     try {
-      const res = await fetch(`/api/allocations/bulk-uploads/${reportId}`, { credentials: "include" });
+      const res = await fetch(`/api/bulk-uploads/${reportId}`, { credentials: "include" });
       if (res.ok) {
         const log = await res.json();
         setSelectedDetails(log);
@@ -61,7 +69,7 @@ export function BulkUploadReport() {
 
   const downloadDetailedReport = async (reportId: number) => {
     try {
-      const res = await fetch(`/api/allocations/bulk-uploads/${reportId}`, { credentials: "include" });
+      const res = await fetch(`/api/bulk-uploads/${reportId}`, { credentials: "include" });
       if (res.ok) {
         const log = await res.json();
         
@@ -125,7 +133,7 @@ export function BulkUploadReport() {
           {reports.map((report) => (
             <TableRow key={report.id} className="hover:bg-muted/30 transition-colors">
               <TableCell className="font-mono text-foreground">{report.id}</TableCell>
-              <TableCell className="text-foreground">{report.uploadType}</TableCell>
+              <TableCell className="text-foreground">{typeLabel[report.uploadType] ?? report.uploadType}</TableCell>
               <TableCell className="text-center text-foreground">{report.totalRows}</TableCell>
               <TableCell className="text-center">
                 <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800">

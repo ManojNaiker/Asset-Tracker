@@ -692,6 +692,18 @@ export async function registerRoutes(
         } 
       });
 
+      await db.insert(bulkUploadLogs).values({
+        userId: (req.user as User).id,
+        uploadType: "users",
+        totalRows: usersData.length,
+        createdCount: created.length,
+        failedCount: failed.length,
+        pendingCount: existing.length,
+        createdData: created,
+        failedData: failed,
+        pendingData: existing,
+      });
+
       res.status(201).json({ 
         created, 
         existing, 
@@ -982,15 +994,37 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Expected an array of assets" });
       }
 
-      const results = await storage.createAssetsBulk(assetsData);
-      
+      const created: any[] = [];
+      const failed: any[] = [];
+
+      for (const assetData of assetsData) {
+        try {
+          const result = await storage.createAsset(assetData);
+          created.push(result);
+        } catch (err: any) {
+          failed.push({ ...assetData, error: err.message || "Failed to create asset" });
+        }
+      }
+
       await storage.createAuditLog({ 
         userId: (req.user as User).id, 
         action: "Bulk Import Assets", 
-        details: { count: results.length } 
+        details: { count: created.length } 
+      });
+
+      await db.insert(bulkUploadLogs).values({
+        userId: (req.user as User).id,
+        uploadType: "assets",
+        totalRows: assetsData.length,
+        createdCount: created.length,
+        failedCount: failed.length,
+        pendingCount: 0,
+        createdData: created,
+        failedData: failed,
+        pendingData: [],
       });
       
-      res.status(201).json({ count: results.length, assets: results });
+      res.status(201).json({ count: created.length, created, failed });
     } catch (err) {
       console.error("Asset import error:", err);
       res.status(500).json({ message: "Failed to import assets" });
@@ -1575,6 +1609,29 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/bulk-uploads", requireAdmin, async (req, res) => {
+    try {
+      const logs = await db.select().from(bulkUploadLogs).orderBy(desc(bulkUploadLogs.createdAt));
+      res.json(logs);
+    } catch (err) {
+      console.error("Bulk upload logs error:", err);
+      res.status(500).json({ message: "Failed to fetch upload logs" });
+    }
+  });
+
+  app.get("/api/bulk-uploads/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid upload ID" });
+      const log = await db.select().from(bulkUploadLogs).where(eq(bulkUploadLogs.id, id));
+      if (!log.length) return res.status(404).json({ message: "Upload log not found" });
+      res.json(log[0]);
+    } catch (err) {
+      console.error("Bulk upload detail error:", err);
+      res.status(500).json({ message: "Failed to fetch upload log" });
+    }
+  });
+
   app.get("/api/allocations/bulk-uploads", requireAdmin, async (req, res) => {
     try {
       const logs = await db.select().from(bulkUploadLogs).orderBy(desc(bulkUploadLogs.createdAt));
@@ -1969,16 +2026,33 @@ export async function registerRoutes(
       const employees = req.body;
       if (!Array.isArray(employees)) return res.status(400).json({ message: "Expected array" });
       
-      let count = 0;
+      const created: any[] = [];
+      const failed: any[] = [];
+
       for (const e of employees) {
         try {
-          await storage.createEmployee(e);
-          count++;
-        } catch (err) {}
+          const result = await storage.createEmployee(e);
+          created.push(result);
+        } catch (err: any) {
+          failed.push({ ...e, error: err.message || "Failed to create employee" });
+        }
       }
-      
-      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Import Employees", details: { count } });
-      res.status(201).json({ count });
+
+      await storage.createAuditLog({ userId: (req.user as User).id, action: "Bulk Import Employees", details: { count: created.length } });
+
+      await db.insert(bulkUploadLogs).values({
+        userId: (req.user as User).id,
+        uploadType: "employees",
+        totalRows: employees.length,
+        createdCount: created.length,
+        failedCount: failed.length,
+        pendingCount: 0,
+        createdData: created,
+        failedData: failed,
+        pendingData: [],
+      });
+
+      res.status(201).json({ count: created.length, created, failed });
     } catch (err) {
       res.status(500).json({ message: "Bulk import failed" });
     }
