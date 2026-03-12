@@ -26,6 +26,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { UserCircle } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 
 const getNavItems = (role: string) => {
@@ -264,17 +265,27 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         {renderNavItems(isCollapsed)}
       </div>
 
-      <div className={`p-4 bg-slate-950/50 ${isCollapsed ? "px-2 flex flex-col items-center" : ""}`}>
+      <div className={`p-4 bg-slate-950/50 ${isCollapsed ? "px-2 flex flex-col items-center gap-2" : ""}`}>
         {!isCollapsed && (
-          <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-200 font-bold text-xs shrink-0">
-              {user.username.slice(0, 2).toUpperCase()}
+          <Link href="/profile">
+            <div className="flex items-center gap-3 mb-3 px-2 py-2 rounded-lg hover:bg-slate-800 cursor-pointer transition-colors group">
+              <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-200 font-bold text-xs shrink-0">
+                {user.username.slice(0, 2).toUpperCase()}
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-medium text-white truncate">{user.username}</p>
+                <p className="text-xs text-slate-500 capitalize group-hover:text-slate-400">View Profile</p>
+              </div>
+              <UserCircle className="w-4 h-4 text-slate-600 group-hover:text-slate-400 shrink-0" />
             </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-medium text-white truncate">{user.username}</p>
-              <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+          </Link>
+        )}
+        {isCollapsed && (
+          <Link href="/profile">
+            <div className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" title="My Profile">
+              <UserCircle className="w-6 h-6" />
             </div>
-          </div>
+          </Link>
         )}
         <Button
           variant="outline"

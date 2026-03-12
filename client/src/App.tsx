@@ -1,3 +1,4 @@
+import ProfilePage from "./pages/profile";
 import SettingsPage from "./pages/settings";
 import SsoSettingsPage from "./pages/sso-settings";
 import ReportsPage from "./pages/reports";
@@ -97,6 +98,10 @@ function Router() {
 
       <Route path="/users">
         <ProtectedRoute component={UsersPage} />
+      </Route>
+
+      <Route path="/profile">
+        <ProtectedRoute component={ProfilePage} />
       </Route>
 
       <Route path="/verify/:token">

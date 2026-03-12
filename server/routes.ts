@@ -2193,5 +2193,122 @@ export async function registerRoutes(
     }
   });
 
+  // ===== Profile Routes =====
+  // Helper to send email to admins
+  async function sendAdminNotificationEmail(subject: string, html: string) {
+    try {
+      const emailCfg = await storage.getEmailSettings();
+      if (!emailCfg || !emailCfg.host) return;
+      const transporter = nodemailer.createTransport({
+        host: emailCfg.host,
+        port: emailCfg.port || 587,
+        secure: emailCfg.secure,
+        auth: { user: emailCfg.user, pass: emailCfg.password },
+      });
+      const adminUsers = await storage.getAdminUsers();
+      const to = adminUsers.map(u => u.username).filter(Boolean).join(", ");
+      if (!to) return;
+      await transporter.sendMail({ from: emailCfg.fromEmail || emailCfg.user, to, subject, html });
+    } catch (err) {
+      console.error("Admin notification email failed:", err);
+    }
+  }
+
+  // GET /api/profile — current user's profile
+  app.get("/api/profile", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const safeUser = { id: user.id, username: user.username, role: user.role, fullName: user.fullName, employeeCode: user.employeeCode, designation: user.designation, department: user.department };
+    const pendingRequest = await storage.getPendingProfileUpdateRequestByUser(user.id);
+    res.json({ ...safeUser, pendingRequest: pendingRequest || null });
+  });
+
+  // POST /api/profile/update-request — submit a change request
+  app.post("/api/profile/update-request", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const existing = await storage.getPendingProfileUpdateRequestByUser(user.id);
+      if (existing) return res.status(400).json({ message: "You already have a pending profile update request. Please wait for admin review." });
+
+      const { fullName, designation, department } = req.body;
+      if (!fullName) return res.status(400).json({ message: "Full name is required" });
+
+      const request = await storage.createProfileUpdateRequest(user.id, { fullName, designation, department });
+      await storage.createAuditLog({ userId: user.id, action: "Profile Update Requested", entityType: "User", entityId: user.id, details: { fullName, designation, department } });
+
+      const appUrl = process.env.APP_URL || `https://${process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || "localhost:5000"}`;
+      await sendAdminNotificationEmail(
+        `Profile Update Request from ${user.fullName || user.username}`,
+        `<p><strong>${user.fullName || user.username}</strong> (${user.username}) has requested a profile update.</p>
+        <p><strong>Requested Changes:</strong></p>
+        <ul>
+          <li>Full Name: ${fullName}</li>
+          ${designation ? `<li>Designation: ${designation}</li>` : ""}
+          ${department ? `<li>Department: ${department}</li>` : ""}
+        </ul>
+        <p><a href="${appUrl}/users">Click here to review and approve/reject the request</a></p>`
+      );
+
+      res.json(request);
+    } catch (err) {
+      console.error("Profile update request error:", err);
+      res.status(500).json({ message: "Failed to submit profile update request" });
+    }
+  });
+
+  // GET /api/profile-requests — admin: list all requests
+  app.get("/api/profile-requests", requireAdmin, async (req, res) => {
+    try {
+      const status = req.query.status as string | undefined;
+      const requests = await storage.getProfileUpdateRequests(status);
+      res.json(requests);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch profile requests" });
+    }
+  });
+
+  // PATCH /api/profile-requests/:id/approve — admin approves: apply changes to user
+  app.patch("/api/profile-requests/:id/approve", requireAdmin, async (req, res) => {
+    try {
+      const admin = req.user as User;
+      const id = parseInt(req.params.id);
+      const request = await storage.getProfileUpdateRequest(id);
+      if (!request) return res.status(404).json({ message: "Request not found" });
+      if (request.status !== "Pending") return res.status(400).json({ message: "Request is no longer pending" });
+
+      const data = request.requestedData as Record<string, any>;
+      await storage.updateUser(request.userId, {
+        fullName: data.fullName,
+        designation: data.designation || undefined,
+        department: data.department || undefined,
+      });
+      await storage.updateProfileUpdateRequest(id, { status: "Approved", reviewedAt: new Date(), reviewedBy: admin.id, reviewNote: req.body.note || null });
+      await storage.createAuditLog({ userId: admin.id, action: "Profile Update Approved", entityType: "User", entityId: request.userId, details: data });
+
+      res.json({ message: "Profile update approved and applied" });
+    } catch (err) {
+      console.error("Profile approve error:", err);
+      res.status(500).json({ message: "Failed to approve request" });
+    }
+  });
+
+  // PATCH /api/profile-requests/:id/reject — admin rejects
+  app.patch("/api/profile-requests/:id/reject", requireAdmin, async (req, res) => {
+    try {
+      const admin = req.user as User;
+      const id = parseInt(req.params.id);
+      const request = await storage.getProfileUpdateRequest(id);
+      if (!request) return res.status(404).json({ message: "Request not found" });
+      if (request.status !== "Pending") return res.status(400).json({ message: "Request is no longer pending" });
+
+      await storage.updateProfileUpdateRequest(id, { status: "Rejected", reviewedAt: new Date(), reviewedBy: admin.id, reviewNote: req.body.note || null });
+      await storage.createAuditLog({ userId: admin.id, action: "Profile Update Rejected", entityType: "User", entityId: request.userId, details: { ...(request.requestedData as object), note: req.body.note } });
+
+      res.json({ message: "Profile update rejected" });
+    } catch (err) {
+      console.error("Profile reject error:", err);
+      res.status(500).json({ message: "Failed to reject request" });
+    }
+  });
+
   return httpServer;
 }

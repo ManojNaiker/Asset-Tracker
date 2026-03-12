@@ -139,6 +139,17 @@ export const pageSettings = pgTable("page_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const profileUpdateRequests = pgTable("profile_update_requests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  requestedData: jsonb("requested_data").notNull(),
+  status: text("status").notNull().default("Pending"),
+  requestedAt: timestamp("requested_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: integer("reviewed_by"),
+  reviewNote: text("review_note"),
+});
+
 export const bulkUploadLogs = pgTable("bulk_upload_logs", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -205,6 +216,7 @@ export const insertSsoSettingsSchema = createInsertSchema(ssoSettings).omit({ id
 export const insertPageSettingsSchema = createInsertSchema(pageSettings).omit({ id: true, updatedAt: true });
 export const insertCustomFieldSchema = createInsertSchema(customFields).omit({ id: true, createdAt: true });
 export const insertBulkUploadLogSchema = createInsertSchema(bulkUploadLogs).omit({ id: true, createdAt: true });
+export const insertProfileUpdateRequestSchema = createInsertSchema(profileUpdateRequests).omit({ id: true, requestedAt: true, reviewedAt: true, reviewedBy: true, reviewNote: true });
 
 // === Types ===
 export type User = typeof users.$inferSelect;
@@ -234,6 +246,8 @@ export type CustomField = typeof customFields.$inferSelect;
 export type InsertCustomField = z.infer<typeof insertCustomFieldSchema>;
 export type BulkUploadLog = typeof bulkUploadLogs.$inferSelect;
 export type InsertBulkUploadLog = z.infer<typeof insertBulkUploadLogSchema>;
+export type ProfileUpdateRequest = typeof profileUpdateRequests.$inferSelect;
+export type InsertProfileUpdateRequest = z.infer<typeof insertProfileUpdateRequestSchema>;
 
 // Request Types
 export type LoginRequest = { username: string; password: string };

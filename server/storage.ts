@@ -7,7 +7,8 @@ import {
   departments, designations, customFields,
   EmailSettings, InsertEmailSettings, emailSettings,
   SsoSettings, InsertSsoSettings, ssoSettings,
-  PageSettings, InsertPageSettings, pageSettings
+  PageSettings, InsertPageSettings, pageSettings,
+  ProfileUpdateRequest, profileUpdateRequests
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, ilike, and, or, sql, desc } from "drizzle-orm";
@@ -94,6 +95,14 @@ export interface IStorage {
   getPageSettings(): Promise<PageSettings | undefined>;
   updatePageSettings(settings: InsertPageSettings): Promise<PageSettings>;
   
+  // Profile Update Requests
+  getProfileUpdateRequests(status?: string): Promise<(ProfileUpdateRequest & { user: User })[]>;
+  getProfileUpdateRequest(id: number): Promise<ProfileUpdateRequest | undefined>;
+  getPendingProfileUpdateRequestByUser(userId: number): Promise<ProfileUpdateRequest | undefined>;
+  createProfileUpdateRequest(userId: number, requestedData: Record<string, any>): Promise<ProfileUpdateRequest>;
+  updateProfileUpdateRequest(id: number, updates: Partial<ProfileUpdateRequest>): Promise<ProfileUpdateRequest>;
+  getAdminUsers(): Promise<User[]>;
+
   // Stats
   getDashboardStats(): Promise<{
     totalAssets: number;
@@ -468,6 +477,43 @@ export class DatabaseStorage implements IStorage {
       const [newSettings] = await db.insert(pageSettings).values(settings).returning();
       return newSettings;
     }
+  }
+
+  // Profile Update Requests
+  async getProfileUpdateRequests(status?: string): Promise<(ProfileUpdateRequest & { user: User })[]> {
+    const rows = await db.select().from(profileUpdateRequests).orderBy(desc(profileUpdateRequests.requestedAt));
+    const result = [];
+    for (const row of rows) {
+      if (status && row.status !== status) continue;
+      const [user] = await db.select().from(users).where(eq(users.id, row.userId));
+      if (user) result.push({ ...row, user });
+    }
+    return result;
+  }
+
+  async getProfileUpdateRequest(id: number): Promise<ProfileUpdateRequest | undefined> {
+    const [row] = await db.select().from(profileUpdateRequests).where(eq(profileUpdateRequests.id, id));
+    return row;
+  }
+
+  async getPendingProfileUpdateRequestByUser(userId: number): Promise<ProfileUpdateRequest | undefined> {
+    const [row] = await db.select().from(profileUpdateRequests)
+      .where(and(eq(profileUpdateRequests.userId, userId), eq(profileUpdateRequests.status, "Pending")));
+    return row;
+  }
+
+  async createProfileUpdateRequest(userId: number, requestedData: Record<string, any>): Promise<ProfileUpdateRequest> {
+    const [row] = await db.insert(profileUpdateRequests).values({ userId, requestedData, status: "Pending" }).returning();
+    return row;
+  }
+
+  async updateProfileUpdateRequest(id: number, updates: Partial<ProfileUpdateRequest>): Promise<ProfileUpdateRequest> {
+    const [row] = await db.update(profileUpdateRequests).set(updates).where(eq(profileUpdateRequests.id, id)).returning();
+    return row;
+  }
+
+  async getAdminUsers(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.role, "admin"));
   }
 
   // Stats
