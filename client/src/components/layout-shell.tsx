@@ -72,7 +72,15 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsedState] = useState(() => {
+    return localStorage.getItem("sidebar-collapsed") === "true";
+  });
+
+  const setDesktopCollapsed = (val: boolean) => {
+    localStorage.setItem("sidebar-collapsed", String(val));
+    setDesktopCollapsedState(val);
+  };
+
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
   const { data: pageSettings } = useQuery({ queryKey: ["/api/settings/page"] });
