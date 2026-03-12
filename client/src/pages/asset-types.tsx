@@ -5,7 +5,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Settings2, Trash2 } from "lucide-react";
+import { Plus, Pencil, Settings2, Trash2, X } from "lucide-react";
 import { api, queryClient } from "@/lib/queryClient";
 import { 
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger 
@@ -26,7 +26,15 @@ const FIELD_TYPES = [
   { value: "number", label: "Number" },
   { value: "date", label: "Date" },
   { value: "boolean", label: "Yes / No" },
+  { value: "dropdown", label: "Dropdown" },
 ];
+
+interface SchemaField {
+  name: string;
+  type: string;
+  required?: boolean;
+  options?: string[];
+}
 
 // ── Edit Asset Type Dialog ──────────────────────────────────────────────────
 function EditAssetTypeDialog({ type, onClose }: { type: AssetType; onClose: () => void }) {
@@ -102,15 +110,16 @@ function EditAssetTypeDialog({ type, onClose }: { type: AssetType; onClose: () =
 function SchemaFieldsDialog({ type, onClose }: { type: AssetType; onClose: () => void }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(true);
-  const [fields, setFields] = useState<{ name: string; type: string; required?: boolean }[]>(
-    Array.isArray(type.schema) ? (type.schema as any[]) : []
+  const [fields, setFields] = useState<SchemaField[]>(
+    Array.isArray(type.schema) ? (type.schema as SchemaField[]) : []
   );
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState("text");
   const [newRequired, setNewRequired] = useState(false);
+  const [newOptions, setNewOptions] = useState("");
 
   const saveMutation = useMutation({
-    mutationFn: async (schema: any[]) => {
+    mutationFn: async (schema: SchemaField[]) => {
       const res = await api.put(`/api/asset-types/${type.id}`, {
         name: type.name,
         description: type.description ?? "",
@@ -136,10 +145,23 @@ function SchemaFieldsDialog({ type, onClose }: { type: AssetType; onClose: () =>
       toast({ title: "Duplicate", description: "A field with this name already exists.", variant: "destructive" });
       return;
     }
-    setFields((prev) => [...prev, { name: trimmed, type: newType, required: newRequired }]);
+
+    const field: SchemaField = { name: trimmed, type: newType, required: newRequired };
+
+    if (newType === "dropdown") {
+      const opts = newOptions.split(",").map(o => o.trim()).filter(Boolean);
+      if (opts.length === 0) {
+        toast({ title: "Missing Options", description: "Please add at least one dropdown option.", variant: "destructive" });
+        return;
+      }
+      field.options = opts;
+    }
+
+    setFields((prev) => [...prev, field]);
     setNewName("");
     setNewType("text");
     setNewRequired(false);
+    setNewOptions("");
   };
 
   const removeField = (idx: number) => {
@@ -148,27 +170,36 @@ function SchemaFieldsDialog({ type, onClose }: { type: AssetType; onClose: () =>
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { setOpen(false); onClose(); } }}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[540px]">
         <DialogHeader>
           <DialogTitle>Schema Fields — {type.name}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
           {/* Existing fields */}
           {fields.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">No fields defined yet.</p>
           ) : (
-            <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+            <div className="space-y-2">
               {fields.map((f, i) => (
                 <div key={i} className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2 border border-border">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">{f.name}</span>
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">{f.type}</Badge>
-                    {f.required && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Required</Badge>}
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-foreground">{f.name}</span>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 capitalize">{f.type}</Badge>
+                        {f.required && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Required</Badge>}
+                      </div>
+                      {f.type === "dropdown" && f.options && f.options.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          Options: {f.options.join(", ")}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    className="h-7 w-7 text-destructive hover:text-destructive shrink-0 ml-2"
                     onClick={() => removeField(i)}
                     data-testid={`button-remove-field-${i}`}
                   >
@@ -191,8 +222,8 @@ function SchemaFieldsDialog({ type, onClose }: { type: AssetType; onClose: () =>
                 className="bg-background flex-1"
                 data-testid="input-new-field-name"
               />
-              <Select value={newType} onValueChange={setNewType}>
-                <SelectTrigger className="w-32 bg-background" data-testid="select-new-field-type">
+              <Select value={newType} onValueChange={(v) => { setNewType(v); setNewOptions(""); }}>
+                <SelectTrigger className="w-36 bg-background" data-testid="select-new-field-type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -202,6 +233,30 @@ function SchemaFieldsDialog({ type, onClose }: { type: AssetType; onClose: () =>
                 </SelectContent>
               </Select>
             </div>
+
+            {newType === "dropdown" && (
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">
+                  Dropdown Options <span className="text-red-500">*</span>
+                  <span className="ml-1 text-muted-foreground/70">(comma separated)</span>
+                </label>
+                <Input
+                  placeholder="e.g. Option A, Option B, Option C"
+                  value={newOptions}
+                  onChange={(e) => setNewOptions(e.target.value)}
+                  className="bg-background"
+                  data-testid="input-dropdown-options"
+                />
+                {newOptions && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {newOptions.split(",").map(o => o.trim()).filter(Boolean).map((opt, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">{opt}</Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
