@@ -297,6 +297,20 @@ function ViewAssetLifecycleDialog({ asset }: { asset: any }) {
                         </div>
                     </div>
 
+                    {asset.specifications && Object.keys(asset.specifications).length > 0 && (
+                        <div className="bg-muted/30 p-4 rounded-lg border border-border">
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-3">Specifications</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                                {Object.entries(asset.specifications as Record<string, any>).map(([key, value]) => (
+                                    <div key={key} className="flex justify-between items-center py-1 border-b border-border/50 last:border-0">
+                                        <span className="text-xs text-muted-foreground capitalize">{key}</span>
+                                        <span className="text-xs font-medium text-foreground">{String(value ?? '—')}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {(() => {
                         const allImgs: string[] = [];
                         // Collect from asset-level images
