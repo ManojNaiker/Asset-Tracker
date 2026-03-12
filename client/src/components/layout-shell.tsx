@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -82,11 +82,22 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   };
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: pageSettings } = useQuery({ queryKey: ["/api/settings/page"] });
 
   const toggleMenu = (name: string) => {
     setOpenMenus(prev => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  const handleMenuHoverEnter = (name: string) => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    setHoveredMenu(name);
+  };
+
+  const handleMenuHoverLeave = () => {
+    closeTimerRef.current = setTimeout(() => setHoveredMenu(null), 120);
   };
 
   if (!user) return null;
@@ -102,18 +113,31 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
           if (isCollapsed) {
             return (
-              <Popover key={item.name}>
+              <Popover
+                key={item.name}
+                open={hoveredMenu === item.name}
+                onOpenChange={(open) => !open && setHoveredMenu(null)}
+              >
                 <PopoverTrigger asChild>
                   <button
                     className={`w-full flex flex-col items-center py-2 group relative focus:outline-none`}
                     data-testid={`nav-collapsed-${item.name.toLowerCase().replace(/\s+/g, "-")}`}
+                    onMouseEnter={() => handleMenuHoverEnter(item.name)}
+                    onMouseLeave={handleMenuHoverLeave}
                   >
                     <div className={`p-3 rounded-lg transition-all duration-200 ${isChildActive ? "bg-slate-800 text-white" : "text-slate-500 hover:text-white hover:bg-slate-800"}`}>
                       <item.icon className="w-6 h-6" />
                     </div>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent side="right" align="start" sideOffset={8} className="w-48 p-2 bg-slate-900 border-slate-700">
+                <PopoverContent
+                  side="right"
+                  align="start"
+                  sideOffset={8}
+                  className="w-48 p-2 bg-slate-900 border-slate-700"
+                  onMouseEnter={() => handleMenuHoverEnter(item.name)}
+                  onMouseLeave={handleMenuHoverLeave}
+                >
                   <p className="text-xs font-semibold text-slate-400 px-2 pb-2 uppercase tracking-wider">{item.name}</p>
                   <div className="space-y-1">
                     {item.children.map((child) => {
