@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { User, Mail, Briefcase, Building2, IdCard, Edit, Clock, CheckCircle, XCircle, Send } from "lucide-react";
+import { User, Mail, Briefcase, Building2, IdCard, Edit, Clock, CheckCircle, XCircle, Send, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 
@@ -30,7 +30,7 @@ interface ProfileData {
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
   const [form, setForm] = useState({ fullName: "", designation: "", department: "" });
 
@@ -45,7 +45,7 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-      setEditOpen(false);
+      setEditing(false);
       setSuccessOpen(true);
     },
     onError: async (err: any) => {
@@ -54,14 +54,16 @@ export default function ProfilePage() {
     },
   });
 
-  const openEdit = () => {
+  const startEdit = () => {
     setForm({
       fullName: profile?.fullName || "",
       designation: profile?.designation || "",
       department: profile?.department || "",
     });
-    setEditOpen(true);
+    setEditing(true);
   };
+
+  const cancelEdit = () => setEditing(false);
 
   const handleSubmit = () => {
     if (!form.fullName.trim()) {
@@ -105,8 +107,8 @@ export default function ProfilePage() {
                   <p className="text-sm text-muted-foreground capitalize">{profile?.role}</p>
                 </div>
               </div>
-              {!profile?.pendingRequest && (
-                <Button onClick={openEdit} variant="outline" size="sm" data-testid="button-edit-profile">
+              {!profile?.pendingRequest && !editing && (
+                <Button onClick={startEdit} variant="outline" size="sm" data-testid="button-edit-profile">
                   <Edit className="w-4 h-4 mr-2" /> Submit Request
                 </Button>
               )}
@@ -114,13 +116,65 @@ export default function ProfilePage() {
           </CardHeader>
           <Separator />
           <CardContent className="pt-6 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <InfoRow icon={<Mail className="w-4 h-4" />} label="Email" value={profile?.username || "-"} />
-              <InfoRow icon={<User className="w-4 h-4" />} label="Full Name" value={profile?.fullName || "-"} />
-              <InfoRow icon={<IdCard className="w-4 h-4" />} label="Employee Code" value={profile?.employeeCode || "-"} />
-              <InfoRow icon={<Briefcase className="w-4 h-4" />} label="Designation" value={profile?.designation || "-"} />
-              <InfoRow icon={<Building2 className="w-4 h-4" />} label="Department" value={profile?.department || "-"} />
-            </div>
+            {!editing ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <InfoRow icon={<Mail className="w-4 h-4" />} label="Email" value={profile?.username || "-"} />
+                <InfoRow icon={<User className="w-4 h-4" />} label="Full Name" value={profile?.fullName || "-"} />
+                <InfoRow icon={<IdCard className="w-4 h-4" />} label="Employee Code" value={profile?.employeeCode || "-"} />
+                <InfoRow icon={<Briefcase className="w-4 h-4" />} label="Designation" value={profile?.designation || "-"} />
+                <InfoRow icon={<Building2 className="w-4 h-4" />} label="Department" value={profile?.department || "-"} />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">Fill in the details you want to update. An admin will review and approve your request.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="fullName"
+                      data-testid="input-fullName"
+                      value={form.fullName}
+                      onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
+                      placeholder="Your full name"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="designation">Designation</Label>
+                    <Input
+                      id="designation"
+                      data-testid="input-designation"
+                      value={form.designation}
+                      onChange={e => setForm(f => ({ ...f, designation: e.target.value }))}
+                      placeholder="Your designation"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="department">Department</Label>
+                    <Input
+                      id="department"
+                      data-testid="input-department"
+                      value={form.department}
+                      onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
+                      placeholder="Your department"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={requestMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    data-testid="button-submit-profile-request"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {requestMutation.isPending ? "Submitting..." : "Submit Request"}
+                  </Button>
+                  <Button variant="outline" onClick={cancelEdit} disabled={requestMutation.isPending} data-testid="button-cancel-edit">
+                    <X className="w-4 h-4 mr-2" /> Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -170,37 +224,8 @@ export default function ProfilePage() {
             Your profile update request has been sent to the admin for approval. You will be notified once it is reviewed.
           </p>
           <DialogFooter className="justify-center">
-            <Button onClick={() => setSuccessOpen(false)} className="w-full" data-testid="button-close-success">
+            <Button onClick={() => setSuccessOpen(false)} className="w-full bg-green-600 hover:bg-green-700 text-white" data-testid="button-close-success">
               Got it
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Request Profile Update</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">Fill in the details you want to change. An admin will review and approve your request.</p>
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
-              <Input id="fullName" data-testid="input-fullName" value={form.fullName} onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))} placeholder="Your full name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="designation">Designation</Label>
-              <Input id="designation" data-testid="input-designation" value={form.designation} onChange={e => setForm(f => ({ ...f, designation: e.target.value }))} placeholder="Your designation" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Input id="department" data-testid="input-department" value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} placeholder="Your department" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={requestMutation.isPending} data-testid="button-submit-profile-request">
-              {requestMutation.isPending ? "Submitting..." : "Submit Request"}
             </Button>
           </DialogFooter>
         </DialogContent>
