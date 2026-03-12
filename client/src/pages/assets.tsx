@@ -27,6 +27,8 @@ export default function AssetsPage() {
   const [searchResult, setSearchResult] = useState<any | null>(null);
   const { data: assets, isLoading } = useAssets({ search, status: statusFilter });
   const { data: assetTypes } = useAssetTypes();
+  const { data: customFields = [] } = useQuery<any[]>({ queryKey: ["/api/custom-fields"] });
+  const activeCustomFields = (customFields as any[]).filter((f: any) => f.entity === "asset" && f.isActive);
 
   const filteredAssets = assets?.filter(asset => {
     if (typeFilter && asset.type.id !== Number(typeFilter)) return false;
@@ -48,7 +50,7 @@ export default function AssetsPage() {
         </div>
         <div className="flex gap-2 flex-wrap md:flex-nowrap">
             <BulkAssetUploadDialog assetTypes={assetTypes || []} />
-            <CreateAssetDialog assetTypes={assetTypes || []} />
+            <CreateAssetDialog assetTypes={assetTypes || []} customFields={activeCustomFields} />
             <Button 
               variant={activeTab === "inventory" ? "default" : "outline"}
               onClick={() => setActiveTab("inventory")}
@@ -120,6 +122,9 @@ export default function AssetsPage() {
               <TableHead className="text-foreground">Serial Number</TableHead>
               <TableHead className="text-foreground">Type</TableHead>
               <TableHead className="text-foreground">Status</TableHead>
+              {activeCustomFields.map((f: any) => (
+                <TableHead key={f.id} className="text-foreground">{f.fieldName}</TableHead>
+              ))}
               <TableHead className="text-foreground">Added Date</TableHead>
               <TableHead className="text-right text-foreground">Actions</TableHead>
             </TableRow>
@@ -127,13 +132,13 @@ export default function AssetsPage() {
           <TableBody>
             {isLoading ? (
                 <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center">
+                    <TableCell colSpan={5 + activeCustomFields.length} className="h-32 text-center">
                         <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
                     </TableCell>
                 </TableRow>
             ) : assets?.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={5 + activeCustomFields.length} className="h-32 text-center text-muted-foreground">
                         No assets found.
                     </TableCell>
                 </TableRow>
@@ -145,11 +150,16 @@ export default function AssetsPage() {
                         <TableCell>
                             <StatusBadge status={asset.status} />
                         </TableCell>
+                        {activeCustomFields.map((f: any) => (
+                          <TableCell key={f.id} className="text-muted-foreground text-sm">
+                            {(asset.specifications as any)?.[f.fieldKey] ?? '—'}
+                          </TableCell>
+                        ))}
                         <TableCell className="text-muted-foreground text-sm">
                             {new Date(asset.createdAt!).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
-                            <ViewAssetLifecycleDialog asset={asset} />
+                            <ViewAssetLifecycleDialog asset={asset} customFields={activeCustomFields} />
                         </TableCell>
                     </TableRow>
                 ))
@@ -230,7 +240,7 @@ export default function AssetsPage() {
   );
 }
 
-function ViewAssetLifecycleDialog({ asset }: { asset: any }) {
+function ViewAssetLifecycleDialog({ asset, customFields = [] }: { asset: any, customFields?: any[] }) {
     const { data: allocations, isLoading } = useQuery<(any)[]>({
         queryKey: ["/api/allocations"],
     });
@@ -301,12 +311,16 @@ function ViewAssetLifecycleDialog({ asset }: { asset: any }) {
                         <div className="bg-muted/30 p-4 rounded-lg border border-border">
                             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-3">Specifications</p>
                             <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                                {Object.entries(asset.specifications as Record<string, any>).map(([key, value]) => (
-                                    <div key={key} className="flex justify-between items-center py-1 border-b border-border/50 last:border-0">
-                                        <span className="text-xs text-muted-foreground capitalize">{key}</span>
-                                        <span className="text-xs font-medium text-foreground">{String(value ?? '—')}</span>
-                                    </div>
-                                ))}
+                                {Object.entries(asset.specifications as Record<string, any>).map(([key, value]) => {
+                                    const matchedField = customFields.find((f: any) => f.fieldKey === key);
+                                    const label = matchedField ? matchedField.fieldName : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                                    return (
+                                        <div key={key} className="flex justify-between items-center py-1 border-b border-border/50 last:border-0">
+                                            <span className="text-xs text-muted-foreground">{label}</span>
+                                            <span className="text-xs font-medium text-foreground">{String(value ?? '—')}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -385,8 +399,9 @@ function StatusBadge({ status }: { status: string }) {
     return <Badge variant="outline" className={`${styles[status] || "bg-muted"} px-2 py-0.5 rounded-full`}>{status}</Badge>;
 }
 
-function CreateAssetDialog({ assetTypes }: { assetTypes: any[] }) {
+function CreateAssetDialog({ assetTypes, customFields = [] }: { assetTypes: any[], customFields?: any[] }) {
     const [open, setOpen] = useState(false);
+    const [specValues, setSpecValues] = useState<Record<string, any>>({});
     const mutation = useCreateAsset();
     const form = useForm<InsertAsset>({
         resolver: zodResolver(insertAssetSchema),
@@ -399,22 +414,32 @@ function CreateAssetDialog({ assetTypes }: { assetTypes: any[] }) {
         }
     });
 
+    const selectedTypeId = form.watch("assetTypeId");
+    const selectedType = assetTypes.find(t => t.id === Number(selectedTypeId));
+    const schemaFields: any[] = selectedType?.schema || [];
+
     const onSubmit = (data: InsertAsset) => {
-        // Ensure numbers are numbers
         const submissionData = {
             ...data,
-            assetTypeId: Number(data.assetTypeId)
+            assetTypeId: Number(data.assetTypeId),
+            specifications: specValues,
         };
         mutation.mutate(submissionData, {
             onSuccess: () => {
                 setOpen(false);
                 form.reset();
+                setSpecValues({});
             }
         });
     };
 
     const handleSNDetected = (serialNumber: string) => {
         form.setValue("serialNumber", serialNumber);
+    };
+
+    const handleTypeChange = (val: string) => {
+        form.setValue("assetTypeId", Number(val));
+        setSpecValues({});
     };
 
     return (
@@ -424,7 +449,7 @@ function CreateAssetDialog({ assetTypes }: { assetTypes: any[] }) {
                     <Plus className="w-4 h-4 mr-2" /> Add Asset
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Add New Asset</DialogTitle>
                 </DialogHeader>
@@ -435,7 +460,7 @@ function CreateAssetDialog({ assetTypes }: { assetTypes: any[] }) {
                             name="serialNumber"
                             render={({ field }) => (
                                 <FormItem>
-                                            <FormLabel>Serial Number</FormLabel>
+                                    <FormLabel>Serial Number</FormLabel>
                                     <FormControl>
                                         <div className="relative">
                                             <Input 
@@ -458,9 +483,7 @@ function CreateAssetDialog({ assetTypes }: { assetTypes: any[] }) {
                                 <FormItem>
                                     <FormLabel>Asset Type</FormLabel>
                                     <Select 
-                                        onValueChange={(val) => {
-                                            field.onChange(Number(val));
-                                        }} 
+                                        onValueChange={handleTypeChange}
                                         value={field.value ? String(field.value) : ""}
                                     >
                                         <FormControl>
@@ -478,6 +501,83 @@ function CreateAssetDialog({ assetTypes }: { assetTypes: any[] }) {
                                 </FormItem>
                             )}
                         />
+
+                        {schemaFields.length > 0 && (
+                            <div className="space-y-3 border-t pt-3">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Specifications</p>
+                                {schemaFields.map((f: any) => (
+                                    <div key={f.name} className="space-y-1">
+                                        <label className="text-sm font-medium">
+                                            {f.name}{f.required && <span className="text-destructive ml-1">*</span>}
+                                        </label>
+                                        {f.type === "select" && f.options?.length > 0 ? (
+                                            <Select
+                                                value={specValues[f.name] ?? ""}
+                                                onValueChange={(val) => setSpecValues(prev => ({ ...prev, [f.name]: val }))}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder={`Select ${f.name}`} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {f.options.map((opt: string) => (
+                                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <Input
+                                                type={f.type === "number" ? "number" : "text"}
+                                                placeholder={f.name}
+                                                value={specValues[f.name] ?? ""}
+                                                onChange={(e) => setSpecValues(prev => ({
+                                                    ...prev,
+                                                    [f.name]: f.type === "number" ? Number(e.target.value) : e.target.value
+                                                }))}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {customFields.length > 0 && (
+                            <div className="space-y-3 border-t pt-3">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Additional Fields</p>
+                                {customFields.map((f: any) => (
+                                    <div key={f.id} className="space-y-1">
+                                        <label className="text-sm font-medium">
+                                            {f.fieldName}{f.required && <span className="text-destructive ml-1">*</span>}
+                                        </label>
+                                        {f.fieldType === "select" && f.options?.values?.length > 0 ? (
+                                            <Select
+                                                value={specValues[f.fieldKey] ?? ""}
+                                                onValueChange={(val) => setSpecValues(prev => ({ ...prev, [f.fieldKey]: val }))}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder={`Select ${f.fieldName}`} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {f.options.values.map((opt: string) => (
+                                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <Input
+                                                type={f.fieldType === "number" ? "number" : "text"}
+                                                placeholder={f.fieldName}
+                                                value={specValues[f.fieldKey] ?? ""}
+                                                onChange={(e) => setSpecValues(prev => ({
+                                                    ...prev,
+                                                    [f.fieldKey]: f.fieldType === "number" ? Number(e.target.value) : e.target.value
+                                                }))}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
                         <Button type="submit" className="w-full" disabled={mutation.isPending}>
                             {mutation.isPending ? "Adding..." : "Add Asset"}
                         </Button>
