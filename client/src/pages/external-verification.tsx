@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle2, XCircle, Info, ImageIcon } from "lucide-react";
+import { ImagePreview } from "@/components/image-preview";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ExternalVerificationPage({ params }: { params: { token: string } }) {
@@ -131,9 +132,7 @@ export default function ExternalVerificationPage({ params }: { params: { token: 
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {allocationImages.map((url, idx) => (
-                  <div key={idx} className="aspect-square rounded-md overflow-hidden border border-border">
-                    <img src={url} className="w-full h-full object-cover" alt={`Asset photo ${idx + 1}`} />
-                  </div>
+                  <ImagePreview key={idx} src={url} alt={`Asset photo ${idx + 1}`} className="aspect-square rounded-md overflow-hidden border border-border" />
                 ))}
               </div>
             </div>
