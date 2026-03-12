@@ -819,7 +819,13 @@ export async function registerRoutes(
       // We no longer clear the token so the link remains valid for the employee to see their selection
       // await storage.updateAllocation(allocation.id, { verificationToken: null });
 
+      // Look up the employee's user account to attribute the audit log correctly
+      const employeeUser = allocation.employee.email
+        ? await storage.getUserByUsername(allocation.employee.email)
+        : undefined;
+
       await storage.createAuditLog({
+        userId: employeeUser?.id ?? undefined,
         action: "Asset " + status,
         entityType: "Verification",
         entityId: verification.id,
