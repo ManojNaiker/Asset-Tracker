@@ -16,6 +16,20 @@ interface BulkUploadReport {
   createdAt: string;
 }
 
+function formatCellValue(value: any): string {
+  if (value === null || value === undefined) return '—';
+  if (typeof value === 'object') {
+    if (Array.isArray(value)) {
+      if (value.length === 0) return '—';
+      return value.map(v => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join(', ');
+    }
+    const entries = Object.entries(value);
+    if (entries.length === 0) return '—';
+    return entries.map(([k, v]) => `${k}: ${v}`).join(', ');
+  }
+  return String(value);
+}
+
 export function BulkUploadReport() {
   const [reports, setReports] = useState<BulkUploadReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -209,7 +223,7 @@ export function BulkUploadReport() {
                                     {selectedDetails.createdData.map((row: any, idx: number) => (
                                       <tr key={idx} className="border-b border-border hover:bg-muted/50">
                                         {Object.keys(selectedDetails.createdData[0] || {}).map(key => (
-                                          <td key={key} className="px-3 py-2 whitespace-nowrap">{String(row[key] ?? '')}</td>
+                                          <td key={key} className="px-3 py-2 whitespace-nowrap">{formatCellValue(row[key])}</td>
                                         ))}
                                       </tr>
                                     ))}
@@ -235,7 +249,7 @@ export function BulkUploadReport() {
                                     {selectedDetails.failedData.map((row: any, idx: number) => (
                                       <tr key={idx} className="border-b border-red-200 dark:border-red-800 hover:bg-red-100/50 dark:hover:bg-red-900/30">
                                         {Object.keys(selectedDetails.failedData[0] || {}).map(key => (
-                                          <td key={key} className="px-3 py-2 whitespace-nowrap">{String(row[key] ?? '')}</td>
+                                          <td key={key} className="px-3 py-2 whitespace-nowrap">{formatCellValue(row[key])}</td>
                                         ))}
                                       </tr>
                                     ))}
