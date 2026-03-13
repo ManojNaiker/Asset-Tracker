@@ -510,7 +510,7 @@ function CreateAssetDialog({ assetTypes, customFields = [] }: { assetTypes: any[
                                         <label className="text-sm font-medium">
                                             {f.name}{f.required && <span className="text-destructive ml-1">*</span>}
                                         </label>
-                                        {f.type === "select" && f.options?.length > 0 ? (
+                                        {(f.type === "dropdown" || f.type === "select") && f.options?.length > 0 ? (
                                             <Select
                                                 value={specValues[f.name] ?? ""}
                                                 onValueChange={(val) => setSpecValues(prev => ({ ...prev, [f.name]: val }))}

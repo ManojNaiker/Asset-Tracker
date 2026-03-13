@@ -204,12 +204,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateAssetType(id: number, updates: Partial<AssetType>): Promise<AssetType> {
-    const cols: any = {};
-    if (updates.name !== undefined) cols.name = updates.name;
-    if (updates.description !== undefined) cols.description = updates.description;
-    if (updates.schema !== undefined) cols.schema = sql`${JSON.stringify(updates.schema)}::jsonb`;
-    const [updated] = await db.update(assetTypes).set(cols).where(eq(assetTypes.id, id)).returning();
-    return updated;
+    const result = await pool.query(
+      `UPDATE asset_types SET name = COALESCE($1, name), description = $2, "schema" = $3::jsonb WHERE id = $4 RETURNING *`,
+      [
+        updates.name ?? null,
+        updates.description ?? null,
+        JSON.stringify(updates.schema ?? []),
+        id,
+      ]
+    );
+    return result.rows[0];
   }
 
   // Assets
