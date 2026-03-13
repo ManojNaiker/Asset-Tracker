@@ -283,7 +283,21 @@ function SchemaFieldsDialog({ type, onClose }: { type: AssetType; onClose: () =>
           {/* Save */}
           <Button
             className="w-full"
-            onClick={() => saveMutation.mutate(fields)}
+            onClick={() => {
+              let finalFields = [...fields];
+              const trimmed = newName.trim();
+              if (trimmed) {
+                if (!finalFields.some((f) => f.name.toLowerCase() === trimmed.toLowerCase())) {
+                  const pending: SchemaField = { name: trimmed, type: newType, required: newRequired };
+                  if (newType === "dropdown") {
+                    const opts = newOptions.split(",").map(o => o.trim()).filter(Boolean);
+                    if (opts.length > 0) pending.options = opts;
+                  }
+                  finalFields = [...finalFields, pending];
+                }
+              }
+              saveMutation.mutate(finalFields);
+            }}
             disabled={saveMutation.isPending}
             data-testid="button-save-schema"
           >
