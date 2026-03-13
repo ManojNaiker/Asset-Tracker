@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useAssets, useCreateAsset, useAssetTypes } from "@/hooks/use-assets";
+import { useAssets, useCreateAsset, useAssetTypes, useUpdateAsset } from "@/hooks/use-assets";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertAssetSchema, type InsertAsset } from "@shared/schema";
-import { Plus, Search, Filter, Loader2, FileText, Eye, History, Upload, Download, ImageIcon } from "lucide-react";
+import { Plus, Search, Filter, Loader2, FileText, Eye, History, Upload, Download, ImageIcon, Pencil } from "lucide-react";
 import { ImagePreview } from "@/components/image-preview";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -158,7 +158,8 @@ export default function AssetsPage() {
                         <TableCell className="text-muted-foreground text-sm">
                             {new Date(asset.createdAt!).toLocaleDateString()}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right flex justify-end items-center gap-1">
+                            <EditAssetDialog asset={asset} assetTypes={assetTypes || []} />
                             <ViewAssetLifecycleDialog asset={asset} customFields={activeCustomFields} />
                         </TableCell>
                     </TableRow>
@@ -397,6 +398,187 @@ function StatusBadge({ status }: { status: string }) {
         Scrapped: "bg-muted text-muted-foreground border-border",
     };
     return <Badge variant="outline" className={`${styles[status] || "bg-muted"} px-2 py-0.5 rounded-full`}>{status}</Badge>;
+}
+
+function EditAssetDialog({ asset, assetTypes }: { asset: any; assetTypes: any[] }) {
+    const [open, setOpen] = useState(false);
+    const [specValues, setSpecValues] = useState<Record<string, any>>({});
+    const mutation = useUpdateAsset();
+
+    const form = useForm<InsertAsset>({
+        resolver: zodResolver(insertAssetSchema),
+        defaultValues: {
+            serialNumber: asset.serialNumber,
+            assetTypeId: asset.assetTypeId,
+            status: asset.status,
+            specifications: asset.specifications || {},
+            images: asset.images || [],
+        },
+    });
+
+    const selectedTypeId = form.watch("assetTypeId");
+    const selectedType = assetTypes.find(t => t.id === Number(selectedTypeId));
+    const schemaFields: any[] = selectedType?.schema || [];
+
+    const handleOpen = (val: boolean) => {
+        if (val) {
+            form.reset({
+                serialNumber: asset.serialNumber,
+                assetTypeId: asset.assetTypeId,
+                status: asset.status,
+                specifications: asset.specifications || {},
+                images: asset.images || [],
+            });
+            setSpecValues(asset.specifications || {});
+        }
+        setOpen(val);
+    };
+
+    const handleTypeChange = (val: string) => {
+        form.setValue("assetTypeId", Number(val));
+        setSpecValues({});
+    };
+
+    const onSubmit = (data: InsertAsset) => {
+        mutation.mutate(
+            { id: asset.id, ...data, assetTypeId: Number(data.assetTypeId), specifications: specValues },
+            {
+                onSuccess: () => setOpen(false),
+            }
+        );
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={handleOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" data-testid={`button-edit-asset-${asset.id}`}>
+                    <Pencil className="w-4 h-4 mr-1" /> Edit
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>Edit Asset: {asset.serialNumber}</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="serialNumber"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Serial Number</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            placeholder="SN-12345"
+                                            {...field}
+                                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                            data-testid="input-edit-serial-number"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="assetTypeId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Asset Type</FormLabel>
+                                    <Select
+                                        onValueChange={handleTypeChange}
+                                        value={field.value ? String(field.value) : ""}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger data-testid="select-edit-asset-type">
+                                                <SelectValue placeholder="Select type" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {assetTypes.map(t => (
+                                                <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="status"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Status</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger data-testid="select-edit-status">
+                                                <SelectValue placeholder="Select status" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="Available">Available</SelectItem>
+                                            <SelectItem value="Allocated">Allocated</SelectItem>
+                                            <SelectItem value="Damaged">Damaged</SelectItem>
+                                            <SelectItem value="Lost">Lost</SelectItem>
+                                            <SelectItem value="Scrapped">Scrapped</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {schemaFields.length > 0 && (
+                            <div className="space-y-3 border-t pt-3">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Specifications</p>
+                                {schemaFields.map((f: any) => (
+                                    <div key={f.name} className="space-y-1">
+                                        <label className="text-sm font-medium">
+                                            {f.name}{f.required && <span className="text-destructive ml-1">*</span>}
+                                        </label>
+                                        {(f.type === "dropdown" || f.type === "select") && f.options?.length > 0 ? (
+                                            <Select
+                                                value={specValues[f.name] ?? ""}
+                                                onValueChange={(val) => setSpecValues(prev => ({ ...prev, [f.name]: val }))}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder={`Select ${f.name}`} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {f.options.map((opt: string) => (
+                                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <Input
+                                                type={f.type === "number" ? "number" : "text"}
+                                                placeholder={f.name}
+                                                value={specValues[f.name] ?? ""}
+                                                onChange={(e) => setSpecValues(prev => ({
+                                                    ...prev,
+                                                    [f.name]: f.type === "number" ? Number(e.target.value) : e.target.value,
+                                                }))}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                            <Button type="submit" disabled={mutation.isPending} data-testid="button-save-edit-asset">
+                                {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                                Save Changes
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
 }
 
 function CreateAssetDialog({ assetTypes, customFields = [] }: { assetTypes: any[], customFields?: any[] }) {
