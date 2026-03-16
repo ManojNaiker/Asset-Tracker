@@ -2384,6 +2384,74 @@ export async function registerRoutes(
     }
   });
 
+  // ─── Scheduled Backup File Management ────────────────────────────────────────
+
+  // GET /api/backup/files — list all saved backup files (admin only)
+  app.get("/api/backup/files", requireAdmin, async (req, res) => {
+    try {
+      const { listBackupFiles } = await import("./backup-scheduler");
+      res.json(listBackupFiles());
+    } catch (err) {
+      console.error("List backups error:", err);
+      res.status(500).json({ message: "Failed to list backup files" });
+    }
+  });
+
+  // GET /api/backup/files/:filename — download a specific backup file (admin only)
+  app.get("/api/backup/files/:filename", requireAdmin, async (req, res) => {
+    try {
+      const { BACKUPS_DIR } = await import("./backup-scheduler");
+      const filename = req.params.filename;
+      if (!filename.endsWith(".json") || filename.includes("..") || filename.includes("/")) {
+        return res.status(400).json({ message: "Invalid filename" });
+      }
+      const filepath = path.join(BACKUPS_DIR, filename);
+      if (!fs.existsSync(filepath)) {
+        return res.status(404).json({ message: "Backup file not found" });
+      }
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Content-Type", "application/json");
+      res.sendFile(filepath);
+    } catch (err) {
+      console.error("Download backup file error:", err);
+      res.status(500).json({ message: "Failed to download backup file" });
+    }
+  });
+
+  // DELETE /api/backup/files/:filename — delete a specific backup file (admin only)
+  app.delete("/api/backup/files/:filename", requireAdmin, async (req, res) => {
+    try {
+      const { BACKUPS_DIR } = await import("./backup-scheduler");
+      const filename = req.params.filename;
+      if (!filename.endsWith(".json") || filename.includes("..") || filename.includes("/")) {
+        return res.status(400).json({ message: "Invalid filename" });
+      }
+      const filepath = path.join(BACKUPS_DIR, filename);
+      if (!fs.existsSync(filepath)) {
+        return res.status(404).json({ message: "Backup file not found" });
+      }
+      fs.unlinkSync(filepath);
+      res.json({ message: "Backup file deleted" });
+    } catch (err) {
+      console.error("Delete backup file error:", err);
+      res.status(500).json({ message: "Failed to delete backup file" });
+    }
+  });
+
+  // POST /api/backup/now — manually trigger a backup now (admin only)
+  app.post("/api/backup/now", requireAdmin, async (req, res) => {
+    try {
+      const { createBackupFile } = await import("./backup-scheduler");
+      const filename = await createBackupFile("manual");
+      const admin = req.user as User;
+      await storage.createAuditLog({ userId: admin.id, action: "Manual Backup Created", entityType: "System", entityId: null, details: { filename } });
+      res.json({ message: "Backup created successfully", filename });
+    } catch (err) {
+      console.error("Manual backup error:", err);
+      res.status(500).json({ message: "Failed to create backup" });
+    }
+  });
+
   // ─── Backup / Restore ────────────────────────────────────────────────────────
 
   // GET /api/backup/export — dump all tables as a single JSON file (admin only)
