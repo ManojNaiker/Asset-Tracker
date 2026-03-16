@@ -2384,6 +2384,79 @@ export async function registerRoutes(
     }
   });
 
+  // ─── FTP User Management ─────────────────────────────────────────────────────
+  const { ftpUsers: ftpUsersTable } = await import("@shared/schema");
+
+  // GET /api/ftp-users — list all FTP users (admin only)
+  app.get("/api/ftp-users", requireAdmin, async (req, res) => {
+    try {
+      const users = await db.select({
+        id: ftpUsersTable.id,
+        username: ftpUsersTable.username,
+        description: ftpUsersTable.description,
+        isActive: ftpUsersTable.isActive,
+        createdAt: ftpUsersTable.createdAt,
+        createdBy: ftpUsersTable.createdBy,
+      }).from(ftpUsersTable);
+      res.json(users);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch FTP users" });
+    }
+  });
+
+  // POST /api/ftp-users — create FTP user (admin only)
+  app.post("/api/ftp-users", requireAdmin, async (req, res) => {
+    try {
+      const { username, password, description } = req.body;
+      if (!username || !password) return res.status(400).json({ message: "Username and password required" });
+      if (password.length < 6) return res.status(400).json({ message: "Password must be at least 6 characters" });
+      const admin = req.user as User;
+      const hashedPwd = await bcrypt.hash(password, 10);
+      const [created] = await db.insert(ftpUsersTable).values({
+        username, password: hashedPwd, description: description || null, isActive: true, createdBy: admin.id
+      }).returning({ id: ftpUsersTable.id, username: ftpUsersTable.username, description: ftpUsersTable.description, isActive: ftpUsersTable.isActive, createdAt: ftpUsersTable.createdAt });
+      await storage.createAuditLog({ userId: admin.id, action: "FTP User Created", entityType: "FtpUser", entityId: created.id, details: { username } });
+      res.status(201).json(created);
+    } catch (err: any) {
+      if (err.code === "23505") return res.status(409).json({ message: "Username already exists" });
+      res.status(500).json({ message: "Failed to create FTP user" });
+    }
+  });
+
+  // PATCH /api/ftp-users/:id — update FTP user (admin only)
+  app.patch("/api/ftp-users/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { password, description, isActive } = req.body;
+      const updates: Record<string, any> = {};
+      if (description !== undefined) updates.description = description;
+      if (isActive !== undefined) updates.isActive = isActive;
+      if (password) {
+        if (password.length < 6) return res.status(400).json({ message: "Password must be at least 6 characters" });
+        updates.password = await bcrypt.hash(password, 10);
+      }
+      await db.update(ftpUsersTable).set(updates).where(eq(ftpUsersTable.id, id));
+      const admin = req.user as User;
+      await storage.createAuditLog({ userId: admin.id, action: "FTP User Updated", entityType: "FtpUser", entityId: id, details: { isActive } });
+      res.json({ message: "FTP user updated" });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to update FTP user" });
+    }
+  });
+
+  // DELETE /api/ftp-users/:id — delete FTP user (admin only)
+  app.delete("/api/ftp-users/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await db.delete(ftpUsersTable).where(eq(ftpUsersTable.id, id));
+      const admin = req.user as User;
+      await storage.createAuditLog({ userId: admin.id, action: "FTP User Deleted", entityType: "FtpUser", entityId: id, details: {} });
+      res.json({ message: "FTP user deleted" });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete FTP user" });
+    }
+  });
+
   // ─── Scheduled Backup File Management ────────────────────────────────────────
 
   // GET /api/backup/files — list all saved backup files (admin only)

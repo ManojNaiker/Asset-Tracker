@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LayoutShell } from "@/components/layout-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, UserPlus, Loader2, Edit2, Trash2, Lock, Unlock, Mail, UserCog, Building2, Briefcase, Upload, Settings2, GripVertical } from "lucide-react";
+import { Plus, UserPlus, Loader2, Edit2, Trash2, Lock, Unlock, Mail, UserCog, Building2, Briefcase, Upload, Settings2, GripVertical, Network, Eye, EyeOff, ToggleLeft, ToggleRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -200,6 +200,9 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
                     </TabsTrigger>
                     <TabsTrigger value="field-settings" className="data-[state=active]:bg-card">
                         Field Settings
+                    </TabsTrigger>
+                    <TabsTrigger value="ftp-users" className="data-[state=active]:bg-card">
+                        FTP Users
                     </TabsTrigger>
                 </TabsList>
             </Tabs>
@@ -666,6 +669,10 @@ export default function UsersPage({ hideLayout = false }: { hideLayout?: boolean
 
             {activeSubTab === "field-settings" && (
                 <FieldSettingsTab />
+            )}
+
+            {activeSubTab === "ftp-users" && (
+                <FtpUsersTab />
             )}
         </>
     );
@@ -1141,5 +1148,213 @@ function FieldForm({ entityOptions, dropdownSources, defaultValues, onSubmit, is
                 {submitLabel}
             </Button>
         </form>
+    );
+}
+
+
+function FtpUsersTab() {
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<any>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showEditPassword, setShowEditPassword] = useState(false);
+    const [newPwd, setNewPwd] = useState("");
+    const [editDesc, setEditDesc] = useState("");
+
+    const { data: ftpUsers = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/ftp-users"] });
+
+    const [form, setForm] = useState({ username: "", password: "", description: "" });
+
+    const createMutation = useMutation({
+        mutationFn: async (data: any) => {
+            const res = await fetch("/api/ftp-users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data), credentials: "include" });
+            if (!res.ok) throw new Error((await res.json()).message);
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/ftp-users"] });
+            toast({ title: "FTP User created", description: "WinSCP se in credentials se connect karein." });
+            setForm({ username: "", password: "", description: "" });
+            setIsCreateOpen(false);
+        },
+        onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, data }: any) => {
+            const res = await fetch(`/api/ftp-users/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data), credentials: "include" });
+            if (!res.ok) throw new Error((await res.json()).message);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/ftp-users"] });
+            toast({ title: "FTP User updated" });
+            setEditingUser(null);
+            setNewPwd("");
+        },
+        onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id: number) => {
+            const res = await fetch(`/api/ftp-users/${id}`, { method: "DELETE", credentials: "include" });
+            if (!res.ok) throw new Error((await res.json()).message);
+        },
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/ftp-users"] }); toast({ title: "FTP User deleted" }); },
+        onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    });
+
+    const toggleActive = (user: any) => {
+        updateMutation.mutate({ id: user.id, data: { isActive: !user.isActive } });
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h2 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
+                        <Network className="w-6 h-6 text-blue-600" /> FTP Users
+                    </h2>
+                    <p className="text-muted-foreground mt-1">In users se WinSCP/FTP se backup folder access hoga.</p>
+                </div>
+                <Button onClick={() => setIsCreateOpen(true)} data-testid="button-add-ftp-user">
+                    <Plus className="w-4 h-4 mr-2" /> FTP User Banao
+                </Button>
+            </div>
+
+            <div className="rounded-xl border bg-card overflow-hidden">
+                <div className="bg-blue-50 dark:bg-blue-950/30 border-b px-4 py-3 flex items-start gap-3">
+                    <Network className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                    <div className="text-sm text-blue-800 dark:text-blue-300">
+                        <p className="font-semibold">WinSCP se kaise connect karein (apne server par):</p>
+                        <p className="mt-1">Protocol: <strong>FTP</strong> &nbsp;|&nbsp; Host: <strong>aapka server IP</strong> &nbsp;|&nbsp; Port: <strong>2121</strong> &nbsp;|&nbsp; Username/Password: neeche banaye gaye FTP user ke credentials</p>
+                        <p className="mt-1 text-xs opacity-80">Connect hone par sirf <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">backups/</code> folder dikhega.</p>
+                    </div>
+                </div>
+
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-10 text-muted-foreground gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Loading...
+                    </div>
+                ) : ftpUsers.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                        <Network className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                        <p className="text-sm">Abhi tak koi FTP user nahi hai.</p>
+                        <p className="text-xs mt-1">Upar "FTP User Banao" button dabao.</p>
+                    </div>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Username</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Created</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {ftpUsers.map((user: any) => (
+                                <TableRow key={user.id} data-testid={`row-ftp-user-${user.id}`}>
+                                    <TableCell className="font-medium font-mono">{user.username}</TableCell>
+                                    <TableCell className="text-muted-foreground text-sm">{user.description || "—"}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={user.isActive ? "default" : "secondary"} className={user.isActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : ""}>
+                                            {user.isActive ? "Active" : "Inactive"}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-sm text-muted-foreground">
+                                        {new Date(user.createdAt).toLocaleDateString("en-IN")}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex gap-2 justify-end">
+                                            <Button variant="outline" size="sm" onClick={() => toggleActive(user)} title={user.isActive ? "Deactivate" : "Activate"} data-testid={`button-toggle-ftp-${user.id}`}>
+                                                {user.isActive ? <ToggleRight className="w-4 h-4 text-emerald-600" /> : <ToggleLeft className="w-4 h-4 text-slate-400" />}
+                                            </Button>
+                                            <Button variant="outline" size="sm" onClick={() => { setEditingUser(user); setEditDesc(user.description || ""); setNewPwd(""); }} data-testid={`button-edit-ftp-${user.id}`}>
+                                                <Edit2 className="w-4 h-4" />
+                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" data-testid={`button-delete-ftp-${user.id}`}>
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>FTP User delete karein?</AlertDialogTitle>
+                                                        <AlertDialogDescription><strong>{user.username}</strong> permanently delete ho jayega.</AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => deleteMutation.mutate(user.id)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
+            </div>
+
+            {/* Create Dialog */}
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Naya FTP User banao</DialogTitle></DialogHeader>
+                    <div className="space-y-4 pt-2">
+                        <div className="space-y-1">
+                            <Label>Username <span className="text-destructive">*</span></Label>
+                            <Input value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} placeholder="ftpuser1" data-testid="input-ftp-username" />
+                        </div>
+                        <div className="space-y-1">
+                            <Label>Password <span className="text-destructive">*</span></Label>
+                            <div className="relative">
+                                <Input type={showPassword ? "text" : "password"} value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="Minimum 6 characters" className="pr-10" data-testid="input-ftp-password" />
+                                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setShowPassword(v => !v)}>
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <Label>Description (optional)</Label>
+                            <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="jaise: WinSCP backup access" data-testid="input-ftp-description" />
+                        </div>
+                        <Button className="w-full" onClick={() => createMutation.mutate(form)} disabled={!form.username || !form.password || createMutation.isPending} data-testid="button-submit-ftp-user">
+                            {createMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+                            FTP User Banao
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Dialog */}
+            <Dialog open={!!editingUser} onOpenChange={o => !o && setEditingUser(null)}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>FTP User Edit karein — {editingUser?.username}</DialogTitle></DialogHeader>
+                    <div className="space-y-4 pt-2">
+                        <div className="space-y-1">
+                            <Label>Description</Label>
+                            <Input value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder="Description" data-testid="input-edit-ftp-description" />
+                        </div>
+                        <div className="space-y-1">
+                            <Label>Naya Password (khali chhodo agar change nahi karna)</Label>
+                            <div className="relative">
+                                <Input type={showEditPassword ? "text" : "password"} value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="Minimum 6 characters" className="pr-10" data-testid="input-edit-ftp-password" />
+                                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setShowEditPassword(v => !v)}>
+                                    {showEditPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
+                        </div>
+                        <Button className="w-full" onClick={() => updateMutation.mutate({ id: editingUser.id, data: { description: editDesc, ...(newPwd ? { password: newPwd } : {}) } })} disabled={updateMutation.isPending} data-testid="button-submit-edit-ftp">
+                            {updateMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                            Save Changes
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 }

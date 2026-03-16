@@ -164,6 +164,20 @@ export const bulkUploadLogs = pgTable("bulk_upload_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const ftpUsers = pgTable("ftp_users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: integer("created_by"),
+});
+
+export const insertFtpUserSchema = createInsertSchema(ftpUsers).omit({ id: true, createdAt: true });
+export type FtpUser = typeof ftpUsers.$inferSelect;
+export type InsertFtpUser = z.infer<typeof insertFtpUserSchema>;
+
 export const fieldTypeOptions = ["text", "number", "dropdown"] as const;
 
 export const customFields = pgTable("custom_fields", {
