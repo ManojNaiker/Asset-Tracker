@@ -20,7 +20,8 @@ import {
   ChevronLeft,
   Mail,
   UserCog,
-  ShieldCheck
+  ShieldCheck,
+  DatabaseBackup
 } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
@@ -54,6 +55,7 @@ const getNavItems = (role: string) => {
       ]
     },
     { name: "Reports", href: "/reports", icon: PieChart, roles: ["admin"] },
+    { name: "Backup & Restore", href: "/backup", icon: DatabaseBackup, roles: ["admin"] },
     { name: "My Assets", href: "/my-assets", icon: Box, roles: ["user"] },
     {
       name: "Settings",

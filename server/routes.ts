@@ -2384,5 +2384,154 @@ export async function registerRoutes(
     }
   });
 
+  // ─── Backup / Restore ────────────────────────────────────────────────────────
+
+  // GET /api/backup/export — dump all tables as a single JSON file (admin only)
+  app.get("/api/backup/export", requireAdmin, async (req, res) => {
+    try {
+      const { db } = await import("./db");
+      const schema = await import("@shared/schema");
+
+      const [
+        usersData,
+        employeesData,
+        assetTypesData,
+        assetsData,
+        allocationsData,
+        verificationsData,
+        departmentsData,
+        designationsData,
+        emailSettingsData,
+        ssoSettingsData,
+        pageSettingsData,
+        auditLogsData,
+        customFieldsData,
+        bulkUploadLogsData,
+        profileUpdateRequestsData,
+      ] = await Promise.all([
+        db.select().from(schema.users),
+        db.select().from(schema.employees),
+        db.select().from(schema.assetTypes),
+        db.select().from(schema.assets),
+        db.select().from(schema.allocations),
+        db.select().from(schema.verifications),
+        db.select().from(schema.departments),
+        db.select().from(schema.designations),
+        db.select().from(schema.emailSettings),
+        db.select().from(schema.ssoSettings),
+        db.select().from(schema.pageSettings),
+        db.select().from(schema.auditLogs),
+        db.select().from(schema.customFields),
+        db.select().from(schema.bulkUploadLogs),
+        db.select().from(schema.profileUpdateRequests),
+      ]);
+
+      const backup = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        data: {
+          users: usersData,
+          employees: employeesData,
+          assetTypes: assetTypesData,
+          assets: assetsData,
+          allocations: allocationsData,
+          verifications: verificationsData,
+          departments: departmentsData,
+          designations: designationsData,
+          emailSettings: emailSettingsData,
+          ssoSettings: ssoSettingsData,
+          pageSettings: pageSettingsData,
+          auditLogs: auditLogsData,
+          customFields: customFieldsData,
+          bulkUploadLogs: bulkUploadLogsData,
+          profileUpdateRequests: profileUpdateRequestsData,
+        },
+      };
+
+      const filename = `backup-${new Date().toISOString().slice(0, 10)}.json`;
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Content-Type", "application/json");
+      res.json(backup);
+    } catch (err) {
+      console.error("Backup export error:", err);
+      res.status(500).json({ message: "Failed to export backup" });
+    }
+  });
+
+  // POST /api/backup/import — restore from JSON backup (admin only)
+  app.post("/api/backup/import", requireAdmin, async (req, res) => {
+    try {
+      const backup = req.body;
+
+      if (!backup || backup.version !== 1 || !backup.data) {
+        return res.status(400).json({ message: "Invalid backup file format" });
+      }
+
+      const { db } = await import("./db");
+      const schema = await import("@shared/schema");
+      const { sql } = await import("drizzle-orm");
+
+      const d = backup.data;
+
+      // Helper: reset sequence after bulk insert
+      const resetSeq = async (tableName: string, colName = "id") => {
+        await db.execute(
+          sql.raw(`SELECT setval(pg_get_serial_sequence('${tableName}', '${colName}'), COALESCE(MAX(${colName}), 1)) FROM ${tableName}`)
+        );
+      };
+
+      // Delete in reverse-dependency order
+      await db.delete(schema.profileUpdateRequests);
+      await db.delete(schema.bulkUploadLogs);
+      await db.delete(schema.auditLogs);
+      await db.delete(schema.customFields);
+      await db.delete(schema.verifications);
+      await db.delete(schema.allocations);
+      await db.delete(schema.assets);
+      await db.delete(schema.assetTypes);
+      await db.delete(schema.employees);
+      await db.delete(schema.designations);
+      await db.delete(schema.departments);
+      await db.delete(schema.ssoSettings);
+      await db.delete(schema.emailSettings);
+      await db.delete(schema.pageSettings);
+      await db.delete(schema.users);
+
+      // Insert in dependency order
+      if (d.users?.length)               await db.insert(schema.users).values(d.users);
+      if (d.employees?.length)           await db.insert(schema.employees).values(d.employees);
+      if (d.departments?.length)         await db.insert(schema.departments).values(d.departments);
+      if (d.designations?.length)        await db.insert(schema.designations).values(d.designations);
+      if (d.assetTypes?.length)          await db.insert(schema.assetTypes).values(d.assetTypes);
+      if (d.assets?.length)              await db.insert(schema.assets).values(d.assets);
+      if (d.allocations?.length)         await db.insert(schema.allocations).values(d.allocations);
+      if (d.verifications?.length)       await db.insert(schema.verifications).values(d.verifications);
+      if (d.emailSettings?.length)       await db.insert(schema.emailSettings).values(d.emailSettings);
+      if (d.ssoSettings?.length)         await db.insert(schema.ssoSettings).values(d.ssoSettings);
+      if (d.pageSettings?.length)        await db.insert(schema.pageSettings).values(d.pageSettings);
+      if (d.auditLogs?.length)           await db.insert(schema.auditLogs).values(d.auditLogs);
+      if (d.customFields?.length)        await db.insert(schema.customFields).values(d.customFields);
+      if (d.bulkUploadLogs?.length)      await db.insert(schema.bulkUploadLogs).values(d.bulkUploadLogs);
+      if (d.profileUpdateRequests?.length) await db.insert(schema.profileUpdateRequests).values(d.profileUpdateRequests);
+
+      // Reset sequences so future inserts don't conflict
+      await Promise.all([
+        resetSeq("users"), resetSeq("employees"), resetSeq("asset_types"),
+        resetSeq("assets"), resetSeq("allocations"), resetSeq("verifications"),
+        resetSeq("departments"), resetSeq("designations"), resetSeq("email_settings"),
+        resetSeq("sso_settings"), resetSeq("page_settings"), resetSeq("audit_logs"),
+        resetSeq("custom_fields"), resetSeq("bulk_upload_logs"), resetSeq("profile_update_requests"),
+      ]);
+
+      const admin = req.user as User;
+      await storage.createAuditLog({ userId: admin.id, action: "Backup Restored", entityType: "System", entityId: null, details: { exportedAt: backup.exportedAt } });
+
+      res.json({ message: "Backup restored successfully" });
+    } catch (err) {
+      console.error("Backup import error:", err);
+      res.status(500).json({ message: "Failed to import backup" });
+    }
+  });
+
   return httpServer;
 }
