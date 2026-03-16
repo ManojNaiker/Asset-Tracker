@@ -1226,9 +1226,18 @@ function FtpUsersTab() {
                 <div className="bg-blue-50 dark:bg-blue-950/30 border-b px-4 py-3 flex items-start gap-3">
                     <Network className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
                     <div className="text-sm text-blue-800 dark:text-blue-300">
-                        <p className="font-semibold">WinSCP se kaise connect karein (apne server par):</p>
-                        <p className="mt-1">Protocol: <strong>FTP</strong> &nbsp;|&nbsp; Host: <strong>aapka server IP</strong> &nbsp;|&nbsp; Port: <strong>2121</strong> &nbsp;|&nbsp; Username/Password: neeche banaye gaye FTP user ke credentials</p>
-                        <p className="mt-1 text-xs opacity-80">Connect hone par sirf <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">backups/</code> folder dikhega.</p>
+                        <p className="font-semibold">WinSCP se kaise connect karein:</p>
+                        <div className="mt-2 space-y-1 text-sm">
+                          <p>① Pehle neeche <strong>"FTP User Banao"</strong> button se ek user banao</p>
+                          <p>② WinSCP mein yeh settings daalein:</p>
+                          <div className="mt-1 bg-blue-100 dark:bg-blue-900 rounded p-2 font-mono text-xs space-y-0.5">
+                            <p>Protocol: <strong>FTP</strong></p>
+                            <p>Host: <strong>aapka server ka IP ya domain</strong></p>
+                            <p>Port: <strong>2121</strong> &nbsp;(apne server par)</p>
+                            <p>Username/Password: <strong>neeche banaye gaye FTP user ke credentials</strong></p>
+                          </div>
+                          <p className="text-xs opacity-80 mt-1">⚠️ Yeh FTP tab apne server par deploy karne ke baad kaam karega. Backup files seedha website ke <strong>Backup &amp; Restore</strong> page se bhi download ho sakti hain.</p>
+                        </div>
                     </div>
                 </div>
 

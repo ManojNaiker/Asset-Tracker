@@ -101,7 +101,7 @@ app.use((req, res, next) => {
     () => {
       log(`serving on port ${port}`);
       startBackupScheduler();
-      startFtpServer();
+      startFtpServer().catch(err => console.error("FTP start error:", err));
     },
   );
 })();

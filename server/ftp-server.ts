@@ -1,5 +1,4 @@
 import FtpSrv from "ftp-srv";
-import path from "path";
 import { db } from "./db";
 import { ftpUsers } from "@shared/schema";
 import { eq } from "drizzle-orm";
@@ -9,16 +8,27 @@ import { BACKUPS_DIR } from "./backup-scheduler";
 
 let ftpServer: any = null;
 
-export function startFtpServer() {
+async function getPublicIp(): Promise<string> {
+  try {
+    const res = await fetch("https://api.ipify.org?format=text");
+    return (await res.text()).trim();
+  } catch {
+    return "127.0.0.1";
+  }
+}
+
+export async function startFtpServer() {
   const ftpPort = parseInt(process.env.FTP_PORT || "2121", 10);
-  const host = "0.0.0.0";
+
+  // Get actual public IP for passive mode
+  const publicIp = process.env.FTP_PASV_HOST || await getPublicIp();
 
   try {
     ftpServer = new FtpSrv({
-      url: `ftp://${host}:${ftpPort}`,
-      pasv_url: process.env.FTP_PASV_HOST || "127.0.0.1",
-      pasv_min: 3000,
-      pasv_max: 3009,
+      url: `ftp://0.0.0.0:${ftpPort}`,
+      pasv_url: publicIp,
+      pasv_min: 4000,
+      pasv_max: 4004,
       anonymous: false,
       greeting: ["Light Finance Backup FTP Server"],
     });
@@ -40,9 +50,8 @@ export function startFtpServer() {
       }
     });
 
-    ftpServer.listen().then(() => {
-      log(`FTP server started on port ${ftpPort} — backups/ folder accessible`, "ftp");
-    });
+    await ftpServer.listen();
+    log(`FTP server ready on port ${ftpPort} | PASV IP: ${publicIp} | Backups: ${BACKUPS_DIR}`, "ftp");
   } catch (err) {
     log(`FTP server failed to start: ${err}`, "ftp");
   }
